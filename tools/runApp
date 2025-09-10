@@ -1,0 +1,116 @@
+#!/bin/bash
+
+cleanup() {
+
+  : 
+}
+
+curdir=`pwd`
+
+# tput clear
+venv="../../venv_ibmmq"
+
+. $venv/bin/activate
+if [ $? -ne 0 ]
+then
+  echo "ERROR: Cannot active virtual env in $venv"
+  exit 1
+fi
+
+cd $curdir/..
+
+trap cleanup EXIT
+
+#  pip install --upgrade pip
+
+if [ -z "$NOREBUILD" ]
+then
+pip uninstall -y ibmmq
+
+# verbose="-v"
+
+pip install $verbose -e .
+if [ $? -ne 0 ]
+then
+  echo "ERROR: Could not rebuild package"
+  exit 1
+fi
+fi
+
+cd $curdir
+echo
+# echo "$line"
+
+# Most examples use QM1
+echo "CLEAR QL(DEV.QUEUE.1)" | runmqsc QM1 >/dev/null 2>&1
+
+# Various simple testcases that I've used during devt
+opt=`echo $1 | tr '[A-Z]' '[a-z]'`
+
+case $opt in
+bvt)
+  python bvt.py
+  ;;
+
+cb)
+  python ../code/examples/async_consume.py &
+  pid=$!
+  sleep 1
+  echo "hello from Python at `date`" | amqsput DEV.QUEUE.1 QM1 >/dev/null 2>&1
+  sleep 1
+  # endmqm -i QM1    # To generate qmgr-wide events
+  sleep 5
+  kill $pid 2>/dev/null
+
+  strmqm QM1 >/dev/null 2>&1
+  exit 0
+  ;;
+
+xmp)
+  t=$2
+  cd $curdir/../code/examples
+
+  if [[ "$t" == "get_message" ]] || [[ "$t" == "get_wait_multiple_messages" ]]
+  then
+    cat << EOF | /opt/mqm/samp/bin/amqsput DEV.QUEUE.1 QM1 >/dev/null 2>&1
+msg1
+msg2
+msg3
+EOF
+  elif [[ "$t" == "get_wait_single_message" ]]
+  then
+(
+    # Wait a little while but less than the WaitInterval in the example
+    sleep 2
+    cat << EOF | /opt/mqm/samp/bin/amqsput DEV.QUEUE.1 QM1 >/dev/null 2>&1
+msg1
+EOF
+) &
+
+  fi
+
+  if [ ! -z "$t" -a -r $t  ]
+  then
+    python $t
+  elif [ ! -z "$t" -a -r $t.py  ]
+  then
+    python $t.py
+  else
+    echo "Example not found. Available are:"
+    ls *.py
+  fi
+
+  ;;
+
+*)
+  echo "Need to provide an option"
+  echo "Available options include:"
+  echo "  bvt  bput bpub "
+  echo "  inq  cb   gdb  "
+  echo "  pcf1 pcf2 props"
+  echo "  xmp (to pick one of the examples)"
+  exit 1
+  ;;
+
+esac
+

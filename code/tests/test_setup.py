@@ -1,13 +1,12 @@
 """Setup tests environment."""
 import os.path
 from unittest import TestCase
-from unittest import main
+from unittest import main # pylint: disable=unused-import
+
+import ibmmq as mq
 
 import config  # noqa
 import utils  # noqa
-
-import pymqi
-
 
 class Tests(TestCase):
     """Setup and tearsdown tests environment."""
@@ -24,15 +23,15 @@ class Tests(TestCase):
 
     prefix = ''
 
-    qmgr = None  # type: pymqi.QueueManager
-    pcf = None  # type: pymqi.PCFExecute
+    qmgr = None  # type: mq.QueueManager
+    pcf = None  # type: mq.PCFExecute
 
     CHCKLOCL = None
 
     @classmethod
     def setUpClass(cls):
         """Initialize test environment."""
-        cls.prefix = os.environ.get('PYMQI_TEST_OBJECT_PREFIX', 'PYMQI.')
+        cls.prefix = os.environ.get('PY_IBMMQ_TEST_OBJECT_PREFIX', 'PYIBMMQ.')
 
         # max length of queue names is 48 characters
         cls.queue_name = '{prefix}MSG.QUEUE'.format(prefix=config.MQ.QUEUE.PREFIX)
@@ -49,14 +48,14 @@ class Tests(TestCase):
 
         cls.conn_info = '{0}({1})'.format(cls.host, cls.port)
 
-        if pymqi.__mqbuild__ == 'server':
-            cls.qmgr = pymqi.QueueManager(cls.queue_manager)
+        if mq.__mqbuild__ == 'server':
+            cls.qmgr = mq.QueueManager(cls.queue_manager)
         else:
-            cls.qmgr = pymqi.QueueManager(None)
-            cls.qmgr.connectTCPClient(cls.queue_manager, pymqi.CD(), cls.channel,
+            cls.qmgr = mq.QueueManager(None)
+            cls.qmgr.connectTCPClient(cls.queue_manager, mq.CD(), cls.channel,
                                       cls.conn_info, cls.user, cls.password)
 
-        cls.pcf = pymqi.PCFExecute(cls.qmgr, response_wait_interval=15000)
+        cls.pcf = mq.PCFExecute(cls.qmgr, response_wait_interval=30000)
 
         cls.version = cls.inquire_qmgr_version().decode()
 
@@ -77,48 +76,48 @@ class Tests(TestCase):
     @classmethod
     def inquire_qmgr_version(cls):
         """Inqure Queue Manager version."""
-        return cls.qmgr.inquire(pymqi.CMQC.MQCA_VERSION)
+        return cls.qmgr.inquire(mq.CMQC.MQCA_VERSION)
 
     def create_queue(self, queue_name, max_depth=5000, attrs=None):
         """Create queue."""
         if not attrs:
             attrs = []
-            attrs.append(pymqi.CFST(Parameter=pymqi.CMQC.MQCA_Q_NAME,
+            attrs.append(mq.CFST(Parameter=mq.CMQC.MQCA_Q_NAME,
                                     String=utils.py3str2bytes(queue_name)))
-            attrs.append(pymqi.CFIN(Parameter=pymqi.CMQC.MQIA_Q_TYPE,
-                                    Value=pymqi.CMQC.MQQT_LOCAL))
-            attrs.append(pymqi.CFIN(Parameter=pymqi.CMQC.MQIA_MAX_Q_DEPTH,
+            attrs.append(mq.CFIN(Parameter=mq.CMQC.MQIA_Q_TYPE,
+                                    Value=mq.CMQC.MQQT_LOCAL))
+            attrs.append(mq.CFIN(Parameter=mq.CMQC.MQIA_MAX_Q_DEPTH,
                                     Value=max_depth))
-            attrs.append(pymqi.CFIN(Parameter=pymqi.CMQCFC.MQIACF_REPLACE,
-                                    Value=pymqi.CMQCFC.MQRP_YES))
+            attrs.append(mq.CFIN(Parameter=mq.CMQCFC.MQIACF_REPLACE,
+                                    Value=mq.CMQCFC.MQRP_YES))
 
         self.pcf.MQCMD_CREATE_Q(attrs)
 
     def delete_queue(self, queue_name):
         """Delete queue."""
         attrs = []
-        attrs.append(pymqi.CFST(Parameter=pymqi.CMQC.MQCA_Q_NAME,
+        attrs.append(mq.CFST(Parameter=mq.CMQC.MQCA_Q_NAME,
                                 String=utils.py3str2bytes(queue_name)))
-        attrs.append(pymqi.CFIN(Parameter=pymqi.CMQCFC.MQIACF_PURGE,
-                                Value=pymqi.CMQCFC.MQPO_YES))
+        attrs.append(mq.CFIN(Parameter=mq.CMQCFC.MQIACF_PURGE,
+                                Value=mq.CMQCFC.MQPO_YES))
         self.pcf.MQCMD_DELETE_Q(attrs)
 
     def create_channel(self, channel_name, attrs=None):
         """Create channle."""
         if not attrs:
             attrs = []
-            attrs.append(pymqi.CFST(Parameter=pymqi.CMQCFC.MQCACH_CHANNEL_NAME,
+            attrs.append(mq.CFST(Parameter=mq.CMQCFC.MQCACH_CHANNEL_NAME,
                                     String=utils.py3str2bytes(channel_name)))
-            attrs.append(pymqi.CFIN(Parameter=pymqi.CMQCFC.MQIACH_CHANNEL_TYPE,
-                                    Value=pymqi.CMQC.MQCHT_SVRCONN))
-            attrs.append(pymqi.CFIN(Parameter=pymqi.CMQCFC.MQIACF_REPLACE,
-                                    Value=pymqi.CMQCFC.MQRP_YES))
+            attrs.append(mq.CFIN(Parameter=mq.CMQCFC.MQIACH_CHANNEL_TYPE,
+                                    Value=mq.CMQXC.MQCHT_SVRCONN))
+            attrs.append(mq.CFIN(Parameter=mq.CMQCFC.MQIACF_REPLACE,
+                                    Value=mq.CMQCFC.MQRP_YES))
         self.pcf.MQCMD_CREATE_CHANNEL(attrs)
 
     def delete_channel(self, channel_name):
         """Delete channel."""
         attrs = []
-        attrs.append(pymqi.CFST(Parameter=pymqi.CMQCFC.MQCACH_CHANNEL_NAME,
+        attrs.append(mq.CFST(Parameter=mq.CMQCFC.MQCACH_CHANNEL_NAME,
                                 String=utils.py3str2bytes(channel_name)))
         self.pcf.MQCMD_DELETE_CHANNEL(attrs)
 

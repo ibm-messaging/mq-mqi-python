@@ -7,8 +7,7 @@ import inspect
 import unittest
 from struct import calcsize
 
-# PyMQI
-from pymqi import CMQC, CMQXC, CMQCFC
+from ibmmq import CMQC, CMQXC, CMQCFC
 
 ignore_dups = []
 
@@ -70,9 +69,9 @@ class Testh2py(unittest.TestCase):
                     mq_attrs_count[mq_attr] += 1
 
             for mq_attr, count in mq_attrs_count.items():
-                if count == 1 or(count == 2 and mq_attr in ignore_dups):
+                if count == 1 or (count == 2 and mq_attr in ignore_dups):
                     continue
-                elif mq_attr.startswith('MQ_DUMMY'):
+                if mq_attr.startswith('MQ_DUMMY'):
                     test_passed = True
                 else:
                     item = "%s is defined %d times in %s" % (mq_attr, count, mod)
@@ -81,7 +80,7 @@ class Testh2py(unittest.TestCase):
         if errors:
             msg = "\n" + "\n".join(errors)
             self.fail(msg)
-        
+
         self.assertTrue(test_passed, 'Test does not found DUMMY duplicate entries!')
 
 if __name__ == "__main__":

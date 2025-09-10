@@ -1,29 +1,36 @@
-# More examples are at https://dsuch.github.io/pymqi/examples.html
-# or in code/examples in the source distribution.
+# More examples are at https://github.com/ibm-messaging/mq-dev-patterns
+# and in code/examples in the source distribution.
 
-import pymqi
+"""
+This example shows reading a single message from a queue, waiting
+for up to 5 seconds before giving up.
+"""
+
+import ibmmq as mq
 
 queue_manager = 'QM1'
 channel = 'DEV.APP.SVRCONN'
 host = '127.0.0.1'
 port = '1414'
-queue_name = 'TEST.1'
+queue_name = 'DEV.QUEUE.1'
 conn_info = '%s(%s)' % (host, port)
 user = 'app'
 password = 'password'
 
 # Message Descriptor
-md = pymqi.MD()
+md = mq.MD()
 
 # Get Message Options
-gmo = pymqi.GMO()
-gmo.Options = pymqi.CMQC.MQGMO_WAIT | pymqi.CMQC.MQGMO_FAIL_IF_QUIESCING
+gmo = mq.GMO()
+gmo.Options = mq.CMQC.MQGMO_WAIT | mq.CMQC.MQGMO_FAIL_IF_QUIESCING
 gmo.WaitInterval = 5000 # 5 seconds
 
-qmgr = pymqi.connect(queue_manager, channel, conn_info, user, password)
+qmgr = mq.connect(queue_manager, channel, conn_info, user, password)
 
-queue = pymqi.Queue(qmgr, queue_name)
+queue = mq.Queue(qmgr, queue_name)
+print("Waiting for message ...")
 message = queue.get(None, md, gmo)
+print("Message: ", message)
 queue.close()
 
 qmgr.disconnect()

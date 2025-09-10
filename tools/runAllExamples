@@ -1,0 +1,76 @@
+#!/bin/bash
+function cls() {
+    if $isTty
+    then
+      tput clear
+    fi
+}
+
+function waitForEnter() {
+  if $isTty
+  then
+    echo
+    read -p "Press ENTER to continue"  x
+  else
+    echo
+  fi
+}
+
+tty -s
+if [ $? -eq 0 ]
+then
+  isTty=true
+else
+  isTty=false
+fi
+
+# Run this, capturing stdout/stderr for later review
+# Some examples are expected to cause an exception; you need to
+# look at the output and see if it's good or not.
+curdir=`pwd`
+cls
+
+# The async consume has a special case in the runApp script
+echo "Running test async_consume"
+runApp cb
+waitForEnter
+
+export NOREBUILD=true
+
+# Run all the examples except those we know will not work in this
+# environment or which would not naturally end
+examples=`ls ../code/examples/*py |\
+   grep -v windows |\
+   grep -v "async_consume" |\
+   grep -v put_get_correl_id |\
+   grep -v publish |\
+   grep -v subscribe`
+for testcase in $examples
+do
+  cls
+  e=`basename $testcase .py`
+  echo "Running test $e"
+  cd $curdir
+  runApp xmp $e
+  waitForEnter
+done
+
+cls
+echo "Running tests publish_message and subscribe"
+runApp xmp subscribe.py &
+subPid=$!
+sleep 1
+
+runApp xmp publish_message.py
+sleep 2
+wait $subPid
+waitForEnter
+
+#cls
+#echo "Running test PCF for z/OS"
+#runApp pcfz
+
+echo
+echo "All examples run"
+
+

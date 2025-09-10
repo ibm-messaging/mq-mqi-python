@@ -1,22 +1,31 @@
+
+# Directories and files used by edit/build/test tools
 .coverage
 .idea
 .idea/*
 .tox
 .vscode
+dist/
 
-build/*
+# Where there might be some intermediate files
 code/dist
+code/tests/secrets
 code/develop-eggs/*
-code/MANIFEST
-dist
-docs/_build/
-MANIFEST
+build/*
 
-*pymqe.so
-
+# Temporary and binary files
 *.*~
 *.egg-info*
+__pycache__
 *.pyc
 *.pyo
 *.so
 *.swp
+**/secrets/*
+
+# Some of my local tools
+archive
+tools.untracked
+
+# Other local directories I may use
+issues

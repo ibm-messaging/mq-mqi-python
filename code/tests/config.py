@@ -1,32 +1,40 @@
+"""Use the environment to get configuration values for connection to qmgr"""
 import os.path
 import utils
 
 
 class PATHS:
+    """Location of testcases"""
     TESTS_DIR = os.path.normpath(os.path.dirname(__file__))
 
 
 class MQ:
-
-    # Queue manager connection setup
+    """
+    Configuration for the tests
+    By default, inherited from tox.ini
+    """
     class QM:
-        NAME = os.environ.get('PYMQI_TEST_QM_NAME', 'MQTEST')
-        HOST = os.environ.get('PYMQI_TEST_QM_HOST', '127.0.0.1')
-        PORT = os.environ.get('PYMQI_TEST_QM_PORT', '8887')
-        TRANSPORT = os.environ.get('PYMQI_TEST_QM_TRANSPORT', 'TCP')
-        CHANNEL = os.environ.get('PYMQI_TEST_QM_CHANNEL', 'CH1')
-        USER = os.environ.get('PYMQI_TEST_QM_USER', '')
-        PASSWORD = os.environ.get('PYMQI_TEST_QM_PASSWORD', '')
-        APP_CHANNEL = os.environ.get('PYMQI_TEST_QM_APP_CHANNEL', 'CH1')
-        APP_USER = os.environ.get('PYMQI_TEST_QM_APP_USER', '')
-        APP_PASSWORD = os.environ.get('PYMQI_TEST_QM_APP_PASSWORD', '')
+        """Queue manager connection setup"""
+        NAME = os.environ.get('PY_IBMMQ_TEST_QM_NAME', 'QM1')
+        HOST = os.environ.get('PY_IBMMQ_TEST_QM_HOST', 'localhost')
+        PORT = os.environ.get('PY_IBMMQ_TEST_QM_PORT', '1413')
+        TRANSPORT = os.environ.get('PY_IBMMQ_TEST_QM_TRANSPORT', 'TCP')
+
+        CHANNEL = os.environ.get('PY_IBMMQ_TEST_QM_CHANNEL', 'DEV.ADMIN.SVRCONN')
+        USER = os.environ.get('PY_IBMMQ_TEST_QM_USER', 'admin')
+        PASSWORD = os.environ.get('PY_IBMMQ_TEST_QM_PASSWORD', 'password')
+
+        APP_CHANNEL = os.environ.get('PY_IBMMQ_TEST_QM_APP_CHANNEL', 'DEV.APP.SVRCONN')
+        APP_USER = os.environ.get('PY_IBMMQ_TEST_QM_APP_USER', 'app')
+        APP_PASSWORD = os.environ.get('PY_IBMMQ_TEST_QM_APP_PASSWORD', 'password')
 
         MIN_COMMAND_LEVEL = os.environ.get(
-            'PYMQI_TEST_QM_MIN_COMMAND_LEVEL', '800')
+            'PY_IBMMQ_TEST_QM_MIN_COMMAND_LEVEL', '800')
 
-        class CONN_AUTH:
+        class CONNAUTH:
+            """Configuration of authentication credentials"""
             # user/password connection authentication is a MQ >= 8.0 feature
-            SUPPORTED = os.environ.get('PYMQI_TEST_QM_CONN_AUTH_SUPPORTED',
+            SUPPORTED = os.environ.get('PY_IBMMQ_TEST_QM_CONNAUTH_SUPPORTED',
                                        '1')
             # Set to OPTIONAL or REQUIRED
             # OPTIONAL: If a user ID and password are provided by a client
@@ -34,7 +42,7 @@ class MQ:
             # to provide user + password, though.
             # REQUIRED: A valid user ID and password are mandatory.
             USE_PW = os.environ.get(
-                'PYMQI_TEST_QM_CONN_AUTH_USE_PW', 'OPTIONAL')
+                'PY_IBMMQ_TEST_QM_CONNAUTH_USE_PW', 'REQUIRED')
 
             # Delay time in seconds for API call returns in case of auth
             # failures (some DoS-countermeasure). For testing purposes we
@@ -42,14 +50,14 @@ class MQ:
             # create_mq_objects.py for the creation of the queue manager conn
             # auth.
             FAIL_DELAY = os.environ.get(
-                'PYMQI_TEST_QM_CONN_AUTH_FAIL_DELAY', '0')
+                'PY_IBMMQ_TEST_QM_CONNAUTH_FAIL_DELAY', '0')
 
-    # Queue naming setup
     class QUEUE:
-        PREFIX = os.environ.get('PYMQI_TEST_QUEUE_PREFIX', '')
+        """Queue naming setup"""
+        PREFIX = os.environ.get('PY_IBMMQ_TEST_QUEUE_PREFIX', 'UNITTEST')
         QUEUE_NAMES = {
-            'TestRFH2PutGet': PREFIX + 'TEST.PYMQI.RFH2PUTGET',
-            'TestQueueManager': PREFIX + 'TEST.PYMQI.QUEUEMANAGER',
+            'TestRFH2PutGet': PREFIX + 'TEST.PYIBMMQ.RFH2PUTGET',
+            'TestQueueManager': PREFIX + 'TEST.PYIBMMQ.QUEUEMANAGER',
             }
 
     # convenience attribute derived from above settings, may be used for tests

@@ -1,38 +1,91 @@
-# More examples are at https://dsuch.github.io/pymqi/examples.html
-# or in code/examples in the source distribution.
+# More examples are at https://github.com/ibm-messaging/mq-dev-patterns
+# and in code/examples in the source distribution.
 
-import logging
+"""
+This example shows a simple execution of a PCF command to display local queues matching a pattern
+and then show their current depth.
 
-import pymqi
+The PCF parameters are built as a list of separate elements. Compare with the the dict-based approach
+in the dis_channels example.
 
-logging.basicConfig(level=logging.INFO)
+The "admin" credentials are used to avoid needing to grant application users
+additional privileges. We use the CSP class to provide those credentials.
+"""
 
+import ibmmq as mq
+
+no_queues=False
 queue_manager = 'QM1'
-channel = 'DEV.APP.SVRCONN'
+channel = 'DEV.ADMIN.SVRCONN'
 host = '127.0.0.1'
 port = '1414'
+
 conn_info = '%s(%s)' % (host, port)
-user = 'app'
-password = 'password'
+
+csp = mq.CSP()
+csp.CSPUserId = 'admin'
+csp.CSPPassword = 'password'
 
 prefix = 'SYSTEM.*'
-queue_type = pymqi.CMQC.MQQT_MODEL
+queue_type = mq.CMQC.MQQT_LOCAL
 
-args = {pymqi.CMQC.MQCA_Q_NAME: prefix, pymqi.CMQC.MQIA_Q_TYPE: queue_type}
+# The parameters needed for the INQUIRE Q command.
+name_attrs = []
+name_attrs.append(mq.CFST(Parameter=mq.CMQC.MQCA_Q_NAME,
+                             String=prefix))
+name_attrs.append(mq.CFIN(Parameter=mq.CMQC.MQIA_Q_TYPE,
+                  Value=queue_type))
 
-qmgr = pymqi.connect(queue_manager, channel, conn_info, user, password)
-pcf = pymqi.PCFExecute(qmgr)
+# The parameters needed for the INQUIRE Q STATUS command
+status_attrs = []
+status_attrs.append(mq.CFST(Parameter=mq.CMQC.MQCA_Q_NAME,
+                               String=prefix))
+status_attrs.append(mq.CFIL(Parameter=mq.CMQCFC.MQIACF_Q_STATUS_ATTRS,
+                               Values=[mq.CMQCFC.MQIACF_ALL]))
 
+qmgr = mq.connect(queue_manager, channel, conn_info, csp=csp)
+pcf = mq.PCFExecute(qmgr, response_wait_interval=15000)
+
+print()
+print("Listing queues...")
 try:
-    response = pcf.MQCMD_INQUIRE_Q(args)
-except pymqi.MQMIError as e:
-    if e.comp == pymqi.CMQC.MQCC_FAILED and e.reason == pymqi.CMQC.MQRC_UNKNOWN_OBJECT_NAME:
-        logging.info('No queues matched given arguments.')
+    response = pcf.MQCMD_INQUIRE_Q(name_attrs)
+except mq.MQMIError as e:
+    if e.comp == mq.CMQC.MQCC_FAILED and e.reason == mq.CMQC.MQRC_UNKNOWN_OBJECT_NAME:
+        no_queues=True
+        print('No queues matched given pattern.')
     else:
         raise
 else:
     for queue_info in response:
-        queue_name = queue_info[pymqi.CMQC.MQCA_Q_NAME]
-        logging.info('Found queue `%s`' % queue_name)
+        try:
+            queue_name = queue_info[mq.CMQC.MQCA_Q_NAME]
+            print(f'Found queue \"{mq.to_string(queue_name)}\"')
+        except UnicodeError:
+            print(f'Failure to decode msg: {queue_name}')
+        except KeyError:
+            print('Cannot find queue name in response: ', queue_info)
+
+if not no_queues:
+    print()
+    print("Listing queue status...")
+    try:
+        response = pcf.MQCMD_INQUIRE_Q_STATUS(status_attrs)
+    except mq.MQMIError as e:
+        if e.comp == mq.CMQC.MQCC_FAILED and e.reason == mq.CMQC.MQRC_UNKNOWN_OBJECT_NAME:
+            # Should not get here as we already know there are some queues matching the pattern
+            print('No queues matched given pattern.')
+        else:
+            raise
+    else:
+        for queue_info in response:
+            try:
+                queue_name = queue_info[mq.CMQC.MQCA_Q_NAME]
+                depth = queue_info[mq.CMQC.MQIA_CURRENT_Q_DEPTH]
+                print(f'Found queue {queue_name} depth: {depth}')
+            except KeyError as e:
+                print('Failure to decode msg because ', e)
 
 qmgr.disconnect()
+
+print("Done.")

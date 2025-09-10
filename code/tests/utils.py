@@ -1,10 +1,10 @@
-# Test helpers and utilities
+"""Test helpers and utilities"""
 
 import sys
 import os
 import inspect
+import random
 import functools  # >= Python 2.5
-
 
 def with_env_complement(env_var_name, envvar_value):
     """Decorate test with environment additions.
@@ -15,12 +15,13 @@ def with_env_complement(env_var_name, envvar_value):
     env_var_name again.
     Runs the test without environment changes if env_var_name is set.
     """
+
     # The actual decorator that will accept the test function argument and wrap
     # it with the optional env additions
     def decorate(test_func):
         @functools.wraps(test_func)
         def _env_complemented(*args, **kwargs):
-            if env_var_name not in os.environ.keys():
+            if env_var_name not in os.environ.keys(): # pylint: disable=C0201
                 # enhance environment if env variable is not set
                 os.environ[env_var_name] = envvar_value
                 try:
@@ -44,6 +45,7 @@ def _visit(cls, prefix=()):
         cls: The (config) class to traverse for attribute lookup.
         prefix: Optional prefix tuple.
     """
+    # pylint: disable=R1737
     for attr_name, attr_val in cls.__dict__.items():
         if not attr_name.startswith('__'):
             # ignore names that appear "special"
@@ -72,12 +74,28 @@ def ispy3str(s):
     """
     if isinstance(s, str) and not isinstance(s, bytes):
         return True
-    else:
-        return False
+    return False
 
 
 def py3str2bytes(s, encoding='ascii'):
-    if ispy3str(s):
+    """Sometimes return a string and sometimes return the byte array"""
+    if ispy3str(s) and random.randint(0,1) == 0:
         return s.encode(encoding)
-    else:
-        return s
+    return s
+
+def strcmp(a,b):
+    """Compare two strings that might be either unicode or byte arrays"""
+    rc = False
+    encoding = 'ascii'
+
+    if a == b:
+        rc = True
+    if isinstance(a,str) and isinstance(b,bytes):
+        if a.encode(encoding) == b:
+            rc = True
+
+    if isinstance(b,str) and isinstance(a,bytes):
+        if b.encode(encoding) == a:
+            rc = True
+
+    return rc

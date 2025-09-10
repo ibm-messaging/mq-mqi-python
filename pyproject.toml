@@ -1,54 +1,5 @@
-[tool.pyright]
-pythonVersion = "3.8"
-typeCheckingMode = "off" # "basic"
+# This is not really being used for now, except to define the build process.
 
-#
-# This is level 1
-#
-#reportOptionalOperand       = "none"
-#reportGeneralTypeIssues     = "none"
-#reportOptionalMemberAccess  = "none"
-reportPrivateUsage        = "error"
-reportAssertAlwaysTrue    = "error"
-reportUnusedImport        = "error"
-reportUnusedFunction      = "error"
-reportUnusedCallResult    = "error"
-reportUnusedVariable      = "error"
-reportInvalidTypeVarUse   = "error"
-reportOverlappingOverload = "error"
-reportPropertyTypeMismatch  = "error"
-reportUntypedClassDecorator = "error"
-reportUnnecessaryCast       = "error"
-reportUnnecessaryComparison = "error"
-reportUnnecessaryIsInstance = "error"
-reportUnsupportedDunderAll  = "error"
-reportUntypedFunctionDecorator    = "error"
-reportWildcardImportFromLibrary   = "error"
-reportImplicitStringConcatenation = "error"
-
-#
-# This is level 2
-#
-#reportMissingImports       = "error"
-#reportGeneralTypeIssues    = "error"
-#reportOptionalMemberAccess = "error"
-
-#
-# This is level 3
-#
-#reportMissingParameterType = "error"
-
-#
-# This is level 4, needed before reportUnknownMemberType
-#
-#reportUnknownArgumentType  = "error"
-
-#
-# This is level 5
-#
-#reportUnknownLambdaType    = "error"
-#reportUnknownMemberType    = "error"
-#reportUnknownParameterType = "error"
-#reportUnknownVariableType  = "error"
-#reportUntypedClassDecorator    = "error"
-#reportUntypedFunctionDecorator = "error"
+[build-system]
+requires = ["setuptools >= 75.0.0"]
+build-backend = "setuptools.build_meta"

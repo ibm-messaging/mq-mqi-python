@@ -1,27 +1,25 @@
-""" Tests for pymqi.QueueManager class.
+""" Tests for mq.QueueManager class.
 """
 
-import os
-import unittest
-from uuid import uuid4
+# pylint: disable=missing-function-docstring,no-name-in-module
 
-import config  # noqa
-import utils  # noqa
+import unittest
+
+import ibmmq as mq
+
+import config
+import utils
 
 try:
     from typing import List
 except ImportError:
     pass
 
-from test_setup import Tests  # noqa
-from test_setup import main  # noqa
-
-import pymqi
-import pymqi.CMQC
-
+from test_setup import Tests
+from test_setup import main
 
 class TestQueueManager(Tests):
-
+    """Testing the queue manager"""
     CHCKCLNT = None  # type: int
 
     @classmethod
@@ -30,56 +28,56 @@ class TestQueueManager(Tests):
         super(TestQueueManager, cls).setUpClass()
 
         # Get CHCKCLNT value
-        attrs = []  # type: List[pymqi.MQOpts]
-        attrs.append(pymqi.CFIL(Parameter=pymqi.CMQCFC.MQIACF_Q_MGR_ATTRS,
-                                Values=[pymqi.CMQC.MQCA_CONN_AUTH]))
+        attrs = []  # type: List[mq.MQOpts]
+        attrs.append(mq.CFIL(Parameter=mq.CMQCFC.MQIACF_Q_MGR_ATTRS,
+                                Values=[mq.CMQC.MQCA_CONN_AUTH]))
         results = cls.pcf.MQCMD_INQUIRE_Q_MGR(attrs)
-        connAuthName = results[0][pymqi.CMQC.MQCA_CONN_AUTH]
+        conn_auth_name = results[0][mq.CMQC.MQCA_CONN_AUTH]
 
-        attrs = []  # type: List[pymqi.MQOpts]
+        attrs = []  # type: List[mq.MQOpts]
 
-        attrs.append(pymqi.CFST(Parameter=pymqi.CMQC.MQCA_AUTH_INFO_NAME,
-                                String=connAuthName))
-        attrs.append(pymqi.CFIN(Parameter=pymqi.CMQC.MQIA_AUTH_INFO_TYPE,
-                                Value=pymqi.CMQC.MQAIT_IDPW_OS))
-        attrs.append(pymqi.CFIL(Parameter=pymqi.CMQCFC.MQIACF_AUTH_INFO_ATTRS,
-                                Values=[pymqi.CMQC.MQIA_CHECK_CLIENT_BINDING]))
+        attrs.append(mq.CFST(Parameter=mq.CMQC.MQCA_AUTH_INFO_NAME,
+                                String=conn_auth_name))
+        attrs.append(mq.CFIN(Parameter=mq.CMQC.MQIA_AUTH_INFO_TYPE,
+                                Value=mq.CMQC.MQAIT_IDPW_OS))
+        attrs.append(mq.CFIL(Parameter=mq.CMQCFC.MQIACF_AUTH_INFO_ATTRS,
+                                Values=[mq.CMQC.MQIA_CHECK_CLIENT_BINDING]))
 
         results = cls.pcf.MQCMD_INQUIRE_AUTH_INFO(attrs)
-        cls.CHCKCLNT = results[0][pymqi.CMQC.MQIA_CHECK_CLIENT_BINDING]
+        cls.CHCKCLNT = results[0][mq.CMQC.MQIA_CHECK_CLIENT_BINDING]
 
         # Add required rights for pinging QMGR
-        attrs = []  # type: List[pymqi.MQOpts]
-        attrs.append(pymqi.CFST(Parameter=pymqi.CMQCFC.MQCACF_AUTH_PROFILE_NAME,
+        attrs = []  # type: List[mq.MQOpts]
+        attrs.append(mq.CFST(Parameter=mq.CMQCFC.MQCACF_AUTH_PROFILE_NAME,
                                 String=b'SYSTEM.DEFAULT.MODEL.QUEUE'))
-        attrs.append(pymqi.CFIN(Parameter=pymqi.CMQCFC.MQIACF_OBJECT_TYPE,
-                                Value=pymqi.CMQC.MQOT_Q))
-        attrs.append(pymqi.CFIL(Parameter=pymqi.CMQCFC.MQIACF_AUTH_ADD_AUTHS,
-                                Values=[pymqi.CMQCFC.MQAUTH_DISPLAY,
-                                        pymqi.CMQCFC.MQAUTH_INPUT]))
-        attrs.append(pymqi.CFSL(Parameter=pymqi.CMQCFC.MQCACF_PRINCIPAL_ENTITY_NAMES,
+        attrs.append(mq.CFIN(Parameter=mq.CMQCFC.MQIACF_OBJECT_TYPE,
+                                Value=mq.CMQC.MQOT_Q))
+        attrs.append(mq.CFIL(Parameter=mq.CMQCFC.MQIACF_AUTH_ADD_AUTHS,
+                                Values=[mq.CMQCFC.MQAUTH_DISPLAY,
+                                        mq.CMQCFC.MQAUTH_INPUT]))
+        attrs.append(mq.CFSL(Parameter=mq.CMQCFC.MQCACF_PRINCIPAL_ENTITY_NAMES,
                                 Strings=[utils.py3str2bytes(cls.app_user)]))
         cls.pcf.MQCMD_SET_AUTH_REC(attrs)
 
-        attrs = []  # type: List[pymqi.MQOpts]
-        attrs.append(pymqi.CFST(Parameter=pymqi.CMQCFC.MQCACF_AUTH_PROFILE_NAME,
+        attrs = []  # type: List[mq.MQOpts]
+        attrs.append(mq.CFST(Parameter=mq.CMQCFC.MQCACF_AUTH_PROFILE_NAME,
                                 String=b'SYSTEM.ADMIN.COMMAND.QUEUE'))
-        attrs.append(pymqi.CFIN(Parameter=pymqi.CMQCFC.MQIACF_OBJECT_TYPE,
-                                Value=pymqi.CMQC.MQOT_Q))
-        attrs.append(pymqi.CFIL(Parameter=pymqi.CMQCFC.MQIACF_AUTH_ADD_AUTHS,
-                                Values=[pymqi.CMQCFC.MQAUTH_OUTPUT]))
-        attrs.append(pymqi.CFSL(Parameter=pymqi.CMQCFC.MQCACF_PRINCIPAL_ENTITY_NAMES,
+        attrs.append(mq.CFIN(Parameter=mq.CMQCFC.MQIACF_OBJECT_TYPE,
+                                Value=mq.CMQC.MQOT_Q))
+        attrs.append(mq.CFIL(Parameter=mq.CMQCFC.MQIACF_AUTH_ADD_AUTHS,
+                                Values=[mq.CMQCFC.MQAUTH_OUTPUT]))
+        attrs.append(mq.CFSL(Parameter=mq.CMQCFC.MQCACF_PRINCIPAL_ENTITY_NAMES,
                                 Strings=[utils.py3str2bytes(cls.app_user)]))
         cls.pcf.MQCMD_SET_AUTH_REC(attrs)
 
-        attrs = []  # type: List[pymqi.MQOpts]
-        attrs.append(pymqi.CFST(Parameter=pymqi.CMQCFC.MQCACF_AUTH_PROFILE_NAME,
+        attrs = []  # type: List[mq.MQOpts]
+        attrs.append(mq.CFST(Parameter=mq.CMQCFC.MQCACF_AUTH_PROFILE_NAME,
                                 String=utils.py3str2bytes(cls.queue_manager)))
-        attrs.append(pymqi.CFIN(Parameter=pymqi.CMQCFC.MQIACF_OBJECT_TYPE,
-                                Value=pymqi.CMQC.MQOT_Q_MGR))
-        attrs.append(pymqi.CFIL(Parameter=pymqi.CMQCFC.MQIACF_AUTH_ADD_AUTHS,
-                                Values=[pymqi.CMQCFC.MQAUTH_DISPLAY]))
-        attrs.append(pymqi.CFSL(Parameter=pymqi.CMQCFC.MQCACF_PRINCIPAL_ENTITY_NAMES,
+        attrs.append(mq.CFIN(Parameter=mq.CMQCFC.MQIACF_OBJECT_TYPE,
+                                Value=mq.CMQC.MQOT_Q_MGR))
+        attrs.append(mq.CFIL(Parameter=mq.CMQCFC.MQIACF_AUTH_ADD_AUTHS,
+                                Values=[mq.CMQCFC.MQAUTH_DISPLAY]))
+        attrs.append(mq.CFSL(Parameter=mq.CMQCFC.MQCACF_PRINCIPAL_ENTITY_NAMES,
                                 Strings=[utils.py3str2bytes(cls.app_user)]))
         results = cls.pcf.MQCMD_SET_AUTH_REC(attrs)
 
@@ -89,19 +87,19 @@ class TestQueueManager(Tests):
             cls.qmgr.disconnect()
 
     def test_init_none(self):
-        qmgr = pymqi.QueueManager(None)
+        qmgr = mq.QueueManager(None)
         self.assertFalse(qmgr.is_connected)
 
     @utils.with_env_complement('MQSERVER', config.MQ.APP_MQSERVER)
     def test_init_name(self):
         # As the connect method provides no way to supply user & password, this
         # cannot work if the queue manager requires it
-        if self.CHCKCLNT == pymqi.CMQCFC.MQCHK_REQUIRED:
+        if (config.MQ.QM.CONNAUTH.USE_PW == 'REQUIRED') or (self.CHCKCLNT == mq.CMQCFC.MQCHK_REQUIRED):
             self.skipTest('Test not viable for user/password-requiring queue manager')
             return
 
         # connecting with queue manager name needs MQSERVER set properly
-        qmgr = pymqi.QueueManager(self.queue_manager)
+        qmgr = mq.QueueManager(self.queue_manager)
         self.assertTrue(qmgr.is_connected)
 
         if qmgr.is_connected:
@@ -111,11 +109,11 @@ class TestQueueManager(Tests):
     def test_connect(self):
         # As the connect method provides no way to supply user & password, this
         # cannot work if the queue manager requires it
-        if self.CHCKCLNT == pymqi.CMQCFC.MQCHK_REQUIRED:
+        if (config.MQ.QM.CONNAUTH.USE_PW == 'REQUIRED') or (self.CHCKCLNT == mq.CMQCFC.MQCHK_REQUIRED):
             self.skipTest('Test not viable for user/password-requiring queue manager')
             return
 
-        qmgr = pymqi.QueueManager(None)
+        qmgr = mq.QueueManager(None)
         self.assertFalse(qmgr.is_connected)
         qmgr.connect(self.queue_manager)
         self.assertTrue(qmgr.is_connected)
@@ -123,24 +121,24 @@ class TestQueueManager(Tests):
             qmgr.disconnect()
 
     def test_connect_tcp_client(self):
-        qmgr = pymqi.QueueManager(None)
+        qmgr = mq.QueueManager(None)
         qmgr.connect_tcp_client(
-            self.queue_manager, pymqi.cd(), self.channel, self.conn_info, user=self.user,
+            self.queue_manager, mq.cd(), self.channel, self.conn_info, user=self.user,
             password=self.password)
         self.assertTrue(qmgr.is_connected)
         if qmgr.is_connected:
             qmgr.disconnect()
 
     def test_connect_tcp_client_without_cred(self):
-        if self.CHCKCLNT == pymqi.CMQCFC.MQCHK_REQUIRED:
+        if (config.MQ.QM.CONNAUTH.USE_PW == 'REQUIRED') or (self.CHCKCLNT == mq.CMQCFC.MQCHK_REQUIRED):
             self.skipTest('Test not viable for user/password-requiring queue manager')
             return
 
-        qmgr = pymqi.QueueManager(None)
-        with self.assertRaises(pymqi.MQMIError) as ex_ctx:
+        qmgr = mq.QueueManager(None)
+        with self.assertRaises(mq.MQMIError) as ex_ctx:
             qmgr.connect_tcp_client(
-                self.queue_manager, pymqi.cd(), self.channel, self.conn_info)
-            self.assertEqual(ex_ctx.exception.reason, pymqi.CMQC.MQRC_NOT_AUTHORIZED)
+                self.queue_manager, mq.cd(), self.channel, self.conn_info)
+            self.assertEqual(ex_ctx.exception.reason, mq.CMQC.MQRC_NOT_AUTHORIZED)
         if qmgr.is_connected:
             qmgr.disconnect()
 
@@ -148,35 +146,34 @@ class TestQueueManager(Tests):
     # ConnectionName list with unaccessible QM affects on channel name of the next test if MQSERVER used
     # changing the order of ConnectionName entries does not affect to issue occurrence
     def test_zzz_connect_tcp_client_conection_list(self):
-        qmgr = pymqi.QueueManager(None)
+        qmgr = mq.QueueManager(None)
         conn_info = '127.0.0.1(22),{0}'.format(self.conn_info)
         qmgr.connect_tcp_client(
-            self.queue_manager, pymqi.cd(), self.channel, conn_info, user=self.user,
+            self.queue_manager, mq.cd(), self.channel, conn_info, user=self.user,
             password=self.password)
         self.assertTrue(qmgr.is_connected)
         if qmgr.is_connected:
             qmgr.disconnect()
 
-    # This test overlaps with
-    # test_mq80.test_successful_connect_without_optional_credentials,
+    # This test overlaps with test_mq80.test_successful_connect_without_optional_credentials,
     # but hey, why not
     def test_connect_tcp_client_with_none_credentials(self):
-        if self.CHCKCLNT == pymqi.CMQCFC.MQCHK_REQUIRED:
+        if config.MQ.QM.CONNAUTH.USE_PW == 'REQUIRED' or self.CHCKCLNT == mq.CMQCFC.MQCHK_REQUIRED:
             self.skipTest('Test not viable for user/password-requiring queue manager')
             return
 
-        qmgr = pymqi.QueueManager(None)
+        qmgr = mq.QueueManager(None)
         qmgr.connect_tcp_client(
-            self.queue_manager, pymqi.cd(), self.app_channel, self.conn_info, user=None,
+            self.queue_manager, mq.cd(), self.app_channel, self.conn_info, user=None,
             password=None)
         self.assertTrue(qmgr.is_connected)
         if qmgr.is_connected:
             qmgr.disconnect()
 
     def test_disconnect(self):
-        qmgr = pymqi.QueueManager(None)
+        qmgr = mq.QueueManager(None)
         qmgr.connect_tcp_client(
-            self.queue_manager, pymqi.cd(), self.channel, self.conn_info, user=self.user,
+            self.queue_manager, mq.cd(), self.channel, self.conn_info, user=self.user,
             password=self.password)
         self.assertTrue(qmgr.is_connected)
         if qmgr.is_connected:
@@ -184,13 +181,13 @@ class TestQueueManager(Tests):
             self.assertFalse(qmgr.is_connected)
 
     def test_get_handle_unconnected(self):
-        qmgr = pymqi.QueueManager(None)
-        self.assertRaises(pymqi.PYIFError, qmgr.get_handle)
+        qmgr = mq.QueueManager(None)
+        self.assertRaises(mq.PYIFError, qmgr.get_handle)
 
     def test_get_handle_connected(self):
-        qmgr = pymqi.QueueManager(None)
+        qmgr = mq.QueueManager(None)
         qmgr.connect_tcp_client(
-            self.queue_manager, pymqi.cd(), self.channel, self.conn_info, user=self.user,
+            self.queue_manager, mq.cd(), self.channel, self.conn_info, user=self.user,
             password=self.password)
         handle = qmgr.get_handle()
         self.assertTrue(isinstance(handle, int))
@@ -211,15 +208,15 @@ class TestQueueManager(Tests):
         pass
 
     def test_inquire(self):
-        qmgr = pymqi.QueueManager(None)
+        qmgr = mq.QueueManager(None)
         qmgr.connect_tcp_client(
-            self.queue_manager, pymqi.cd(), self.channel, self.conn_info, user=self.user,
+            self.queue_manager, mq.cd(), self.channel, self.conn_info, user=self.user,
             password=self.password)
-        attribute = pymqi.CMQC.MQCA_Q_MGR_NAME
+        attribute = mq.CMQC.MQCA_Q_MGR_NAME
         expected_value = utils.py3str2bytes(self.queue_manager)
         attribute_value = qmgr.inquire(attribute)
-        self.assertEqual(len(attribute_value), pymqi.CMQC.MQ_Q_MGR_NAME_LENGTH)
-        self.assertEqual(attribute_value.strip(), expected_value)
+        self.assertEqual(len(attribute_value), mq.CMQC.MQ_Q_MGR_NAME_LENGTH)
+        self.assertTrue(utils.strcmp(attribute_value.strip(), expected_value))
 
         if qmgr.is_connected:
             qmgr.disconnect()

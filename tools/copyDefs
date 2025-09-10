@@ -1,0 +1,293 @@
+#!/bin/bash
+
+# This script copies the definition files into the MQ Python directory.
+# It can be used ONLY by members of the IBM MQ development team as it
+# relies on access to the development source and build trees. But
+# noone else would be able to add new MQI definitions anyway.
+#
+# Files are renamed as they are copied, and the primary
+# CMQC.py uses the correct platform-specific variant.
+
+
+# Copyright (c) 2025 IBM Corporation. All Rights Reserved.
+
+function printSyntax {
+cat << EOF
+Usage: copyDefs [-f format] [-l level] [-m major] [-r release] [-s stream] [-u user]
+Options:
+    -f Format for how level name is constructed (default $defaultFormat)
+      1 or USER   : release-stream-USER-level_P
+      2 or STREAM : release-stream-level_P
+      3 or RELEASE: release-level_P
+      4 or FREE   : the full level as entered (no added _P)
+      5 or GOLD   : gold/level_P
+    -l level   (no default)
+    -m major number in output tree (default: $defaultMajor)
+    -r release (default: $defaultRelease)
+    -s stream  (default: $defaultStream)
+    -u userid on mqbase (default: current id)
+EOF
+exit 1
+}
+
+function doLocalBuild {
+cat <<EOF
+Use the runJsd script to build in a local MQ development tree and
+copy the generated files.
+
+The script will need editing for your own environment.
+EOF
+exit 0
+}
+
+# Do we need to add the CURRENT_VERSION info to a map
+# of known classes
+function classExists {
+  while read c
+  do
+    cTrim=`echo $c | cut -d_ -f1 | sed "s/^MQ//g"`
+    grep -q "^class $cTrim" $srcDir/mq*.py
+    if [ $? -eq 0 ]
+    then
+      grep -q $c $srcDir/ibmmqc.c
+      if [ $? -eq 0 ]
+      then
+         : echo "Already have $c" >&2
+      else
+        echo $c
+      fi
+    else
+      : echo "Looking for $cTrim" >&2
+    fi
+  done
+}
+
+# Main code starts here.
+curdir=`pwd`
+
+# Default values
+defaultMajor=p940
+defaultRelease=p943
+defaultStream=dfct
+defaultFormat=USER
+defaultLevel="" # No default
+
+MAJOR=$defaultMajor
+RELEASE=$defaultRelease
+STREAM=$defaultStream
+LEVEL=$defaultLevel
+
+FORMAT=$defaultFormat
+localBuild=false
+gold=false
+
+# My ID on mqbase - SSH keys are in the usual places
+u=`whoami`
+
+while getopts :bf:l:m:r:s:u: o
+do
+  case $o in
+  b)
+    localBuild=true
+    ;;
+  f)
+    FORMAT=`echo $OPTARG | tr '[:lower:]' '[:upper:]'`
+    ;;
+  l)
+    LEVEL=$OPTARG
+    ;;
+  m)
+    MAJOR=$OPTARG
+    ;;
+  r)
+    RELEASE=$OPTARG
+    ;;
+  s)
+    STREAM=$OPTARG
+    ;;
+  u)
+    u=$OPTARG
+    ;;
+  *)
+    printSyntax
+    ;;
+  esac
+done
+
+# Check for no further parameters
+shift $((OPTIND-1))
+if [ "$1" != "" ]
+then
+  printSyntax
+fi
+
+if [ -z "$LEVEL" ]
+then
+  echo "ERROR: Must provide a level eg L230329"
+  exit 1
+fi
+
+# Construct the output tree name from the elements.
+# Various formats are available
+case $FORMAT in
+1|USER)
+  BUILD=$RELEASE-$STREAM-USER-$LEVEL"_P"
+  ;;
+2|STREAM)
+  BUILD=$RELEASE-$STREAM-$LEVEL"_P"
+  ;;
+3|RELEASE)
+  BUILD=$RELEASE-$LEVEL"_P"
+  ;;
+4|FREE)
+  BUILD="$LEVEL"
+  ;;
+5|GOLD)
+  gold=true
+  BUILD="gold/$LEVEL"
+  ;;
+*)
+  printSyntax
+  ;;
+esac
+
+TREE=/cmvc/mq/output/$MAJOR/amd64_linux_2/$BUILD
+FAMFILES=$TREE/output/com.ibm.mq.famfiles.data/production
+
+if $localBuild
+then
+  # This option is not documented. It was a way to drive the process
+  # from a private tree instead of using the product build machines.
+  doLocalBuild
+else
+  # Where to temporarily stage the files as they are copied from the build machine
+  jsdHdrs=$curdir/jsdHdrs
+  # This is used to hold a copy of the files for various analyses
+  flattenDir=$jsdHdrs/flat
+  rm -rf $jsdHdrs/*
+  mkdir -p $flattenDir 2>/dev/null
+
+  # Real Git source tree for MQ library
+  srcDir=$curdir/../code/ibmmq
+  ls $srcDir/CMQ*.py | grep -v CMQC.py | xargs rm -f
+  (
+  # Copy the main definition files
+  scp -r $u@mqbase:$FAMFILES/py* $jsdHdrs
+  rc=$?
+  if [ $rc -eq 0 ]
+  then
+    # And then copy the cmqstrc files
+    scp -r $u@mqbase:$FAMFILES/lookup_allmap_py* $jsdHdrs
+    rc=$?
+  fi
+  echo $rc > /tmp/rc
+  ) 2>&1 | grep -v "internal systems"
+
+  rc=`cat /tmp/rc`
+  if [ $rc -ne 0 ]
+  then
+    echo "ERROR: Cannot copy files from mqbase"
+    d=`dirname $TREE`
+    p="$d/$RELEASE-$STREAM"
+    if $gold
+    then
+      p=$d/$RELEASE
+      echo "Available $RELEASE levels include:"
+    else
+      echo "Available $RELEASE-$STREAM levels include:"
+    fi
+    ssh $u@mqbase ls $p* 2>&1|\
+      grep ":" |\
+      sed "s/://g" |\
+      sed "s!$p!!g" |\
+      sed "s/^-//" |\
+      column -c 100 -x
+      # pr -t -5 -w 100
+    exit 1
+  else
+    echo "Downloaded files OK"
+  fi
+fi
+
+# These platform names are used in this area of the MQ build system.
+# Make linuxIntel the last so all apart from the platform-specific CMQC
+# come from this platform.
+for plat in linuxARM linuxPowerLE linuxS390 aix macos windows linuxIntel
+do
+  find $jsdHdrs/lookup_allmap_py_$plat \
+       $jsdHdrs/py_$plat -name "*.py" |\
+  while read f
+  do
+    # Rename from the MQ build system to a more common format
+    case "$plat" in
+    linuxARM)
+      pyplat="linux_arm64"
+      ;;
+    linuxPowerLE)
+      pyplat="linux_ppcle"
+      ;;
+    linuxS390)
+      pyplat="linux_s390x"
+      ;;
+    linuxIntel)
+      pyplat="linux_x64"
+      ;;
+    *)
+      pyplat=$plat
+      ;;
+    esac
+
+    b=`basename $f .py`
+
+    # Stash one copy - platform doesn't matter
+    cp $f $flattenDir
+
+    # And now copy into the real source tree, renaming CMQC
+    # to the platform-specific variant. Other modules can
+    # keep the original name as they do not contain variable contents.
+    if [ $b = "CMQC" ]
+    then
+        cp $f $srcDir/_$b"_"$pyplat.py
+      else
+        # The generation tool is currently duplicating some defs that are actually
+        # unnecessary. So remove them completely until we fix the generator.
+        cat $f | grep -v MQTRANSPORTEXIT | grep -Ev "MQDCC_.*=" > $srcDir
+      fi
+  done
+done
+
+# Need to create this block for each structure that has an associated Python class
+# with an ifdef around it:
+#   PyDict_SetItemString(v,"cd", PyLong_FromLong((long)MQCD_CURRENT_VERSION));
+strucVers=$jsdHdrs/strucVers.c
+find $flattenDir -name "*py" |\
+    xargs grep CURRENT_VERSION |\
+    grep -v STRC |
+    grep -v _ARRAY |\
+    sed "s/:/ /g" |\
+    awk '{print $2}' |\
+    sort -u |\
+    classExists |\
+    awk '{
+           split($1,f,"_")
+           struc=tolower(substr(f[1],3))
+           printf("#if defined(%s)\n",$1)
+           printf("  PyDict_SetItemString(v,\"%s\", PyLong_FromLong((long)%s));\n",struc, $1)
+           printf("#endif\n")
+         }' > $strucVers
+
+if [ -s $strucVers ]
+then
+  echo "Missing structure information for:"
+  grep "defined.*CURRENT_VERSION" $strucVers | cut -f2 -d"(" | sed "s/)//g" | while read s
+  do
+    echo "    $s"
+  done
+  echo "Copy $strucVers into ibmmqc.c in PyInit_ibmmqc function"
+fi
+
+# Add more checks in here after the first release, when we'll have a meaningful
+# opportunity to do "git diff".
+
+echo
+echo "Done."

@@ -1,0 +1,22 @@
+# The setuptools process adds a bunch of files by default into the sdist. But
+# we need to extend it a bit, and also make sure things that are not suitable
+# for distribution are not included.
+
+# Specific files to add to the release
+include tox.ini
+include code/ibmmq/ibmmqc.h
+include CHANGELOG.md
+
+# And complete directories
+graft   code/examples
+graft   code/tests
+graft   docs
+
+# NOT going to include ./tools. If you need to work with
+# those, then the git clone will include them.
+
+# Binary, cached and temporary files
+global-exclude   */__pycache__/*
+global-exclude   */\.mypy_cache/*
+global-exclude *~ */py[cod] *.so
+global-exclude */secrets/*

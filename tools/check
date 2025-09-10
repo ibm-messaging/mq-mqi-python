@@ -1,0 +1,247 @@
+#!/bin/bash
+
+# This script does a bunch of consistency checks and test execution and should be
+# run before a final commit and publish. Run it manually, so you can answer the questions
+
+# Copyright (c) 2025 IBM Corporation. All Rights Reserved.
+
+function cleanup {
+  # The main $logFile is deliberately not deleted as we may need
+  # to review it after execution.
+
+  if [ -r $errFile ]
+  then
+     rm -f $errFile
+  fi
+}
+
+function waitForEnter {
+  if $isTty
+  then
+    echo
+    read -p "Press ENTER to continue"  x
+  fi
+}
+
+function continueYN {
+
+  # Assume "Y" if not running interactively
+  if ! $isTty
+  then
+    return 0
+  fi
+
+  prompt="$1"
+  while true
+  do
+    read -p "$prompt? [Y/N] " yn
+    case $yn in
+    y*|Y*)
+       #echo 0
+       return 0
+       ;;
+    n*|N*)
+      #echo 1
+      return 1
+      ;;
+    *)
+      ;;
+    esac
+  done
+  return 0
+}
+
+function main {
+curdir=`pwd`
+
+errFile="/tmp/pyCheck.$$"
+rm -f $errFile
+
+src=$curdir/..
+
+trap cleanup EXIT
+
+echo
+echo "Looking for version number consistency..."
+cd $src
+v=`grep "version.*=.*[0-9]" setup.py | awk '{print $3}' | sed "s/'//g"`
+echo "  Version in setup.py = $v"
+
+echo 0 > $errFile
+
+# This might be redundant since there should now be only a single place where the package
+# version is defined. But I'll leave it for now, in case we ever do add other locations.
+cd $src/code
+find `pwd`  -type f |\
+  grep -v ".*C.*\.py" |\
+  grep -v "pyc$" |\
+  grep -v "/tests/" |\
+  grep -v "/examples/" |\
+  grep -v "so$" |\
+  grep -v "README$" |\
+  grep -v "cache" |\
+  grep -v "egg-info" |\
+while read f
+do
+  (
+  for major in 1 2
+  do
+  grep -qi "version.*$major\." $f
+  if [ $? -eq 0 ]
+  then
+    # echo Looking in $f
+    grep -q "$v" $f
+    if [ $? -eq 0 ]
+    then
+      echo "  OK   : $f has same version number"
+    else
+      echo "  ERROR: $f does not have correct version"
+      echo "1" > $errFile
+    fi
+  fi
+  done
+  ) | sort -u
+done
+
+if [ `cat $errFile` -eq 1 ]
+then
+  echo "Version checking failed"
+  exit 1
+fi
+
+cd $src/code/examples
+echo
+echo "Looking for MQ VRMF info..."
+cmdlevel=`grep MQCMDL_CURRENT_LEVEL ../ibmmq/CMQSTRC.py | awk '{print $3}' | sed "s/,//g"`
+echo "  Command level in repo = $cmdlevel"
+
+# For now, while developing this script ...
+# cmdlevel="943"
+
+# The Dockerfile ought to be pointing at the most recent version. Whose Redist Client
+# package needs to be available if we want the "runInContainer" test to pass. We make it
+# a warning if the VRM does not match, not an error, to allow earlier test attempts to pass.
+# Though we can point the container to download from a local server instead of public instead.
+#
+# No other files currently seem to have a VRMF dependency.
+for f in Dockerfile
+do
+  vrmf=`grep "VRMF=" $f | cut -f2 -d" " | cut -f2 -d=`
+  if [ -z "$vrmf" ]
+  then
+    echo "  ERROR: Cannot find VRMF in $f"
+    exit 1
+  fi
+
+  vrm=`echo $vrmf | awk '{
+         split($1,a,".")
+         printf("%d%d%d\n",a[1],a[2],a[3])
+       }
+     '`
+
+  if [ "$vrm" != "$cmdlevel" ]
+  then
+    echo "  WARN : VRMF $vrmf [$vrm] does not match CMDLEVEL $cmdlevel in $f"
+  else
+    echo "  OK   : Example $f building on MQ $vrmf"
+  fi
+done
+
+cd $src/code/ibmmq
+echo
+echo "Looking for debug lines to remove..."
+
+(
+# There's a print() in the debug dumper that we need to ignore
+# Assume there's a space between any comment char and the next token
+find . -name "*.py" -type f | xargs grep "print(" |\
+   grep -v getattr |\
+   awk '{
+           if ($2 != "#") {
+             print $0
+           }
+         }'
+
+# find . -name "*.py" -type f | xargs grep log
+
+find . -name "*.c" -type f | xargs grep printf | grep -v snprintf
+) | tee $errFile
+cnt=`cat $errFile | wc -l `
+if [ $cnt -ne 0 ]
+then
+  echo "  WARN : Debug printing may need removal"
+  exit 1
+else
+  echo "  OK   : No debug lines found"
+fi
+
+# Give a chance to quit now, before spending a lot of time on tests
+if [ -x $curdir/checkRemote ]
+then
+echo
+continueYN "Run BVT on remote machines"
+if [ $? -eq 0 ]
+then
+  cd $curdir
+  checkRemote
+  if [ $? -ne 0 ]
+  then
+    echo " ERROR : Problem running remote system check"
+    exit 1
+  fi
+fi
+fi
+
+echo
+continueYN "Continue to run tests"
+if [ $? -eq 0 ]
+then
+  echo "Running all testcases..."
+  cd $src/code/tests
+  ./runContainer.sh
+  ./runAllTests.sh
+fi
+
+echo
+continueYN "Continue to run examples"
+if [ $? -eq 0 ]
+then
+  echo "Running all examples..."
+  cd $curdir
+  # Strip a specific queuename so it doesn't cause problems with the final step.
+  ./runAllExamples < /dev//null 2>&1|\
+     grep -av "SYSTEM.PROTECTION.ERROR.QUEUE"
+  # Not going to try to run the Python container as it will download the
+  # current public (not development-level) version of the package
+  #./runContainerToKlein.sh 2>&1
+fi
+
+}
+
+#########################################
+# Script starts executing here
+#########################################
+logFile=/tmp/pyCheck.log
+
+tty -s
+if [ $? -eq 0 ]
+then
+  isTty=true
+else
+  isTty=false
+fi
+
+# Run the main code.
+
+main 2>&1 |\
+   tee $logFile
+grep -aq -E "WARN|ERR" $logFile
+if [ $? -eq 0 ]
+then
+  echo
+  echo "ERROR: Checking process has a problem."
+  exit 1
+fi
+
+echo "Checking process has completed OK"
+exit 0

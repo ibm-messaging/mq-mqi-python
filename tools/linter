@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# Run some linting processes against the Python modules
+# We'll use both flake8 and pylint which show different things.
+
+curdir=`pwd`
+root=$curdir/..
+
+# My VENV directory where flake8 is installed
+venv=venv_ibmmq
+. $root/../$venv/bin/activate
+if [ $? -ne 0 ]
+then
+  echo "ERROR: Cannot activate venv: $venv"
+  exit 1
+fi
+
+# Uncomment these lines the first time we create the VENV
+# pip install flake8 pylint
+# pip install ddt
+
+pip uninstall -y ibmmq
+cd $root
+pip install -e .
+
+dirs=""
+dirs="$dirs $root/code/examples"
+dirs="$dirs $root/code/ibmmq"
+dirs="$dirs $root/code/tests"
+
+args="$*"
+if [ -z "$args" ]
+then
+  args="."
+fi
+
+for d in  $dirs
+do
+  cd $d
+  # Lots of complaints that classes from the "typing" module
+  # are not used. But they ARE needed in the comment/annotation processing.
+  flake8 --config=$root/tox.ini $args | grep -v typing
+
+  export PYTHONPATH=$root/code/ibmmq:.
+  # Examples have a lot of variables that really should be considered constants so we
+  # bypass that subclass of the invalid-name test.
+  # Similarly bypass for the backwards-compatibility class names
+  pylint --rcfile=$root/pylintrc $args 2>&1 |\
+    grep -v UPPER_CASE |\
+    grep -v "Class name.*conform to PascalCase" |\
+    grep -v "Instance.*has no"
+
+done
