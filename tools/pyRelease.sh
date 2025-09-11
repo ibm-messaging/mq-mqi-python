@@ -185,7 +185,7 @@ rm -rf code/$pkg.egg-info
 
 # Even though we're not going to upload the binary wheel, we do
 # want the build process to create it as a "final" check on the contents
-python -m build --sdist| grep -Ev "^copying|^adding"
+python -m build | grep -Ev "^copying|^adding"
 if [ $? -ne 0 ]
 then
   echo "ERROR: Failed to build."

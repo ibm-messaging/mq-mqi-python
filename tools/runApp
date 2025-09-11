@@ -105,9 +105,7 @@ EOF
 *)
   echo "Need to provide an option"
   echo "Available options include:"
-  echo "  bvt  bput bpub "
-  echo "  inq  cb   gdb  "
-  echo "  pcf1 pcf2 props"
+  echo "  bvt cb    "
   echo "  xmp (to pick one of the examples)"
   exit 1
   ;;

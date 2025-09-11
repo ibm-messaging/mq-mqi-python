@@ -7,7 +7,7 @@
 curdir=`pwd`
 
 # Prepare for release, and push to the local server
-echo Y  | ./pyRelease.sh -l N -v
+echo Y  | ./pyRelease.sh -l Y -v
 if [ $? -ne 0 ]
 then
   echo "Release process failed"
