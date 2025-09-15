@@ -97,4 +97,4 @@ the oldest levels designed for.
   * Added MQObject as superclass of queues, topics etc for potential future simplifications
 * The C module is considered an internal interface and has changed to match new requirements from the Python layer above
   it.
-
+* Text strings from error classes (MQMIError, PYIFError) slightly modified

@@ -34,7 +34,7 @@ class MQMIError(Error):
             setattr(self, k, v)
 
     def __str__(self) -> str:
-        return 'MQI Error. Comp: %d, Reason %d: %s' % (self.comp, self.reason, self.error_as_string())
+        return 'MQI Error. Comp %d, Reason %d: %s' % (self.comp, self.reason, self.error_as_string())
 
     def error_as_string(self) -> str:
         """ Return the exception object MQI warning/failed reason as its mnemonic string.

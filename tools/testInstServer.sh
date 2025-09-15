@@ -22,9 +22,12 @@ fi
 if [ "$1" != "STOP" ]
 then
   cd $venv
+  # Clean out any existing packages
   rm -rf ./packages/*
   echo "Running a local pypi server"
-  pypi-server run --verbose  -p 8080  -a . -P . $* ./packages >pypi-server.log 2>&1 &
+  # This server is unprotected - no TLS, no authentication, no authorisation controls
+  # But it's only listening on localhost, so should not be remotely accessible
+  pypi-server run --verbose  -i 127.0.0.1 -p 8080  -a . -P . $* ./packages >pypi-server.log 2>&1 &
 else
   echo "Any running pypi server was stopped"
 fi
