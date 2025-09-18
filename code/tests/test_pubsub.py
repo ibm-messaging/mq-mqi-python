@@ -34,6 +34,47 @@ class TestPubSub(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
     4. compare result with message
     5. tearDown(): delete objects
     """
+
+    def cleanup(self):
+        pcf = mq.PCFExecute(self.qmgr)
+        try:
+            qprefix = config.MQ.QUEUE.PREFIX + "*"
+            args = {mq.CMQC.MQCA_Q_NAME: qprefix}
+            response = pcf.MQCMD_INQUIRE_Q(args)
+        except mq.MQMIError as e:
+            if e.comp == mq.CMQC.MQCC_FAILED and e.reason == mq.CMQC.MQRC_UNKNOWN_OBJECT_NAME:
+                pass
+            else:
+                raise
+        else:
+            for queue_info in response:
+                try:
+                    q = queue_info[mq.CMQC.MQCA_Q_NAME]
+                    args = {mq.CMQC.MQCA_Q_NAME: q,
+                            mq.CMQC.MQIA_Q_TYPE: mq.CMQC.MQQT_LOCAL
+                           }
+                    pcf.MQCMD_DELETE_Q(args)
+                except mq.MQMIError:
+                    pass
+        try:
+            sub_prefix = config.MQ.QUEUE.PREFIX + "*"
+            args = {mq.CMQCFC.MQCACF_SUB_NAME: sub_prefix
+                   }
+            response = pcf.MQCMD_INQUIRE_SUBSCRIPTION(args)
+        except mq.MQMIError as e:
+            if e.comp == mq.CMQC.MQCC_FAILED and e.reason == mq.CMQC.MQRC_NO_SUBSCRIPTION:
+                pass
+            else:
+                raise
+        else:
+            for sub_info in response:
+                try:
+                    sub = sub_info[mq.CMQCFC.MQBACF_SUB_ID]
+                    args = {mq.CMQCFC.MQBACF_SUB_ID: mq.ByteString(sub)}
+                    pcf.MQCMD_DELETE_SUBSCRIPTION(args)
+                except mq.MQMIError:
+                    pass
+
     def setUp(self):
         self.topic_string_template = "/UNITTEST/{prefix}/PUBSUB/{{type}}/{{destination}}/{{durable}}".format(
             prefix=config.MQ.QUEUE.PREFIX)
@@ -57,6 +98,10 @@ class TestPubSub(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
         # list of tuples (subscription, subscription descriptions) for tearDown() to delete after the test
         self.sub_desc_list = []
 
+        # Some of the tests appear to leave dangling resources, especially after any failures. So we clean up
+        # before each run
+        self.cleanup()
+
     def msg_format(self, **kwargs):
         res = self.msg_template.format(**kwargs)
         return utils.py3str2bytes(res)
@@ -67,7 +112,7 @@ class TestPubSub(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
             subname = sub_desc.get_vs("SubName")
             pcf = mq.PCFExecute(self.qmgr)
             args = {mq.CMQCFC.MQCACF_SUB_NAME: subname
-                    }
+                   }
             pcf.MQCMD_DELETE_SUBSCRIPTION(args)
 
     def delete_queue(self, sub_desc, queue_name):
@@ -82,7 +127,7 @@ class TestPubSub(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
         """Delete the created objects.
         """
         for (sub, sub_desc, queue_name) in self.sub_desc_list:
-            self.delete_sub(sub_desc)
+            # self.delete_sub(sub_desc)
             if queue_name is None:
                 sub_queue = sub.get_sub_queue()
                 self.delete_queue(sub_desc, sub_queue)
@@ -358,9 +403,11 @@ class TestPubSub(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
         """
         topic_string = self.topic_string_template.format(type="API", destination="MANAGED", durable="DURABLE")
         subname = self.subname_template.format(type="Api", destination="Managed", durable="Durable")
+
         # define a list self.sub_desc_list of subscription definitions so tearDown() can find it
         sub_desc = self.get_subscription_descriptor(subname, topic_string,
                                                     mq.CMQC.MQSO_CREATE + mq.CMQC.MQSO_DURABLE + mq.CMQC.MQSO_MANAGED)
+
         # register Subscription
         sub = self.create_api_subscription()
         # this modifies the subscription descriptor

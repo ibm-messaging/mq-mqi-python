@@ -27,5 +27,5 @@ fi
 
 # And now run them
 # Tests are run in the alphabetic order of test*.py
-tox -e container  2>&1
+tox -e container $* 2>&1
 

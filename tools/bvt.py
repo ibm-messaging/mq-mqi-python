@@ -1,31 +1,26 @@
-"""
-A very simple basic test of the python package.
+""" A very simple basic test of the python package.
 It does a local bindings connection to QM1, puts and gets a message.
 """
 
+from datetime import datetime
 import ibmmq
-
-qn="DEV.QUEUE.1"
 
 od = ibmmq.OD()
 md = ibmmq.MD()
-md.MsgId=b'ThisIsAMsgId'
 
-# Different styles of setting the fields
-od.ObjectName=qn
-od['ObjectName']=qn
-od.set(ObjectName=qn)
+od.ObjectName="DEV.QUEUE.1"
 
-queue_manager = ibmmq.connect('QM1')
+qmgr = ibmmq.connect('QM1')
+q = ibmmq.Queue(qmgr, od, ibmmq.CMQC.MQOO_OUTPUT | ibmmq.CMQC.MQOO_INPUT_EXCLUSIVE)
 
-q = ibmmq.Queue(queue_manager, od, ibmmq.CMQC.MQOO_OUTPUT | ibmmq.CMQC.MQOO_INPUT_EXCLUSIVE)
-q.put('Hello from Python!',md)
+now=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+msg_out='Hello from Python at ' + now
+q.put(msg_out,md)
+print("Message put:", msg_out)
 
-odr = od.to_string()
-print("QName = ", odr['ObjectName'])
-
-msg = q.get()
-print('Here is the message:', msg)
+#msg_in=""
+msg_in = q.get()
+print('Message got:', msg_in)
 
 q.close()
-queue_manager.disconnect()
+qmgr.disconnect()

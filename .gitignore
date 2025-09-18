@@ -23,9 +23,10 @@ __pycache__
 *.swp
 **/secrets/*
 
-# Some of my local tools
+# Some of my local tools/directories
 archive
 tools.untracked
+checkRemote
 
 # Other local directories I may use
 issues
