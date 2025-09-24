@@ -116,9 +116,9 @@ except ImportError:
 
 # Load the C library
 try:
-    from . import ibmmqc # type: ignore
+    from . import ibmmqc  # type: ignore
 except ImportError:
-    import ibmmqc # type: ignore # Backward compatibility
+    import ibmmqc  # type: ignore  # Backward compatibility
 
 # Import the MQI definitions. They are not used directly in this
 # file, but reexported for apps to reference.
@@ -170,7 +170,7 @@ from mqerrors import *
 
 # MQI Verbs associated with their relevant classes
 from mqobject import *
-from mqqargs import * # A shared part
+from mqqargs import *  # A shared part
 from mqqmgr import *
 from mqqueue import *
 from mqsub import *
@@ -204,7 +204,7 @@ def to_string(v, encoding=default.bytes_encoding):
     """Use the specified encoding to convert MQCHAR[] to a Python3 string, stripping trailing NULs/spaces.
     If there's an error, return the input unchanged.
     """
-    if isinstance(v,bytes):
+    if isinstance(v, bytes):
         try:
             return v.decode(encoding).strip()
         except UnicodeError:

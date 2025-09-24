@@ -20,15 +20,17 @@ class _cbCBD:
         self.callback_area = cbd.CallbackArea
         self.object = obj
 
+
 class _cbCTLO:
-    def __init__(self,ctlo):
+    def __init__(self, ctlo):
         self.connection_area = ctlo.ConnectionArea
 
+
 _stashedCBD: dict[str, _cbCBD] = {}
-_stashedCTLO: dict[int,_cbCTLO] = {}
+_stashedCTLO: dict[int, _cbCTLO] = {}
 
 # Create the key that's going to give us stashed info for a queue or qmgr
-def _make_key(hc,ho):
+def _make_key(hc, ho):
     s = str(hc) + "/" + str(ho)
     return s
 
@@ -39,13 +41,13 @@ def _make_partial_key(hc):
 
 # The hConn and hObj are the actual numbers, while we also stash the object (Queue or QueueManager) and other fields
 # from the CBD structure
-def _save_callback(obj,qmgr,queue,cbd):
-    key = _make_key(qmgr,queue)
+def _save_callback(obj, qmgr, queue, cbd):
+    key = _make_key(qmgr, queue)
     with _callback_lock:
-        _stashedCBD[key] = _cbCBD(obj,cbd)
+        _stashedCBD[key] = _cbCBD(obj, cbd)
 
-def _delete_callback(hconn,hobj):
-    key = _make_key(hconn,hobj)
+def _delete_callback(hconn, hobj):
+    key = _make_key(hconn, hobj)
     try:
         with _callback_lock:
             del _stashedCBD[key]
@@ -67,7 +69,7 @@ def _delete_all_callbacks(hconn):
         except KeyError:
             pass
 
-def _save_connection_area(hconn,ctlo):
+def _save_connection_area(hconn, ctlo):
     with _callback_lock:
         _stashedCTLO[hconn] = _cbCTLO(ctlo)
 
@@ -77,8 +79,8 @@ def _save_connection_area(hconn,ctlo):
 # It locates the real user-specified callback function, using
 # the hConn and hObj. It then calls the user function
 # with suitably-reformatted parameters.
-def _internal_cb(hc,md,gmo,buf,cbc):
-    key=_make_key(hc,CBC().unpack(cbc).Hobj)
+def _internal_cb(hc, md, gmo, buf, cbc):
+    key = _make_key(hc, CBC().unpack(cbc).Hobj)
     try:
         cb = _stashedCBD[key]
     except KeyError as exc:
@@ -128,9 +130,9 @@ def real_cb(obj, kwargs):
     The related MQCTL is called as a method on the QMgr object
     """
     operation = kwargs['operation'] if 'operation' in kwargs else CMQC.MQOP_REGISTER
-    md        = kwargs['md'] if 'md' in kwargs else MD()
-    cbd       = kwargs['cbd'] if 'cbd' in kwargs else CBD()
-    gmo       = kwargs['gmo'] if 'gmo' in kwargs else GMO()
+    md = kwargs['md'] if 'md' in kwargs else MD()
+    cbd = kwargs['cbd'] if 'cbd' in kwargs else CBD()
+    gmo = kwargs['gmo'] if 'gmo' in kwargs else GMO()
 
     if not isinstance(cbd, CBD):
         raise TypeError("cbd must be an instance of CBD")
@@ -170,9 +172,10 @@ def real_cb(obj, kwargs):
         raise MQMIError(rv[-2], rv[-1])
 
     if operation == CMQC.MQOP_REGISTER:
-        _save_callback(obj,hconn,hobj, cbd)
+        _save_callback(obj, hconn, hobj, cbd)
     elif operation == CMQC.MQOP_DEREGISTER:
-        _delete_callback(hconn,hobj)
+        _delete_callback(hconn, hobj)
+
 
 # Initialise the C layer with the address of this module's proxy callback function.
 ibmmqc.MQCBINIT(_internal_cb)

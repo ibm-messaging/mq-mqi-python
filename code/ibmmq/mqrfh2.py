@@ -28,7 +28,7 @@ class RFH2(MQOpts):
                     ['CodedCharSetId', CMQC.MQCCSI_Q_MGR, MQLONG_TYPE],
                     ['Format', CMQC.MQFMT_NONE, '8s'],
                     ['Flags', 0, MQLONG_TYPE],
-                    ['NameValueCCSID', CMQC.MQCCSI_Q_MGR, MQLONG_TYPE]] # type: List[List[Union[str, int, bytes]]]
+                    ['NameValueCCSID', CMQC.MQCCSI_Q_MGR, MQLONG_TYPE]]  # type: List[List[Union[str, int, bytes]]]
 
     big_endian_encodings = [CMQC.MQENC_INTEGER_NORMAL,
                             CMQC.MQENC_DECIMAL_NORMAL,
@@ -114,7 +114,7 @@ class RFH2(MQOpts):
         Encoding meant to come from the MQMD.
         """
 
-        ensure_not_unicode(buff) # Python 3 bytes check
+        ensure_not_unicode(buff)  # Python 3 bytes check
 
         if buff[0:4] != CMQC.MQRFH_STRUC_ID:
             raise PYIFError('RFH2 - _StrucId not MQRFH_STRUC_ID. Value: %s' % buff[0:4])

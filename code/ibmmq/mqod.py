@@ -35,7 +35,7 @@ class OD(MQOpts):
                 ['ResolvedQName', b'', '48s'],
                 ['ResolvedQMgrName', b'', '48s'], ]
 
-        od_current_version = ibmmqc.__strucversions__.get("od",1)
+        od_current_version = ibmmqc.__strucversions__.get("od", 1)
         if od_current_version >= CMQC.MQOD_VERSION_4:
             opts += [
 
@@ -68,6 +68,7 @@ class OD(MQOpts):
                 opts += [['pad', b'', '4s']]
 
         super().__init__(tuple(opts), **kw)
+
 
 # Backward compatibility
 od = OD

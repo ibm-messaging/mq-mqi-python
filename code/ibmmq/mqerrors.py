@@ -25,12 +25,12 @@ class MQMIError(Error):
     comp = CMQC.MQCC_OK
     reason = CMQC.MQRC_NONE
 
-    def __init__(self, comp: int, reason: int, **kw: Dict[str,Any]):
+    def __init__(self, comp: int, reason: int, **kw: Dict[str, Any]):
         """ Construct the error object with MQI completion code 'comp' and reason code 'reason'.
         """
         self.comp, self.reason = comp, reason
 
-        for k,v in kw.items():
+        for k, v in kw.items():
             setattr(self, k, v)
 
     def __str__(self) -> str:

@@ -46,7 +46,7 @@ mqAttrLength = {
     CMQC.MQCA_LU_NAME:               CMQC.MQ_LU_NAME_LENGTH,
     CMQC.MQCA_NAMELIST_DESC:         CMQC.MQ_NAMELIST_DESC_LENGTH,
     CMQC.MQCA_NAMELIST_NAME:         CMQC.MQ_NAMELIST_NAME_LENGTH,
-    CMQC.MQCA_NAMES:                 CMQC.MQ_OBJECT_NAME_LENGTH * 256, # Maximum length to allocate
+    CMQC.MQCA_NAMES:                 CMQC.MQ_OBJECT_NAME_LENGTH * 256,  # Maximum length to allocate
     CMQC.MQCA_PARENT:                CMQC.MQ_Q_MGR_NAME_LENGTH,
     CMQC.MQCA_PROCESS_DESC:          CMQC.MQ_PROCESS_DESC_LENGTH,
     CMQC.MQCA_PROCESS_NAME:          CMQC.MQ_PROCESS_NAME_LENGTH,
@@ -84,13 +84,13 @@ def get_attr_info(attrs):
         try:
             # If it's a CHAR attribute, it ought to be in this map
             v = mqAttrLength[attr]
-            char_attr_count+=1
+            char_attr_count += 1
             char_attr_length += v
         except KeyError as e:
             # Only integer values in this range are valid for MQINQ/MQSET.
             # Any other attributes require PCF command processing.
             if CMQC.MQIA_FIRST <= attr <= CMQC.MQIA_LAST:
-                int_attr_count+=1
+                int_attr_count += 1
             else:
                 # This might happen if a new char attribute is available for MQINQ but has
                 # not been added to the above list. In which case, inform the package owners.
@@ -104,12 +104,12 @@ def get_attr_length(attr):
     """
     v = 0
     try:
-        v= mqAttrLength[attr]
+        v = mqAttrLength[attr]
     except KeyError:
         pass
     return v
 
-def common_inq(hconn,hobj,selectors):
+def common_inq(hconn, hobj, selectors):
     """Call MQINQ - renamed from 'inq' to match the 'common_set' function"""
     is_list = True
     single_attr = None
@@ -117,7 +117,7 @@ def common_inq(hconn,hobj,selectors):
     # For compatibility with the original version that only
     # accepted a single attribute. Convert it to a list
     # and, at the end, return the one value.
-    if not isinstance(selectors,list):
+    if not isinstance(selectors, list):
         single_attr = selectors
         is_list = False
         selectors = [selectors]
@@ -128,11 +128,11 @@ def common_inq(hconn,hobj,selectors):
     int_attrs = []
 
     # Returns intAttrs (list), charAttr (byte string), MQCC, MQRC
-    rv = ibmmqc.MQINQ(hconn,hobj,selectors,
-                int_attrs,
-                attr_info['intAttrCount'],
-                attr_info['charAttrCount'],
-                attr_info['charAttrLen'])
+    rv = ibmmqc.MQINQ(hconn, hobj, selectors,
+                      int_attrs,
+                      attr_info['intAttrCount'],
+                      attr_info['charAttrCount'],
+                      attr_info['charAttrLen'])
     if rv[-1]:
         raise MQMIError(rv[-2], rv[-1])
 
@@ -141,12 +141,12 @@ def common_inq(hconn,hobj,selectors):
     char_attrs = rv[1]
 
     attrs = {}
-    j=0
+    j = 0
     char_offset = 0
     for s in selectors:
         if CMQC.MQIA_FIRST <= s <= CMQC.MQIA_LAST:
             attrs[s] = int_attrs[j]
-            j+=1
+            j += 1
         else:
             # If we had Namelist objects, more work would be needed to
             # deal with the lists of names returned from MQINQ
@@ -157,11 +157,11 @@ def common_inq(hconn,hobj,selectors):
             if s == CMQC.MQCA_INITIAL_KEY:
                 v = b"********"
             else:
-                v=char_attrs[char_offset:char_offset + char_length]
+                v = char_attrs[char_offset:char_offset + char_length]
             char_offset += char_length
 
             # Turn into a string? Use default encoding?
-            attrs[s] = v # .decode().strip()
+            attrs[s] = v  # .decode().strip()
 
     # The backwards compatibility option - return the actual value instead of a map
     if not is_list:
@@ -172,23 +172,23 @@ def common_inq(hconn,hobj,selectors):
 # For MQSET, the input is usually a dict of {selector:value}, similar to what's
 # returned from MQINQ. But for backwards compatibility, we allow a single separate pair
 # of parameters.
-def common_set(hconn,hobj,*args):
+def common_set(hconn, hobj, *args):
     """Call MQSET - renamed from 'set' to avoid overloading language function"""
-    temp=args[0][0]
-    if not isinstance(temp,dict):
+    temp = args[0][0]
+    if not isinstance(temp, dict):
         # Convert an old-style k/v pair into a dict
-        kv={temp:args[0][1]}
+        kv = {temp: args[0][1]}
     else:
-        kv=temp
+        kv = temp
 
-    selectors=[]
-    int_attrs=[]
-    char_attrs=b''
+    selectors = []
+    int_attrs = []
+    char_attrs = b''
 
     # Build the list of IntAttrs and the CharAttr byte buffer from the input dict.
     # There's actually only a single char item that can be set for a queue (none for a qmgr)
     # but this handles it in a generic fashion.
-    for k,v in kv.items():
+    for k, v in kv.items():
         selectors.append(k)
         if CMQC.MQIA_FIRST <= k <= CMQC.MQIA_LAST:
             int_attrs.append(v)
@@ -200,6 +200,6 @@ def common_set(hconn,hobj,*args):
             pad_len = ll - len(v)
             if pad_len < 0:
                 raise MQMIError(CMQC.MQCC_FAILED, CMQC.MQRC_CHAR_ATTR_LENGTH_ERROR)
-            char_attrs += v + pad_len*b'\0'
+            char_attrs += v + (pad_len * b'\0')
 
-    return ibmmqc.MQSET(hconn,hobj,selectors,int_attrs,char_attrs)
+    return ibmmqc.MQSET(hconn, hobj, selectors, int_attrs, char_attrs)

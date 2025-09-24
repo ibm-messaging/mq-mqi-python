@@ -15,8 +15,8 @@ class BNO(MQOpts):
 
         opts = [['_StrucId', CMQC.MQBNO_STRUC_ID, '4s'],
                 ['Version', CMQC.MQBNO_VERSION_1, MQLONG_TYPE],
-                ['ApplType',CMQC.MQBNO_BALTYPE_SIMPLE, MQLONG_TYPE],
+                ['ApplType', CMQC.MQBNO_BALTYPE_SIMPLE, MQLONG_TYPE],
                 ['Timeout', CMQC.MQBNO_TIMEOUT_AS_DEFAULT, MQLONG_TYPE],
-                ['Options',CMQC.MQBNO_OPTIONS_NONE,MQLONG_TYPE]]
+                ['Options', CMQC.MQBNO_OPTIONS_NONE, MQLONG_TYPE]]
 
         super().__init__(tuple(opts), **kw)

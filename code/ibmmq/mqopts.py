@@ -25,7 +25,7 @@ _binary_fields = ["AccountingToken",
                   "ConnectionId",
                   "ConnTag",
                   "CorrelId",
-                  "Facility", # CIH
+                  "Facility",  # CIH
                   "GroupId",
                   "MCASecurityId",
                   "MsgId",
@@ -33,8 +33,8 @@ _binary_fields = ["AccountingToken",
                   "PubAccountingToken",
                   "RemoteSecurityId",
                   "SubCorrelId",
-                  "TranInstanceId" # IIH
-                ]
+                  "TranInstanceId"  # IIH
+                  ]
 
 # ################################################################################################################################
 # MQI Python<->C Structure mapping. MQI uses lots of parameter passing
@@ -100,7 +100,7 @@ class MQOpts:
 
         # Dict to store c_char arrays to prevent memory addresses
         # from getting overwritten
-        self.__vs_ctype_store = {} # type: Dict[str, Any]
+        self.__vs_ctype_store = {}  # type: Dict[str, Any]
 
         # Create the structure members as instance attributes and build
         # the struct.pack/unpack format string. The attribute name is
@@ -121,7 +121,7 @@ class MQOpts:
         """
 
         # Build tuple for struct.pack() argument. Start with format string.
-        args = [self.__format] # type: list[Any]
+        args = [self.__format]  # type: list[Any]
 
         # Now add the current attribute values to the tuple
         # In most cases, strings can be automatically converted from Unicode to the byte
@@ -137,7 +137,7 @@ class MQOpts:
             else:
                 # print(f"{i[0]} is of value {v}: type {type(v)}")
                 if i[0] in _binary_fields:
-                    if not isinstance(v,bytes):
+                    if not isinstance(v, bytes):
                         err = f'{i[0]} must be a byte array'
                         raise TypeError(err)
                 args.append(ensure_strings_are_bytes(v))
@@ -181,14 +181,14 @@ class MQOpts:
         so you might want to use a copy if you expect to continue to want to work with the original binary elements.
         """
         for i in self.__list:
-            k=i[0]         # The attribute name
-            v = self[i[0]] # The attribute value
+            k = i[0]        # The attribute name
+            v = self[i[0]]  # The attribute value
             # There are no regular MQI structure fields that contain lists of strings/byte arrays:
             # the PCF MQCFSL is handled separately.
             if isinstance(v, bytes):
-                if not k in _binary_fields:
+                if k not in _binary_fields:
                     try:
-                        setattr(self,k, v.decode(encoding).strip())
+                        setattr(self, k, v.decode(encoding).strip())
                     except UnicodeError:
                         pass
                 else:
@@ -204,13 +204,13 @@ class MQOpts:
         An AttributeError exception is raised for invalid member names.
         """
 
-        for k,v in kw.items():
+        for k, v in kw.items():
             # Only set if the attribute already exists. getattr raises
             # an exception if it doesn't.
             getattr(self, str(k))
             setattr(self, str(k), ensure_strings_are_bytes(v))
 
-    def __setitem__(self, key:str, value: Any) -> None:
+    def __setitem__(self, key: str, value: Any) -> None:
         """ Set the structure member attribute 'key' to 'value', as in obj['Attr'] = 42.
         """
         # Only set if the attribute already exists. getattr raises an
@@ -263,7 +263,7 @@ class MQOpts:
         ObjectStringVSCCSID - Long
         """
 
-        vs_value = ensure_strings_are_bytes(vs_value) # allow known args be a string in Py3
+        vs_value = ensure_strings_are_bytes(vs_value)  # allow known args be a string in Py3
 
         # if the VSPtr name is passed - remove VSPtr to be left with name.
         if vs_name.endswith('VSPtr'):
@@ -277,7 +277,7 @@ class MQOpts:
         vs_name_vsccsid = vs_name + 'VSCCSID'
 
         c_vs_value = None
-        c_vs_value_p = 0 # type: Optional[int]
+        c_vs_value_p = 0  # type: Optional[int]
 
         if vs_value is not None:
             c_vs_value = ctypes.create_string_buffer(vs_value)
@@ -318,13 +318,13 @@ class MQOpts:
     # Offset is always 0. Length is set to the length of the string/byte array excluding
     # trailing NUL.
 
-    def _set_ptr_field(self,field: str,value: Any):
+    def _set_ptr_field(self, field: str, value: Any):
         field_name_ptr = field
 
         # SSLPeerNamePtr has only ptr/len and we shouldn't change the name to match the
         # style of later similar attributes for compatibility reasons
         if field.endswith('Ptr'):
-            field_base = field.replace('Ptr','')
+            field_base = field.replace('Ptr', '')
         else:
             field_base = field
 
@@ -336,23 +336,23 @@ class MQOpts:
         # attribute ("_xxLength") first. There may be backward compatibility
         # requirements on allowing the unhidden ("xxLength") version. If neither
         # are available, then raise the error.
-        if not hasattr(self,field_name_length):
+        if not hasattr(self, field_name_length):
             field_name_length = field_base + 'Length'
-            if not hasattr(self,field_name_length):
-                raise MQMIError(CMQC.MQCC_FAILED,CMQC.MQRC_WRONG_VERSION)
+            if not hasattr(self, field_name_length):
+                raise MQMIError(CMQC.MQCC_FAILED, CMQC.MQRC_WRONG_VERSION)
 
-        if hasattr(self,field_name_offset):
+        if hasattr(self, field_name_offset):
             self[field_name_offset] = 0
 
         self[field_name_length] = 0
 
         value = ensure_strings_are_bytes(value)
         c_value = None
-        c_value_p = 0 # type: Optional[int]
+        c_value_p = 0  # type: Optional[int]
         if value is not None and value != 0:
             c_value = ctypes.create_string_buffer(value)
             c_value_p = ctypes.cast(c_value, ctypes.c_void_p).value
-            self[field_name_length] = len(c_value) - 1 # Ignore the trailing NUL that Python adds
+            self[field_name_length] = len(c_value) - 1  # Ignore the trailing NUL that Python adds
 
         self[field_name_ptr] = c_value_p
 

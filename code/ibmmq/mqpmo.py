@@ -24,13 +24,13 @@ class PMO(MQOpts):
             ['ResolvedQName', b'', '48s'],
             ['ResolvedQMgrName', b'', '48s'],
             ['RecsPresent', 0, MQLONG_TYPE],
-            ['PutMsgRecFields',  0, MQLONG_TYPE],
+            ['PutMsgRecFields', 0, MQLONG_TYPE],
             ['PutMsgRecOffset', 0, MQLONG_TYPE],
             ['ResponseRecOffset', 0, MQLONG_TYPE],
             ['PutMsgRecPtr', 0, 'P'],
             ['ResponseRecPtr', 0, 'P']]
 
-        pmo_current_version = ibmmqc.__strucversions__.get("pmo",1)
+        pmo_current_version = ibmmqc.__strucversions__.get("pmo", 1)
         if pmo_current_version >= CMQC.MQPMO_VERSION_3:
             opts += [
                 ['OriginalMsgHandle', 0, 'q'],
@@ -39,6 +39,7 @@ class PMO(MQOpts):
                 ['PubLevel', 9, MQLONG_TYPE]]
 
         super().__init__(tuple(opts), **kw)
+
 
 # Backward compatibility
 pmo = PMO

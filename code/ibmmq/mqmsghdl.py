@@ -47,7 +47,7 @@ class MessageHandle:
             return self.set(name, value)
 
         def get(self, name, default=None, max_value_length=None,
-                impo_options=CMQC.MQIMPO_INQ_FIRST, impo = None, pd=None,
+                impo_options=CMQC.MQIMPO_INQ_FIRST, impo=None, pd=None,
                 property_type=CMQC.MQTYPE_AS_SET):
             """ Returns the value of message property 'name'. If a wildcard
             is used in the property name, then the real name is also returned.
@@ -71,7 +71,7 @@ class MessageHandle:
             """
 
             if impo:
-                if not isinstance(impo,IMPO):
+                if not isinstance(impo, IMPO):
                     raise TypeError("impo must be an instance of IMPO")
             else:
                 impo = IMPO()
@@ -79,10 +79,10 @@ class MessageHandle:
 
             if pd:
                 pd_val = pd
-                if isinstance(pd_val,int):
+                if isinstance(pd_val, int):
                     pd = PD()
                     pd.Options = pd
-                if not isinstance(pd,PD):
+                if not isinstance(pd, PD):
                     raise TypeError("pd must be an instance of PD")
             else:
                 pd = PD()
@@ -92,7 +92,7 @@ class MessageHandle:
             if not max_value_length:
                 max_value_length = self.default_value_length
 
-            value, data_length, returned_name, comp_code, comp_reason  = ibmmqc.MQINQMP(
+            value, data_length, returned_name, comp_code, comp_reason = ibmmqc.MQINQMP(
                 self.conn_handle, self.msg_handle, impo.pack(), name, pd.pack(), property_type, max_value_length)
 
             if comp_code != CMQC.MQCC_OK:
@@ -164,4 +164,4 @@ class MessageHandle:
         if comp_code != CMQC.MQCC_OK:
             raise MQMIError(comp_code, comp_reason)
 
-        self.properties = self._Properties(CMQC.MQHC_UNUSABLE_HCONN,CMQC.MQHM_NONE)
+        self.properties = self._Properties(CMQC.MQHC_UNUSABLE_HCONN, CMQC.MQHM_NONE)

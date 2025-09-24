@@ -173,7 +173,7 @@ class Queue(MQObject):
 
     # pylint complains about a couple of things here which we will ignore in order to maintain
     # backwards compatibility
-    def get(self, maxLength=None, *opts): # pylint: disable=invalid-name,keyword-arg-before-vararg
+    def get(self, maxLength=None, *opts):  # pylint: disable=invalid-name,keyword-arg-before-vararg
         """ Return a message from the queue. If the queue is not already
         open, it is opened now with the option 'MQOO_INPUT_AS_Q_DEF'.
 
@@ -202,7 +202,7 @@ class Queue(MQObject):
         supply a maxLength value.
         """
 
-        max_length = maxLength # Work with the "right" name style from here on
+        max_length = maxLength  # Work with the "right" name style from here on
         m_desc, get_opts = mqqargs.common_q_args(*opts)
         if get_opts is None:
             get_opts = GMO()
@@ -216,7 +216,7 @@ class Queue(MQObject):
             if get_opts.Options & CMQC.MQGMO_ACCEPT_TRUNCATED_MSG:
                 length = 0
             else:
-                length = 4096 # Try to read short message in one call
+                length = 4096  # Try to read short message in one call
         else:
             length = max_length
 
@@ -251,7 +251,7 @@ class Queue(MQObject):
 
         return rv[0]
 
-    def get_no_jms(self, max_length=None, *args): # pylint: disable=keyword-arg-before-vararg
+    def get_no_jms(self, max_length=None, *args):  # pylint: disable=keyword-arg-before-vararg
         """Get a message but force there to be no properties returned."""
         md, gmo = mqqargs.common_q_args(*args)
         if not gmo:
@@ -292,7 +292,7 @@ class Queue(MQObject):
 
         return msg
 
-    def close(self, options: int =CMQC.MQCO_NONE) -> None:
+    def close(self, options: int = CMQC.MQCO_NONE) -> None:
         """ Close a queue, using options.
         """
         if not self.__q_handle:
@@ -302,7 +302,7 @@ class Queue(MQObject):
             raise MQMIError(rv[-2], rv[-1])
         self.__q_handle = self.__q_desc = self.__open_opts = None
 
-    def inquire(self, selectors: Union[int, list[int]]) -> Union[Any, dict[int,Any]]:
+    def inquire(self, selectors: Union[int, list[int]]) -> Union[Any, dict[int, Any]]:
         """ Inquire on queue attributes. If the queue is not already
         open, it is opened for Inquire.
 
@@ -359,7 +359,7 @@ class Queue(MQObject):
 
     # Setting up a callback - pass it to the function
     # common to both Queues and QMgrs
-    def cb(self, **kwargs: dict[str,Any]) ->None:
+    def cb(self, **kwargs: dict[str, Any]) -> None:
         """cb(operation=operation, md=mqmd,gmo=mqgmo,cbd=mqcbd)
         Register or Deregister a Callback function for asynchronous
         message consumption.
@@ -367,4 +367,4 @@ class Queue(MQObject):
         The cbd.CallbackFunction must be defined as (dict[str,Any]) with
         entries for queue_manager,queue,md,gmo,cbc,msg.
         """
-        mqcallback.real_cb(self,kwargs)
+        mqcallback.real_cb(self, kwargs)

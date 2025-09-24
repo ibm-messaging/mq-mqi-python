@@ -16,7 +16,7 @@ class CFH(MQOpts):
     """ Construct an MQCFH Structure with default values as per MQI.
     The default values may be overridden by the optional keyword arguments 'kw'.
     """
-    def __init__(self, **kw: Dict[str,Any]):
+    def __init__(self, **kw: Dict[str, Any]):
         opts = [['Type', CMQCFC.MQCFT_COMMAND, MQLONG_TYPE],
                 ['StrucLength', CMQCFC.MQCFH_STRUC_LENGTH, MQLONG_TYPE],
                 ['Version', CMQCFC.MQCFH_VERSION_3, MQLONG_TYPE],
@@ -25,8 +25,8 @@ class CFH(MQOpts):
                 ['Control', CMQCFC.MQCFC_LAST, MQLONG_TYPE],
                 ['CompCode', CMQC.MQCC_OK, MQLONG_TYPE],
                 ['Reason', CMQC.MQRC_NONE, MQLONG_TYPE],
-                ['ParameterCount', 0, MQLONG_TYPE]
-               ]
+                ['ParameterCount', 0, MQLONG_TYPE],
+                ]
 
         super().__init__(tuple(opts), **kw)
 
@@ -39,7 +39,7 @@ class CFBF(MQOpts):
 
     def __init__(self, **kw: Dict[str, Any]):
         filter_value = kw.pop('FilterValue', '')
-        filter_value_length = kw.pop('FilterValueLength', len(filter_value)) # type: int
+        filter_value_length = kw.pop('FilterValueLength', len(filter_value))  # type: int
         padded_filter_value_length = padded_count(filter_value_length)
 
         opts = [['Type', CMQCFC.MQCFT_BYTE_STRING_FILTER, MQLONG_TYPE],
@@ -49,7 +49,7 @@ class CFBF(MQOpts):
                 ['Operator', 0, MQLONG_TYPE],
                 ['FilterValueLength', filter_value_length, MQLONG_TYPE],
                 ['FilterValue', filter_value, '{}s'.format(padded_filter_value_length)]
-               ]
+                ]
 
         super().__init__(tuple(opts), **kw)
 
@@ -60,18 +60,17 @@ class CFBS(MQOpts):
     The default values may be overridden by the optional keyword arguments 'kw'.
     """
 
-    def __init__(self, **kw: Dict[str,Any]):
+    def __init__(self, **kw: Dict[str, Any]):
         string = kw.pop('String', '')
-        string_length = kw.pop('StringLength', len(string)) # type: int
+        string_length = kw.pop('StringLength', len(string))  # type: int
         padded_string_length = padded_count(string_length)
 
         opts = [['Type', CMQCFC.MQCFT_BYTE_STRING, MQLONG_TYPE],
-                ['StrucLength',
-                 CMQCFC.MQCFBS_STRUC_LENGTH_FIXED + padded_string_length, MQLONG_TYPE],
+                ['StrucLength', CMQCFC.MQCFBS_STRUC_LENGTH_FIXED + padded_string_length, MQLONG_TYPE],
                 ['Parameter', 0, MQLONG_TYPE],
                 ['StringLength', string_length, MQLONG_TYPE],
                 ['String', string, '{}s'.format(padded_string_length)]
-               ]
+                ]
 
         super().__init__(tuple(opts), **kw)
 
@@ -89,7 +88,7 @@ class CFGR(MQOpts):
                 ['StrucLength', CMQCFC.MQCFGR_STRUC_LENGTH, MQLONG_TYPE],
                 ['Parameter', 0, MQLONG_TYPE],
                 ['ParameterCount', count, MQLONG_TYPE],
-               ]
+                ]
         super().__init__(tuple(opts), **kw)
 
 # ################################################################################################################################
@@ -105,7 +104,7 @@ class CFIF(MQOpts):
                 ['Parameter', 0, MQLONG_TYPE],
                 ['Operator', 0, MQLONG_TYPE],
                 ['FilterValue', 0, MQLONG_TYPE]
-               ]
+                ]
 
         super().__init__(tuple(opts), **kw)
 
@@ -116,15 +115,15 @@ class CFIL(MQOpts):
     The default values may be overridden by the optional keyword arguments 'kw'.
     """
     def __init__(self, **kw: Dict[str, Any]):
-        values = kw.pop('Values', []) # type: list[int]
-        count = kw.pop('Count', len(values)) # type: int
+        values = kw.pop('Values', [])  # type: list[int]
+        count = kw.pop('Count', len(values))  # type: int
 
         opts = [['Type', CMQCFC.MQCFT_INTEGER_LIST, MQLONG_TYPE],
                 ['StrucLength', CMQCFC.MQCFIL_STRUC_LENGTH_FIXED + 4 * count, MQLONG_TYPE],
                 ['Parameter', 0, MQLONG_TYPE],
                 ['Count', count, MQLONG_TYPE],
                 ['Values', values, MQLONG_TYPE, count],
-               ]
+                ]
         super().__init__(tuple(opts), **kw)
 
 # ################################################################################################################################
@@ -134,15 +133,15 @@ class CFIL64(MQOpts):
     The default values may be overridden by the optional keyword arguments 'kw'.
     """
     def __init__(self, **kw: Dict[str, Any]):
-        values = kw.pop('Values', []) # type: list[int]
-        count = kw.pop('Count', len(values)) # type: int
+        values = kw.pop('Values', [])  # type: list[int]
+        count = kw.pop('Count', len(values))  # type: int
 
         opts = [['Type', CMQCFC.MQCFT_INTEGER64_LIST, MQLONG_TYPE],
                 ['StrucLength', CMQCFC.MQCFIL64_STRUC_LENGTH_FIXED + 8 * count, MQLONG_TYPE],
                 ['Parameter', 0, MQLONG_TYPE],
                 ['Count', count, MQLONG_TYPE],
                 ['Values', values, INTEGER64_TYPE, count],
-               ]
+                ]
         super().__init__(tuple(opts), **kw)
 
 # ################################################################################################################################
@@ -156,7 +155,7 @@ class CFIN(MQOpts):
                 ['StrucLength', CMQCFC.MQCFIN_STRUC_LENGTH, MQLONG_TYPE],
                 ['Parameter', 0, MQLONG_TYPE],
                 ['Value', 0, MQLONG_TYPE],
-               ]
+                ]
         super().__init__(tuple(opts), **kw)
 
 # ################################################################################################################################
@@ -170,7 +169,7 @@ class CFIN64(MQOpts):
                 ['StrucLength', CMQCFC.MQCFIN64_STRUC_LENGTH, MQLONG_TYPE],
                 ['Parameter', 0, MQLONG_TYPE],
                 ['Value', 0, INTEGER64_TYPE],
-               ]
+                ]
         super().__init__(tuple(opts), **kw)
 
 # ################################################################################################################################
@@ -182,7 +181,7 @@ class CFSF(MQOpts):
 
     def __init__(self, **kw: Dict[str, Any]):
         filter_value = kw.pop('FilterValue', '')
-        filter_value_length = kw.pop('FilterValueLength', len(filter_value)) # type: int
+        filter_value_length = kw.pop('FilterValueLength', len(filter_value))  # type: int
         padded_filter_value_length = padded_count(filter_value_length)
 
         opts = [['Type', CMQCFC.MQCFT_STRING_FILTER, MQLONG_TYPE],
@@ -193,7 +192,7 @@ class CFSF(MQOpts):
                 ['CodedCharSetId', CMQC.MQCCSI_DEFAULT, MQLONG_TYPE],
                 ['FilterValueLength', filter_value_length, MQLONG_TYPE],
                 ['FilterValue', filter_value, '{}s'.format(padded_filter_value_length)]
-               ]
+                ]
 
         super().__init__(tuple(opts), **kw)
 
@@ -204,12 +203,12 @@ class CFSL(MQOpts):
     The default values may be overridden by the optional keyword arguments 'kw'.
     """
 
-    def __init__(self, **kw: Dict[str,Any]):
-        strings = kw.pop('Strings', []) # type: list[Union[str,bytes]]
-        string_length = kw.pop('StringLength', len(max(strings, key=len)) if strings else 0) # type: int
+    def __init__(self, **kw: Dict[str, Any]):
+        strings = kw.pop('Strings', [])  # type: list[Union[str,bytes]]
+        string_length = kw.pop('StringLength', len(max(strings, key=len)) if strings else 0)  # type: int
 
         strings_count = len(strings)
-        count = kw.pop('Count', strings_count) # type: int
+        count = kw.pop('Count', strings_count)  # type: int
 
         max_string_length = padded_count(string_length) if count else 0
         padded_strings_length = (max_string_length) * strings_count
@@ -221,7 +220,7 @@ class CFSL(MQOpts):
                 ['Count', count, MQLONG_TYPE],
                 ['StringLength', max_string_length, MQLONG_TYPE],
                 ['Strings', strings if strings else [b''], '{}s'.format(max_string_length), (count if count else 1)]
-               ]
+                ]
 
         super().__init__(tuple(opts), **kw)
 
@@ -234,7 +233,7 @@ class CFST(MQOpts):
 
     def __init__(self, **kw: Dict[str, Any]):
         string = kw.pop('String', '')
-        string_length = kw.pop('StringLength', len(string)) # type: int
+        string_length = kw.pop('StringLength', len(string))  # type: int
         padded_string_length = padded_count(string_length)
 
         opts = [['Type', CMQCFC.MQCFT_STRING, MQLONG_TYPE],
@@ -243,6 +242,6 @@ class CFST(MQOpts):
                 ['CodedCharSetId', CMQC.MQCCSI_DEFAULT, MQLONG_TYPE],
                 ['StringLength', string_length, MQLONG_TYPE],
                 ['String', string, '{}s'.format(padded_string_length)]
-               ]
+                ]
 
         super().__init__(tuple(opts), **kw)

@@ -21,16 +21,16 @@ class IIH(MQOpts):
                 ['StrucLength', CMQC.MQIIH_LENGTH_1, MQLONG_TYPE],
                 ['Encoding', 0, MQLONG_TYPE],
                 ['CodedCharSetId', 0, MQLONG_TYPE],
-                ['Format', CMQC.MQFMT_NONE,'8s'],
-                ['Flags', CMQC.MQIIH_NONE,MQLONG_TYPE],
-                ['LTermOverride',' ','8s'],
-                ['MFSMapName',' ','8s'],
-                ['ReplyToFormat',CMQC.MQFMT_NONE,'8s'],
-                ['Authenticator',CMQC.MQIAUT_NONE,'8s'],
-                ['TranInstanceId',CMQC.MQITII_NONE,'16s'],
-                ['TranState',CMQC.MQITS_NOT_IN_CONVERSATION,'b'],
-                ['CommitMode',CMQC.MQICM_COMMIT_THEN_SEND,'b'],
-                ['SecurityScope',CMQC.MQISS_CHECK,'b'],
-                ['_Reserved',0,'b']]
+                ['Format', CMQC.MQFMT_NONE, '8s'],
+                ['Flags', CMQC.MQIIH_NONE, MQLONG_TYPE],
+                ['LTermOverride', ' ', '8s'],
+                ['MFSMapName', ' ', '8s'],
+                ['ReplyToFormat', CMQC.MQFMT_NONE, '8s'],
+                ['Authenticator', CMQC.MQIAUT_NONE, '8s'],
+                ['TranInstanceId', CMQC.MQITII_NONE, '16s'],
+                ['TranState', CMQC.MQITS_NOT_IN_CONVERSATION, 'b'],
+                ['CommitMode', CMQC.MQICM_COMMIT_THEN_SEND, 'b'],
+                ['SecurityScope', CMQC.MQISS_CHECK, 'b'],
+                ['_Reserved', 0, 'b']]
 
         super().__init__(tuple(opts), **kw)

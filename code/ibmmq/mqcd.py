@@ -123,7 +123,7 @@ class CD(MQOpts):
 
         # The MQ 12 additional field is not relevant for client connections
         # but we'll put it here for completeness.
-        cd_current_version = ibmmqc.__strucversions__.get("cd",1)
+        cd_current_version = ibmmqc.__strucversions__.get("cd", 1)
         if cd_current_version >= CMQXC.MQCD_VERSION_12:
             opts += [['SPLProtection', 0, MQLONG_TYPE]]
             if MQLONG_TYPE == 'i':
@@ -134,6 +134,7 @@ class CD(MQOpts):
         # it's being set here, as a last element in the list.
 
         super().__init__(tuple(opts), **kw)
+
 
 # Backward compatibility
 cd = CD

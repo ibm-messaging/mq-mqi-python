@@ -19,7 +19,7 @@ class DLH(MQOpts):
                 ['DestQMgrName', b'', '48s'],
                 ['Encoding', 0, MQLONG_TYPE],
                 ['CodedCharSetId', CMQC.MQCCSI_UNDEFINED, MQLONG_TYPE],
-                ['Format', CMQC.MQFMT_NONE,'8s'],
+                ['Format', CMQC.MQFMT_NONE, '8s'],
                 ['PutApplType', 0, MQLONG_TYPE],
                 ['PutApplName', b'', '28s'],
                 ['PutDate', b'', '8s'],
@@ -30,7 +30,7 @@ class DLH(MQOpts):
     # Return the DLH as a formatted structure based on the message buffer. You
     # can then choose to also do a to_string() on the contents. This method
     # means you can pass the entire buffer, not just the DLH slice
-    def get_header(self,buf):
+    def get_header(self, buf):
         """Return the unpacked header from the full message buffer"""
         dlh = super().unpack(buf[:CMQC.MQDLH_LENGTH_1])
         return dlh

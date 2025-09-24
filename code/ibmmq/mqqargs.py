@@ -20,13 +20,14 @@ def common_q_args(*opts):
         pg_opts = opts[1]
     if m_desc is None:
         m_desc = MD()
-    if not isinstance(m_desc,MD):
+    if not isinstance(m_desc, MD):
         raise TypeError("Message Descriptor must be an instance of MD")
     if pg_opts:
-        if not isinstance(pg_opts, (PMO,GMO)):
+        if not isinstance(pg_opts, (PMO, GMO)):
             raise TypeError("Options must be an instance of PMO or GMO")
 
     return m_desc, pg_opts
+
 
 # Backward compatibility
 commonQArgs = common_q_args

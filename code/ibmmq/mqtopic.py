@@ -38,7 +38,7 @@ class Topic(MQObject):
             raise PYIFError('The Topic Descriptor has not been set.')
 
         rv = ibmmqc.MQOPEN(self.__queue_manager.getHandle(),
-                          self.__topic_desc.pack(), self.__open_opts)
+                           self.__topic_desc.pack(), self.__open_opts)
         if rv[-2]:
             raise MQMIError(rv[-2], rv[-1])
 
@@ -88,7 +88,7 @@ class Topic(MQObject):
             self.__real_open()
         object_name = None
         if topic_name:
-            object_name  = topic_name
+            object_name = topic_name
         if topic_string:
             if object_name:
                 object_name = object_name + "/" + topic_string

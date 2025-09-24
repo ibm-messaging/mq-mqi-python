@@ -71,23 +71,22 @@ class FilterOperator:
     """ Creates low-level filters based on what's been provided in the high-level
     Filter object.
     """
-    operator_mapping = {
-        'less': CMQCFC.MQCFOP_LESS,
-        'equal': CMQCFC.MQCFOP_EQUAL,
-        'greater': CMQCFC.MQCFOP_GREATER,
-        'not_less': CMQCFC.MQCFOP_NOT_LESS,
-        'not_equal': CMQCFC.MQCFOP_NOT_EQUAL,
-        'not_greater': CMQCFC.MQCFOP_NOT_GREATER,
-        'like': CMQCFC.MQCFOP_LIKE,
-        'not_like': CMQCFC.MQCFOP_NOT_LIKE,
-        'contains': CMQCFC.MQCFOP_CONTAINS,
-        'excludes': CMQCFC.MQCFOP_EXCLUDES,
-        'contains_gen': CMQCFC.MQCFOP_CONTAINS_GEN,
-        'excludes_gen': CMQCFC.MQCFOP_EXCLUDES_GEN,
-        } # type: Dict[str, int]
+    operator_mapping = {'less': CMQCFC.MQCFOP_LESS,
+                        'equal': CMQCFC.MQCFOP_EQUAL,
+                        'greater': CMQCFC.MQCFOP_GREATER,
+                        'not_less': CMQCFC.MQCFOP_NOT_LESS,
+                        'not_equal': CMQCFC.MQCFOP_NOT_EQUAL,
+                        'not_greater': CMQCFC.MQCFOP_NOT_GREATER,
+                        'like': CMQCFC.MQCFOP_LIKE,
+                        'not_like': CMQCFC.MQCFOP_NOT_LIKE,
+                        'contains': CMQCFC.MQCFOP_CONTAINS,
+                        'excludes': CMQCFC.MQCFOP_EXCLUDES,
+                        'contains_gen': CMQCFC.MQCFOP_CONTAINS_GEN,
+                        'excludes_gen': CMQCFC.MQCFOP_EXCLUDES_GEN,
+                        }  # type: Dict[str, int]
 
-    def __init__(self, selector:int, operator_name:str):
-        self.filter_cls = _Filter # Start with the parent class as the first ref is how mypy sees it
+    def __init__(self, selector: int, operator_name: str):
+        self.filter_cls = _Filter  # Start with the parent class as the first ref is how mypy sees it
         if CMQC.MQIA_FIRST <= selector <= CMQC.MQIA_LAST:
             self.filter_cls = IntegerFilter
         elif CMQC.MQCA_FIRST <= selector <= CMQC.MQCA_LAST:
@@ -105,7 +104,7 @@ class FilterOperator:
             msg = 'Operator [%s] is not supported.'
             raise Error(msg % operator_name)
 
-    def __call__(self, value: Union[str, int]) -> _Filter: # Union[IntegerFilter, StringFilter, ByteStringFilter]:
+    def __call__(self, value: Union[str, int]) -> _Filter:  # Union[IntegerFilter, StringFilter, ByteStringFilter]:
         ensure_not_unicode(value)
         return (self.filter_cls)(self.selector, value, self.operator)
 
@@ -115,14 +114,14 @@ class Filter:
     """ The user-facing filtering class which provides syntactic sugar
     on top of _Filter and its subclasses.
     """
-    def __init__(self, selector:int):
+    def __init__(self, selector: int):
         self.selector = selector
 
-    def __getattribute__(self, name:str) -> FilterOperator:
+    def __getattribute__(self, name: str) -> FilterOperator:
         """ A generic method for either fetching the Filter object's
         attributes or calling magic methods like 'like', 'contains' etc.
         """
-        if name=='selector':
+        if name == 'selector':
             return object.__getattribute__(self, name)
 
         return FilterOperator(self.selector, name)
@@ -173,7 +172,7 @@ class _Method:
                     ParameterCount=len(args_dict) + len(filters))
         message = mqcfh.pack()
 
-        parameter = MQOpts([]) # Set an initial type, to satisfy mypy
+        parameter = MQOpts([])  # Set an initial type, to satisfy mypy
 
         if args_dict:
             if isinstance(args_dict, dict):
@@ -193,18 +192,16 @@ class _Method:
                         is_list = False
                         for item in CMQCFC.__dict__:
                             if ((item[:7] == 'MQIACF_' or item[:7] == 'MQIACH_')
-                                and item[-6:] == '_ATTRS'
-                                and CMQCFC.__dict__[item] == key):
+                               and item[-6:] == '_ATTRS'
+                               and CMQCFC.__dict__[item] == key):
 
                                 is_list = True
                                 break
 
                         if not is_list:
-                            parameter = CFIN(Parameter=key,
-                                            Value=value)
+                            parameter = CFIN(Parameter=key, Value=value)
                         else:
-                            parameter = CFIL(Parameter=key,
-                                            Values=[value])
+                            parameter = CFIL(Parameter=key, Values=[value])
                     elif isinstance(value, list):
                         if isinstance(value[0], int):
                             parameter = CFIL(Parameter=key, Values=value)
@@ -244,10 +241,10 @@ class _Method:
         # Either open the command queue, or use the pre-opened Queue object
         command_queue_opened = False
         if self.__pcf._command_queue is None:
-            assert self.__pcf.qm is not None # Keep mypy happy
+            assert self.__pcf.qm is not None  # Keep mypy happy
             command_queue = Queue(self.__pcf.qm,
-                              self.__pcf.command_queue_name,
-                              CMQC.MQOO_OUTPUT)
+                                  self.__pcf.command_queue_name,
+                                  CMQC.MQOO_OUTPUT)
             self.__pcf._command_queue = command_queue
             command_queue_opened = True
         else:
@@ -270,11 +267,12 @@ class _Method:
             command_queue.close()
             self.__pcf._command_queue = None
 
-        gmo_options = CMQC.MQGMO_NO_SYNCPOINT + CMQC.MQGMO_FAIL_IF_QUIESCING + \
-                      CMQC.MQGMO_WAIT
+        gmo_options = (CMQC.MQGMO_NO_SYNCPOINT |
+                       CMQC.MQGMO_FAIL_IF_QUIESCING |
+                       CMQC.MQGMO_WAIT)
 
         if self.__pcf.convert:
-            gmo_options = gmo_options + CMQC.MQGMO_CONVERT
+            gmo_options |= CMQC.MQGMO_CONVERT
 
         get_opts = GMO(
             Options=gmo_options,
@@ -336,7 +334,7 @@ class _Method:
             except MQMIError as e:
                 # There might be something special we want to do with 2033s.
                 # But for now, just report it in the same way as any other failure.
-                if e.reason  == CMQC.MQRC_NO_MSG_AVAILABLE:
+                if e.reason == CMQC.MQRC_NO_MSG_AVAILABLE:
                     # print("Timed out...")
                     raise e
                     # return ress
@@ -522,7 +520,7 @@ class PCFExecute(QueueManager):
 
         while index > 0:
 
-            value = None # Will always be set by one of these clauses
+            value = None  # Will always be set by one of these clauses
             parameter_type = struct.unpack(MQLONG_TYPE, message[cursor:cursor + 4])[0]
 
             if group_count == 0:

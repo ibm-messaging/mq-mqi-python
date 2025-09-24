@@ -45,5 +45,6 @@ class MD(MQOpts):
             ['MsgFlags', CMQC.MQMF_NONE, MQLONG_TYPE],
             ['OriginalLength', CMQC.MQOL_UNDEFINED, MQLONG_TYPE]]), **kw)
 
+
 # Backward compatibility
 md = MD

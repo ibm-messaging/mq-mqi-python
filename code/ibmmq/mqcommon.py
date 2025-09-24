@@ -7,15 +7,15 @@ import struct
 
 class default:
     """Global encoding options"""
-    ccsid          = 1208
+    ccsid = 1208
     bytes_encoding = 'utf8'
 
     # How are unicode strings converted to bytes for MQI fields? By default we pick an ASCII encoding, as
     # that is good for the majority of codepages where an MQ app is running.
     # A z/OS system might need to override this to ebcdic: "cp500" perhaps.
-    mqi_encoding='ascii'
+    mqi_encoding = 'ascii'
 
-def padded_count(count: int, boundary: int = 4) ->int:
+def padded_count(count: int, boundary: int = 4) -> int:
     """Calculate padded bytes count
     """
     return count + ((boundary - count & (boundary - 1)) & (boundary - 1))
@@ -43,6 +43,7 @@ def ensure_strings_are_bytes(s, encoding=default.mqi_encoding) -> bytes:
     if is_unicode(s):
         return s.encode(encoding)
     return s
+
 
 # For compatibility
 ensure_bytes = ensure_strings_are_bytes

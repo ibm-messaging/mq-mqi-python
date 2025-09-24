@@ -36,7 +36,7 @@ class Subscription(MQObject):
 
         object_name = None
         if topic_name:
-            object_name  = topic_name
+            object_name = topic_name
         if topic_string:
             if object_name:
                 object_name = object_name + "/" + topic_string
@@ -54,7 +54,7 @@ class Subscription(MQObject):
         """
         return self.sub_queue.get(max_length, *opts)
 
-    def get_rfh2(self, max_length:Union[None, int] = None, *opts) -> bytes:  # pylint: disable=keyword-arg-before-vararg
+    def get_rfh2(self, max_length: Union[None, int] = None, *opts) -> bytes:  # pylint: disable=keyword-arg-before-vararg
         """ Get a publication from the Queue.
         """
         return self.sub_queue.get_rfh2(max_length, *opts)
@@ -129,7 +129,7 @@ class Subscription(MQObject):
         if close_sub_queue:
             _ = self.sub_queue.close(close_sub_queue_options)
 
-    def subrq(self, sub_action:int = CMQC.MQSR_ACTION_PUBLICATION, sro=None) -> None:
+    def subrq(self, sub_action: int = CMQC.MQSR_ACTION_PUBLICATION, sro=None) -> None:
         """Call the MQSUBRQ function. If the SRO object is supplied then it
         may be updated by the operation.
         """

@@ -16,13 +16,13 @@ class CBD(MQOpts):
                 ['Version', CMQC.MQCBD_VERSION_1, MQLONG_TYPE],
                 ['CallbackType', CMQC.MQCBT_MESSAGE_CONSUMER, MQLONG_TYPE],
                 ['Options', CMQC.MQCBDO_NONE, MQLONG_TYPE],
-                ['CallbackArea',0,'P'],
-                ['CallbackFunction',0,'P'],
-                ['CallbackName',b'', '128s'],
+                ['CallbackArea', 0, 'P'],
+                ['CallbackFunction', 0, 'P'],
+                ['CallbackName', b'', '128s'],
                 ['MaxMsgLength', CMQC.MQCBD_FULL_MSG_LENGTH, MQLONG_TYPE]]
 
         # Some padding is needed to match the C structure, even though it's not
         # listed in cmqc.h
-        opts += [['_Reserved1',0,MQLONG_TYPE]]
+        opts += [['_Reserved1', 0, MQLONG_TYPE]]
 
         super().__init__(tuple(opts), **kw)

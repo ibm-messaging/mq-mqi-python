@@ -17,32 +17,32 @@ class CNO(MQOpts):
     """
     def __init__(self, **kw):
 
-        cno_current_version = ibmmqc.__strucversions__.get("cno",1)
+        cno_current_version = ibmmqc.__strucversions__.get("cno", 1)
         opts = [['_StrucId', CMQC.MQCNO_STRUC_ID, '4s'],
                 ['Version', CMQC.MQCNO_VERSION_5, MQLONG_TYPE],
-                ['Options', CMQC.MQCNO_NONE,MQLONG_TYPE],
-                ['_ClientConnOffset',0,MQLONG_TYPE],
-                ['_ClientConnPtr',0,'P'],
-                ['ConnTag',b'','128s'],
-                ['_SSLConfigPtr',0,'P'],
-                ['_SSLConfigOffset',0,MQLONG_TYPE],
-                ['ConnectionId',b'','24s'],
-                ['_SecurityParmsOffset',0,MQLONG_TYPE],
-                ['_SecurityParmsPtr',0,'P']]
+                ['Options', CMQC.MQCNO_NONE, MQLONG_TYPE],
+                ['_ClientConnOffset', 0, MQLONG_TYPE],
+                ['_ClientConnPtr', 0, 'P'],
+                ['ConnTag', b'', '128s'],
+                ['_SSLConfigPtr', 0, 'P'],
+                ['_SSLConfigOffset', 0, MQLONG_TYPE],
+                ['ConnectionId', b'', '24s'],
+                ['_SecurityParmsOffset', 0, MQLONG_TYPE],
+                ['_SecurityParmsPtr', 0, 'P']]
 
         if cno_current_version >= CMQC.MQCNO_VERSION_6:
-            opts += [['CCDTUrl',0,'P'],
-                ['_CCDTUrlOffset',0,MQLONG_TYPE],
-                ['_CCDTUrlLength',0,MQLONG_TYPE],
-                ['_Reserved',0,INTEGER64_TYPE]]
+            opts += [['CCDTUrl', 0, 'P'],
+                     ['_CCDTUrlOffset', 0, MQLONG_TYPE],
+                     ['_CCDTUrlLength', 0, MQLONG_TYPE],
+                     ['_Reserved', 0, INTEGER64_TYPE]]
 
         if cno_current_version >= CMQC.MQCNO_VERSION_7:
-            opts += [['ApplName',CMQC.MQAN_NONE, '28s'],
-                     ['_Reserved2',0,MQLONG_TYPE]]
+            opts += [['ApplName', CMQC.MQAN_NONE, '28s'],
+                     ['_Reserved2', 0, MQLONG_TYPE]]
 
         if cno_current_version >= CMQC.MQCNO_VERSION_8:
-            opts += [['_BalanceParmsPtr',0,'P'],
-                    ['_BalanceParmsOffset',0,MQLONG_TYPE],
-                    ['_Reserved3', 0, MQLONG_TYPE]]
+            opts += [['_BalanceParmsPtr', 0, 'P'],
+                     ['_BalanceParmsOffset', 0, MQLONG_TYPE],
+                     ['_Reserved3', 0, MQLONG_TYPE]]
 
         super().__init__(tuple(opts), **kw)

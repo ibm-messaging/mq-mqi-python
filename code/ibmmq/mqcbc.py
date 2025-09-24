@@ -22,14 +22,14 @@ class CBC(MQOpts):
                 ['ConnectionArea', 0, 'P'],
                 ['CompCode', 0, MQLONG_TYPE],
                 ['Reason', 0, MQLONG_TYPE],
-                ['State', 0,  MQLONG_TYPE],
+                ['State', 0, MQLONG_TYPE],
                 ['DataLength', 0, MQLONG_TYPE],
-                ['BufferLength', 0,  MQLONG_TYPE],
+                ['BufferLength', 0, MQLONG_TYPE],
                 ['Flags', 0, MQLONG_TYPE],
                 ['ReconnectDelay', 0, MQLONG_TYPE]]
 
         # Some padding is needed to match the C structure, even though it's not
         # listed in cmqc.h
-        opts += [['_Reserved1',0,MQLONG_TYPE]]
+        opts += [['_Reserved1', 0, MQLONG_TYPE]]
 
         super().__init__(tuple(opts), **kw)

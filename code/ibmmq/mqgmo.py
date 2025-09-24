@@ -19,7 +19,7 @@ class GMO(MQOpts):
                 ['Signal1', 0, MQLONG_TYPE],
                 ['Signal2', 0, MQLONG_TYPE],
                 ['ResolvedQName', b'', '48s'],
-                ['MatchOptions', CMQC.MQMO_MATCH_MSG_ID+CMQC.MQMO_MATCH_CORREL_ID, MQLONG_TYPE],
+                ['MatchOptions', CMQC.MQMO_MATCH_MSG_ID + CMQC.MQMO_MATCH_CORREL_ID, MQLONG_TYPE],
                 ['GroupStatus', CMQC.MQGS_NOT_IN_GROUP, 'b'],
                 ['SegmentStatus', CMQC.MQSS_NOT_A_SEGMENT, 'b'],
                 ['Segmentation', CMQC.MQSEG_INHIBITED, 'b'],
@@ -27,13 +27,14 @@ class GMO(MQOpts):
                 ['MsgToken', b'', '16s'],
                 ['ReturnedLength', CMQC.MQRL_UNDEFINED, MQLONG_TYPE], ]
 
-        gmo_current_version = ibmmqc.__strucversions__.get("gmo",1)
+        gmo_current_version = ibmmqc.__strucversions__.get("gmo", 1)
         if gmo_current_version >= 4:
             opts += [
                 ['_Reserved2', (0), MQLONG_TYPE],
                 ['MsgHandle', (0), 'q']]
 
         super().__init__(tuple(opts), **kw)
+
 
 # Backward compatibility
 gmo = GMO

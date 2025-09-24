@@ -21,7 +21,7 @@ class QueueManager(MQObject):
     default, the Queue Manager is implicitly connected. If required,
     the connection may be deferred until a call to connect().
     """
-    def __init__(self, name: Optional[Union[str, bytes]] ='', disconnect_on_exit: bool =True,
+    def __init__(self, name: Optional[Union[str, bytes]] = '', disconnect_on_exit: bool = True,
                  bytes_encoding: str = default.bytes_encoding,
                  default_ccsid: int = default.ccsid) -> None:
         """ Connect to the Queue Manager 'name' (default value '').
@@ -75,7 +75,7 @@ class QueueManager(MQObject):
 # SSL additions courtesy of Brian Vicente (mailto:sailbv@netscape.net)
 # Connect options suggested by Jaco Smuts (mailto:JSmuts@clover.co.za)
 
-    def connect_with_options(self, name: Union[str, bytes], *args: Any, **kwargs:Dict[str,Any]) ->None:
+    def connect_with_options(self, name: Union[str, bytes], *args: Any, **kwargs: Dict[str, Any]) -> None:
         """connect_with_options(name
                                 [,user=user][,password=password]
                                 [,opts=cnoopts][,cno=mqcno][,sco=mqsco]
@@ -119,7 +119,7 @@ class QueueManager(MQObject):
         sco_pack = None
         cno_pack = None
         bno_pack = None
-        cd_pack  = None
+        cd_pack = None
 
         initial_key = None
         https_keystore = None
@@ -139,7 +139,7 @@ class QueueManager(MQObject):
             # The only field we need to work on is the CCDTUrl
             try:
                 ccdt_url = cno.CCDTUrl
-                cno._set_ptr_field('CCDTUrl',ccdt_url)
+                cno._set_ptr_field('CCDTUrl', ccdt_url)
             except AttributeError:
                 ccdt_url = None
 
@@ -163,13 +163,13 @@ class QueueManager(MQObject):
 
             try:
                 key_repo_password = sco.KeyRepoPassword
-                sco._set_ptr_field('KeyRepoPassword',key_repo_password)
+                sco._set_ptr_field('KeyRepoPassword', key_repo_password)
             except AttributeError:
                 key_repo_password = None
 
             try:
                 https_keystore = sco.HTTPSKeyStore
-                sco._set_ptr_field('HTTPSKeyStore',https_keystore)
+                sco._set_ptr_field('HTTPSKeyStore', https_keystore)
             except AttributeError:
                 https_keystore = None
 
@@ -228,16 +228,16 @@ class QueueManager(MQObject):
             if not isinstance(token, (str, bytes)):
                 raise TypeError('Token must be an instance of str or bytes')
 
-            csp._set_ptr_field('Token',token)
+            csp._set_ptr_field('Token', token)
 
             # We need to fix these up even if they are not going to be used
             if user:
-                csp._set_ptr_field('CSPUserId',None)
+                csp._set_ptr_field('CSPUserId', None)
             if password:
-                csp._set_ptr_field('CSPPassword',None)
+                csp._set_ptr_field('CSPPassword', None)
 
             csp.AuthenticationType = CMQC.MQCSP_AUTH_ID_TOKEN
-            csp.Version = max(csp.Version,CMQC.MQCSP_VERSION_3)
+            csp.Version = max(csp.Version, CMQC.MQCSP_VERSION_3)
 
         elif user:
             # We check for None because password can be an empty string
@@ -246,12 +246,12 @@ class QueueManager(MQObject):
 
             if not (isinstance(user, (str, bytes)) and isinstance(password, (str, bytes))):
                 raise ValueError('Both user and password must be instances of str or bytes')
-            csp._set_ptr_field('CSPUserId',user)
-            csp._set_ptr_field('CSPPassword',password)
+            csp._set_ptr_field('CSPUserId', user)
+            csp._set_ptr_field('CSPPassword', password)
             csp.AuthenticationType = CMQC.MQCSP_AUTH_USER_ID_AND_PWD
 
         if initial_key:
-            csp._set_ptr_field('InitialKey',initial_key)
+            csp._set_ptr_field('InitialKey', initial_key)
             csp.Version = max(csp.Version, CMQC.MQCSP_VERSION_2)
 
         if csp:
@@ -268,13 +268,13 @@ class QueueManager(MQObject):
             # Thus, if someone uses TLS and the version is lower than that,
             # we can just increase it ourselves.
             if cd.SSLCipherSpec:
-                cd.Version = max(cd.Version,CMQXC.MQCD_VERSION_7)
+                cd.Version = max(cd.Version, CMQXC.MQCD_VERSION_7)
 
             ssl_peername = cd.SSLPeerNamePtr
             if ssl_peername:
                 # Ideally we'd rename this field but have to keep its original
                 # name for compatibility
-                cd._set_ptr_field('SSLPeerNamePtr',ssl_peername)
+                cd._set_ptr_field('SSLPeerNamePtr', ssl_peername)
                 restore_cd = True
 
             cd_pack = cd.pack()
@@ -322,7 +322,7 @@ class QueueManager(MQObject):
     # via this method.
     def connect_tcp_client(self, name, cd, channel, conn_name,
                            user=None, password=None,
-                           cno=None, csp=None,sco=None,bno=None
+                           cno=None, csp=None, sco=None, bno=None
                            ):
         # type: (str, CD, str, str, Optional[str], Optional[str], Any, Any, Any, Any) -> None
         """ Connect immediately to the remote Queue Manager 'name', using
@@ -364,7 +364,7 @@ class QueueManager(MQObject):
         """
         if not self.__handle:
             raise PYIFError('not connected')
-        saved_handle=self.__handle
+        saved_handle = self.__handle
 
         rv = ibmmqc.MQDISC(self.__handle)
         if rv[0]:
@@ -450,7 +450,7 @@ class QueueManager(MQObject):
         _ = m_desc.unpack(rv[0])
         _ = put_opts.unpack(rv[1])
 
-    def inquire(self, selectors: Union[int, list[int]]) -> Union[Any, Dict[int,Any]]:
+    def inquire(self, selectors: Union[int, list[int]]) -> Union[Any, Dict[int, Any]]:
         """ Inquire on qmgr attributes. If the qmgr is not already
         open, it is opened for Inquire.
 
@@ -476,7 +476,7 @@ class QueueManager(MQObject):
     # Create an alias that is closer to the real MQI function name
     inq = inquire
 
-    def stat(self,status_type: int) -> STS:
+    def stat(self, status_type: int) -> STS:
         """Implementation of MQSTAT"""
         stat = STS()
         rv = ibmmqc.MQSTAT(self.__handle, status_type, stat.pack())
@@ -508,7 +508,7 @@ class QueueManager(MQObject):
     # Setting up a callback function
     # There is a similar method on the Queue object but they
     # both go to a common implementation
-    def cb(self, **kwargs: Dict[str,Any]) -> None:
+    def cb(self, **kwargs: Dict[str, Any]) -> None:
         """cb(operation=operation, md=MD,gmo=GMO,cbd=CBD)
         Register or Deregister a Callback function for asynchronous
         message consumption.
@@ -517,7 +517,7 @@ class QueueManager(MQObject):
         entries for queue_manager,queue(unless it's a qmgr-wide event),
         md,gmo,cbc,msg.
         """
-        mqcallback.real_cb(self,kwargs)
+        mqcallback.real_cb(self, kwargs)
 
     def ctl(self, operation: int, ctlo: CTLO) -> None:
         """Start or stop registered callbacks with the MQCTL operation.
@@ -529,7 +529,7 @@ class QueueManager(MQObject):
         if not isinstance(ctlo, CTLO):
             raise TypeError("ctlo must be an instance of CTLO")
 
-        mqcallback._save_connection_area(self.__handle,ctlo)
+        mqcallback._save_connection_area(self.__handle, ctlo)
         original_cna = ctlo.ConnectionArea
         # Have to set this "pointer" field to NULL for pack() to work
         ctlo.ConnectionArea = 0
@@ -544,7 +544,7 @@ class QueueManager(MQObject):
 
 def connect(queue_manager, channel=None, conn_info=None, user=None, password=None, disconnect_on_exit=True,
             bytes_encoding=default.bytes_encoding, default_ccsid=default.ccsid,
-            cd = None, cno=None, csp=None,sco=None,bno=None
+            cd=None, cno=None, csp=None, sco=None, bno=None
             ):
     """ A convenience wrapper for connecting to MQ queue managers without needing to explicitly create a qmgr object first.
     If given both 'channel' and 'conn_info' will connect in client mode. If neither are given
@@ -556,10 +556,10 @@ def connect(queue_manager, channel=None, conn_info=None, user=None, password=Non
     qmgr = QueueManager(None, disconnect_on_exit, bytes_encoding=bytes_encoding, default_ccsid=default_ccsid)
 
     if channel and conn_info:
-        qmgr.connect_tcp_client(queue_manager or '', cd or CD(), channel, conn_info, user, password, cno=cno, csp=csp,sco=sco,bno=bno)
+        qmgr.connect_tcp_client(queue_manager or '', cd or CD(), channel, conn_info, user, password, cno=cno, csp=csp, sco=sco, bno=bno)
 
     elif queue_manager:
-        qmgr.connect_with_options(queue_manager, user=user, password=password, cno=cno, csp=csp,sco=sco,bno=bno, cd=cd)
+        qmgr.connect_with_options(queue_manager, user=user, password=password, cno=cno, csp=csp, sco=sco, bno=bno, cd=cd)
 
     else:
         raise TypeError('Invalid arguments: %s' % repr([queue_manager, channel, conn_info, user, password]))
