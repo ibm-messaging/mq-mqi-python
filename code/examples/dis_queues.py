@@ -14,7 +14,7 @@ additional privileges. We use the CSP class to provide those credentials.
 
 import ibmmq as mq
 
-no_queues=False
+no_queues = False
 queue_manager = 'QM1'
 channel = 'DEV.ADMIN.SVRCONN'
 host = '127.0.0.1'
@@ -32,16 +32,14 @@ queue_type = mq.CMQC.MQQT_LOCAL
 # The parameters needed for the INQUIRE Q command.
 name_attrs = []
 name_attrs.append(mq.CFST(Parameter=mq.CMQC.MQCA_Q_NAME,
-                             String=prefix))
+                          String=prefix))
 name_attrs.append(mq.CFIN(Parameter=mq.CMQC.MQIA_Q_TYPE,
-                  Value=queue_type))
+                          Value=queue_type))
 
 # The parameters needed for the INQUIRE Q STATUS command
 status_attrs = []
-status_attrs.append(mq.CFST(Parameter=mq.CMQC.MQCA_Q_NAME,
-                               String=prefix))
-status_attrs.append(mq.CFIL(Parameter=mq.CMQCFC.MQIACF_Q_STATUS_ATTRS,
-                               Values=[mq.CMQCFC.MQIACF_ALL]))
+status_attrs.append(mq.CFST(Parameter=mq.CMQC.MQCA_Q_NAME, String=prefix))
+status_attrs.append(mq.CFIL(Parameter=mq.CMQCFC.MQIACF_Q_STATUS_ATTRS, Values=[mq.CMQCFC.MQIACF_ALL]))
 
 qmgr = mq.connect(queue_manager, channel, conn_info, csp=csp)
 pcf = mq.PCFExecute(qmgr, response_wait_interval=15000)
@@ -52,7 +50,7 @@ try:
     response = pcf.MQCMD_INQUIRE_Q(name_attrs)
 except mq.MQMIError as e:
     if e.comp == mq.CMQC.MQCC_FAILED and e.reason == mq.CMQC.MQRC_UNKNOWN_OBJECT_NAME:
-        no_queues=True
+        no_queues = True
         print('No queues matched given pattern.')
     else:
         raise

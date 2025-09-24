@@ -16,6 +16,7 @@ queue_name = 'DEV.QUEUE.1'
 conn_info = '%s(%s)' % (host, port)
 user = 'app'
 password = 'password'
+WAIT_INTERVAL = 5  # seconds
 
 # Message Descriptor
 md = mq.MD()
@@ -23,7 +24,7 @@ md = mq.MD()
 # Get Message Options
 gmo = mq.GMO()
 gmo.Options = mq.CMQC.MQGMO_WAIT | mq.CMQC.MQGMO_FAIL_IF_QUIESCING
-gmo.WaitInterval = 5000 # 5 seconds
+gmo.WaitInterval = WAIT_INTERVAL * 1000
 
 qmgr = mq.connect(queue_manager, channel, conn_info, user, password)
 

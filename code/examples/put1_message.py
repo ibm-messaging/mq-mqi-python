@@ -20,7 +20,7 @@ message = 'Hello from Python!'
 
 qmgr = mq.connect(queue_manager, channel, conn_info, user, password)
 
-qmgr.put1(queue_name,message)
+qmgr.put1(queue_name, message)
 
 qmgr.disconnect()
 

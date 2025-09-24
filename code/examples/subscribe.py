@@ -24,7 +24,7 @@ md = mq.MD()
 gmo = mq.GMO()
 gmo.Options = mq.CMQC.MQGMO_WAIT | mq.CMQC.MQGMO_FAIL_IF_QUIESCING
 gmo.MatchOptions = mq.CMQC.MQMO_NONE
-gmo.WaitInterval = 5000 # 5 seconds
+gmo.WaitInterval = 5000  # 5 seconds
 
 qmgr = mq.connect(queue_manager, channel, conn_info, user, password)
 

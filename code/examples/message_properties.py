@@ -17,7 +17,7 @@ def read_props_wildcard():
     opts = mq.CMQC.MQIMPO_INQ_FIRST
     while props_to_read:
         try:
-            property_value, prop_name  = get_msg_h.properties.get('usr.%',impo_options=opts)
+            property_value, prop_name = get_msg_h.properties.get('usr.%', impo_options=opts)
             logging.info('  Property name: `%s`, property value: `%s` type %s', prop_name, property_value, type(property_value))
             opts = mq.CMQC.MQIMPO_INQ_NEXT
 
@@ -27,6 +27,7 @@ def read_props_wildcard():
                 props_to_read = False
             else:
                 raise e
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -56,12 +57,12 @@ p += [property_base_name + '1']
 p += [property_base_name + '2']
 
 # Set values of different types
-put_msg_h.properties.set(p[0], 'MyStringPropVal') # Default type is CMQC.MQTYPE_STRING
+put_msg_h.properties.set(p[0], 'MyStringPropVal')  # Default type is CMQC.MQTYPE_STRING
 put_msg_h.properties.set(p[1], 42, property_type=mq.CMQC.MQTYPE_INT32)
 put_msg_h.properties.set(p[2], 3.13, property_type=mq.CMQC.MQTYPE_FLOAT64)
 
 
-pmo = mq.PMO(Version=mq.CMQC.MQPMO_VERSION_3) # PMO v3 is required if you want to use message handles
+pmo = mq.PMO(Version=mq.CMQC.MQPMO_VERSION_3)  # PMO v3 is required if you want to use message handles
 pmo.OriginalMsgHandle = put_msg_h.msg_handle
 opts = mq.CMQC.MQOO_OUTPUT
 put_md = mq.MD(Version=mq.CMQC.MQMD_CURRENT_VERSION)
@@ -92,7 +93,7 @@ logging.info('')
 logging.info('Using explicit names to retrieve properties:')
 
 for prop in p:
-    property_value  = get_msg_h.properties.get(prop)
+    property_value = get_msg_h.properties.get(prop)
     logging.info('  Property name: `%s`, property value: `%s` type %s', prop, property_value, type(property_value))
 
 # Delete one of the properties

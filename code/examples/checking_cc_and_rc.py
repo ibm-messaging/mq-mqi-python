@@ -11,7 +11,7 @@ from ibmmq import CMQC, CMQSTRC
 
 queue_manager = 'QM1'
 channel = 'DEV.APP.SVRCONN'
-host = 'localhost.invalid' # Note the hostname that should never be resolvable
+host = 'localhost.invalid'  # Note the hostname that should never be resolvable
 port = '1414'
 conn_info = '%s(%s)' % (host, port)
 user = 'app'

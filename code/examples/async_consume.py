@@ -21,10 +21,10 @@ def cb_func(**kwargs):
     The CallbackContext (cbd) structure holds the reasons for invocation, along with
     object and connection-related correlation buffers. Which we print out here
     """
-    msg=kwargs['msg']
-    cbc=kwargs['cbc']
-    obj=kwargs['queue']
-    qmgr=kwargs['queue_manager']
+    msg = kwargs['msg']
+    cbc = kwargs['cbc']
+    obj = kwargs['queue']
+    qmgr = kwargs['queue_manager']
 
     print(f"In CB Func: QMgr={qmgr.get_name()} Q={obj.get_name() if obj else '<<None>>'} Msg={msg[:cbc.DataLength] if msg else '<<NONE>>'}")
     print(f"    CallType      = {cbc.CallType} [{mq.CMQSTRC.MQCBCT_DICT[cbc.CallType]}]")
@@ -42,6 +42,7 @@ def cb_func(**kwargs):
         else:
             pass
         Status.ok = False
+
 
 # Define the connection to the queue manager
 queue_manager = 'QM1'
@@ -71,7 +72,7 @@ md = mq.MD()
 gmo = mq.GMO()
 gmo.Options = mq.CMQC.MQGMO_NO_SYNCPOINT
 gmo.Options |= mq.CMQC.MQGMO_WAIT
-gmo.WaitInterval = 3 * 1000 # convert to milliseconds
+gmo.WaitInterval = 3 * 1000  # convert to milliseconds
 
 # Register a callback for the queue
 cbd = mq.CBD()
@@ -98,7 +99,7 @@ while Status.ok:
     time.sleep(2)
 
 if not Status.connBroken:
-    qmgr.ctl(mq.CMQC.MQOP_STOP,ctlo)
+    qmgr.ctl(mq.CMQC.MQOP_STOP, ctlo)
     q.cb(operation=mq.CMQC.MQOP_DEREGISTER)
 
     q.close()

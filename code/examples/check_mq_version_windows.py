@@ -6,6 +6,8 @@ This example shows how to interrogate the Windows registry to determine
 which version of MQ is installed
 """
 
+# Exclude some warnings from pylint that show up when I try to scan this on a Linux machine
+# pylint: disable=import-error,undefined-variable
 import logging
 import _winreg
 

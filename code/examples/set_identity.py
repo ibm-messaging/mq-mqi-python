@@ -18,7 +18,7 @@ conn_info = '%s(%s)' % (host, port)
 user = 'app'
 password = 'password'
 
-qmgr = mq.connect(queue_manager, channel, conn_info) # , user, password)
+qmgr = mq.connect(queue_manager, channel, conn_info)
 
 od = mq.OD()
 od.ObjectName = queue_name
@@ -32,7 +32,7 @@ md.ApplIdentityData = context_applid
 pmo = mq.PMO()
 pmo.Options = mq.CMQC.MQPMO_SET_IDENTITY_CONTEXT
 
-queue.put(message,md,pmo)
+queue.put(message, md, pmo)
 
 queue.close()
 qmgr.disconnect()

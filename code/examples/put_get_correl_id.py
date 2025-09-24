@@ -47,8 +47,9 @@ class Producer(threading.Thread):
         cd.ChannelType = mq.CMQXC.MQCHT_CLNTCONN
         cd.TransportType = mq.CMQXC.MQXPT_TCP
         self.qm = mq.QueueManager(None)
-        self.qm.connect_with_options(queue_manager, opts=mq.CMQC.MQCNO_HANDLE_SHARE_NO_BLOCK,
-                                   cd=cd)
+        self.qm.connect_with_options(queue_manager,
+                                     opts=mq.CMQC.MQCNO_HANDLE_SHARE_NO_BLOCK,
+                                     cd=cd)
 
         self.req_queue = mq.Queue(self.qm, request_queue_name)
         self.replyto_queue = mq.Queue(self.qm, replyto_queue_name)
@@ -123,7 +124,7 @@ class ResponseProducer(Producer):
         # Get Message Options
         gmo = mq.GMO()
         gmo.Options = mq.CMQC.MQGMO_WAIT | mq.CMQC.MQGMO_FAIL_IF_QUIESCING
-        gmo.WaitInterval = 500 # Half a second
+        gmo.WaitInterval = 500  # Half a second
 
         queue = mq.Queue(self.qm, request_queue_name)
 
@@ -155,6 +156,7 @@ class ResponseProducer(Producer):
                 else:
                     # Some other error condition.
                     raise
+
 
 req = RequestProducer()
 resp = ResponseProducer()

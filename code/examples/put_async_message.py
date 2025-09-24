@@ -40,21 +40,21 @@ queue = mq.Queue(qmgr, od, mq.CMQC.MQOO_SET | mq.CMQC.MQOO_OUTPUT)
 pmo = mq.PMO()
 pmo.Options = mq.CMQC.MQPMO_NO_SYNCPOINT | mq.CMQC.MQPMO_ASYNC_RESPONSE
 
-for opt in (mq.CMQC.MQQA_PUT_ALLOWED,mq.CMQC.MQQA_PUT_INHIBITED):
-    selectors={mq.CMQC.MQIA_INHIBIT_PUT:opt}
+for opt in (mq.CMQC.MQQA_PUT_ALLOWED, mq.CMQC.MQQA_PUT_INHIBITED):
+    selectors = {mq.CMQC.MQIA_INHIBIT_PUT: opt}
     queue.set(selectors)
-    for i in range(0,10):
+    for i in range(0, 10):
         md = mq.MD()
-        queue.put(message + str(i),md, pmo)
+        queue.put(message + str(i), md, pmo)
 
     sts = qmgr.stat(mq.CMQC.MQSTAT_TYPE_ASYNC_ERROR)
-    print("Queue: ",mq.CMQSTRC.MQQA_PUT_DICT[opt])
+    print("Queue: ", mq.CMQSTRC.MQQA_PUT_DICT[opt])
     print(f"Put Success: {sts.PutSuccessCount}")
     print(f"Put Failure: {sts.PutFailureCount}")
     print()
 
 # Make sure the queue is back in "allowed" state when we end
-selectors={mq.CMQC.MQIA_INHIBIT_PUT:mq.CMQC.MQQA_PUT_ALLOWED}
+selectors = {mq.CMQC.MQIA_INHIBIT_PUT: mq.CMQC.MQQA_PUT_ALLOWED}
 queue.set(selectors)
 
 queue.close()

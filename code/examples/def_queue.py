@@ -27,7 +27,7 @@ password = 'password'
 queue_name = 'MYQUEUE.1'
 queue_type = mq.CMQC.MQQT_LOCAL
 # Set a random max depth so it will change on each execution
-max_depth = random.randint(100,1000) * 100
+max_depth = random.randint(100, 1000) * 100
 
 args = []
 args.append(mq.CFST(Parameter=mq.CMQC.MQCA_Q_NAME, String=queue_name))

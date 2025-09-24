@@ -22,7 +22,7 @@ conn_info = '%s(%s)' % (host, port)
 user = 'app'
 password = 'password'
 
-priority = random.randint(0,9)
+priority = random.randint(0, 9)
 
 put_md = mq.MD()
 put_md.Priority = priority

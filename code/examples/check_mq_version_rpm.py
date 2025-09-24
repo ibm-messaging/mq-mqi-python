@@ -19,8 +19,8 @@ ts = rpm.TransactionSet()
 mi = ts.dbMatch('name', package_name)
 
 if not mi.count():
-    logging.info('Did not find package `%s` in RPM database.',package_name)
+    logging.info('Did not find package `%s` in RPM database.', package_name)
 else:
     for header in mi:
         version = header['version']
-        logging.info('Found package `%s`, version `%s`.',package_name, version)
+        logging.info('Found package `%s`, version `%s`.', package_name, version)

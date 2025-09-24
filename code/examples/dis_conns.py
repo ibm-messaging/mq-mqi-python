@@ -11,7 +11,7 @@ additional privileges. We use the CSP class to provide those credentials.
 
 import ibmmq as mq
 
-no_queues=False
+no_queues = False
 queue_manager = 'QM1'
 channel = 'DEV.ADMIN.SVRCONN'
 host = '127.0.0.1'
@@ -25,7 +25,7 @@ csp.CSPPassword = 'password'
 
 
 # The parameters needed for the INQUIRE CONNECTIONS command
-argsName   = {mq.CMQCFC.MQBACF_GENERIC_CONNECTION_ID: mq.ByteString('')}
+argsName = {mq.CMQCFC.MQBACF_GENERIC_CONNECTION_ID: mq.ByteString('')}
 
 
 qmgr = mq.connect(queue_manager, channel, conn_info, csp=csp)
@@ -37,8 +37,8 @@ try:
     response = pcf.MQCMD_INQUIRE_CONNECTION(argsName)
 except mq.MQMIError as e:
     if e.comp == mq.CMQC.MQCC_FAILED and e.reason == mq.CMQCFC.MQRCCF_CONNECTION_ID_ERROR:
-        no_conns=True
-        print('No connections matched.') # Should never happen!
+        no_conns = True
+        print('No connections matched.')  # Should never happen!
     else:
         raise
 else:

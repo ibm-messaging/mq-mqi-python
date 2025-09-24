@@ -18,12 +18,12 @@ password = 'password'
 
 topic_string = 'dev/'
 
-now=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 message = 'Hello from Python! Published at ' + now
 
 qmgr = mq.connect(queue_manager, channel, conn_info, user, password)
 
-topic = mq.Topic(qmgr, topic_string = topic_string)
+topic = mq.Topic(qmgr, topic_string=topic_string)
 topic.open(open_opts=mq.CMQC.MQOO_OUTPUT)
 topic.pub(message)
 print("Message published OK")

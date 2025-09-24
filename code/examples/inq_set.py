@@ -21,10 +21,11 @@ def dump_attrs(attributes):
 
         print(f"  {k} [{k_desc}] = {attributes[k]}")
 
+
 # Merge all the attribute strings into a single dict
-attr_dicts={}
-for d in CMQSTRC.MQIA_DICT, CMQSTRC.MQIACF_DICT, CMQSTRC.MQIACH_DICT, \
-         CMQSTRC.MQCA_DICT, CMQSTRC.MQCACF_DICT, CMQSTRC.MQCACH_DICT:
+attr_dicts = {}
+for d in (CMQSTRC.MQIA_DICT, CMQSTRC.MQIACF_DICT, CMQSTRC.MQIACH_DICT,
+          CMQSTRC.MQCA_DICT, CMQSTRC.MQCACF_DICT, CMQSTRC.MQCACH_DICT):
     attr_dicts.update(d)
 
 queue_manager = 'QM1'
@@ -67,21 +68,21 @@ q = mq.Queue(qmgr, od, CMQC.MQOO_SET | CMQC.MQOO_INQUIRE)
 # Use a random number for trigger depth so we can see it change with repeated executions.
 print()
 print("SET on Queue")
-now=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-selectors={CMQC.MQCA_TRIGGER_DATA:now,
-           CMQC.MQIA_TRIGGER_DEPTH:random.randint(1,99)
-          }
+now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+selectors = {CMQC.MQCA_TRIGGER_DATA: now,
+             CMQC.MQIA_TRIGGER_DEPTH: random.randint(1, 99)}
+
 # print("Set selectors: ", selectors)
 dump_attrs(selectors)
 q.set(selectors)
 
 # Doing an MQINQ for a queue, using the multi-selector approach. This should show
 # values including those we just did an MQSET for.
-selectors=[CMQC.MQCA_Q_DESC,
-           CMQC.MQIA_TRIGGER_DEPTH,
-           CMQC.MQCA_BACKOUT_REQ_Q_NAME,
-           CMQC.MQCA_TRIGGER_DATA,
-           CMQC.MQIA_CURRENT_Q_DEPTH]
+selectors = [CMQC.MQCA_Q_DESC,
+             CMQC.MQIA_TRIGGER_DEPTH,
+             CMQC.MQCA_BACKOUT_REQ_Q_NAME,
+             CMQC.MQCA_TRIGGER_DATA,
+             CMQC.MQIA_CURRENT_Q_DEPTH]
 attrs = q.inquire(selectors)
 
 print()
