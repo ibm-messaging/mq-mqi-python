@@ -1,7 +1,7 @@
 """Setup tests environment."""
 import os.path
 from unittest import TestCase
-from unittest import main # pylint: disable=unused-import
+from unittest import main  # pylint: disable=unused-import
 
 import ibmmq as mq
 
@@ -82,43 +82,33 @@ class Tests(TestCase):
         """Create queue."""
         if not attrs:
             attrs = []
-            attrs.append(mq.CFST(Parameter=mq.CMQC.MQCA_Q_NAME,
-                                    String=utils.py3str2bytes(queue_name)))
-            attrs.append(mq.CFIN(Parameter=mq.CMQC.MQIA_Q_TYPE,
-                                    Value=mq.CMQC.MQQT_LOCAL))
-            attrs.append(mq.CFIN(Parameter=mq.CMQC.MQIA_MAX_Q_DEPTH,
-                                    Value=max_depth))
-            attrs.append(mq.CFIN(Parameter=mq.CMQCFC.MQIACF_REPLACE,
-                                    Value=mq.CMQCFC.MQRP_YES))
+            attrs.append(mq.CFST(Parameter=mq.CMQC.MQCA_Q_NAME, String=utils.py3str2bytes(queue_name)))
+            attrs.append(mq.CFIN(Parameter=mq.CMQC.MQIA_Q_TYPE, Value=mq.CMQC.MQQT_LOCAL))
+            attrs.append(mq.CFIN(Parameter=mq.CMQC.MQIA_MAX_Q_DEPTH, Value=max_depth))
+            attrs.append(mq.CFIN(Parameter=mq.CMQCFC.MQIACF_REPLACE, Value=mq.CMQCFC.MQRP_YES))
 
         self.pcf.MQCMD_CREATE_Q(attrs)
 
     def delete_queue(self, queue_name):
         """Delete queue."""
         attrs = []
-        attrs.append(mq.CFST(Parameter=mq.CMQC.MQCA_Q_NAME,
-                                String=utils.py3str2bytes(queue_name)))
-        attrs.append(mq.CFIN(Parameter=mq.CMQCFC.MQIACF_PURGE,
-                                Value=mq.CMQCFC.MQPO_YES))
+        attrs.append(mq.CFST(Parameter=mq.CMQC.MQCA_Q_NAME, String=utils.py3str2bytes(queue_name)))
+        attrs.append(mq.CFIN(Parameter=mq.CMQCFC.MQIACF_PURGE, Value=mq.CMQCFC.MQPO_YES))
         self.pcf.MQCMD_DELETE_Q(attrs)
 
     def create_channel(self, channel_name, attrs=None):
         """Create channle."""
         if not attrs:
             attrs = []
-            attrs.append(mq.CFST(Parameter=mq.CMQCFC.MQCACH_CHANNEL_NAME,
-                                    String=utils.py3str2bytes(channel_name)))
-            attrs.append(mq.CFIN(Parameter=mq.CMQCFC.MQIACH_CHANNEL_TYPE,
-                                    Value=mq.CMQXC.MQCHT_SVRCONN))
-            attrs.append(mq.CFIN(Parameter=mq.CMQCFC.MQIACF_REPLACE,
-                                    Value=mq.CMQCFC.MQRP_YES))
+            attrs.append(mq.CFST(Parameter=mq.CMQCFC.MQCACH_CHANNEL_NAME, String=utils.py3str2bytes(channel_name)))
+            attrs.append(mq.CFIN(Parameter=mq.CMQCFC.MQIACH_CHANNEL_TYPE, Value=mq.CMQXC.MQCHT_SVRCONN))
+            attrs.append(mq.CFIN(Parameter=mq.CMQCFC.MQIACF_REPLACE, Value=mq.CMQCFC.MQRP_YES))
         self.pcf.MQCMD_CREATE_CHANNEL(attrs)
 
     def delete_channel(self, channel_name):
         """Delete channel."""
         attrs = []
-        attrs.append(mq.CFST(Parameter=mq.CMQCFC.MQCACH_CHANNEL_NAME,
-                                String=utils.py3str2bytes(channel_name)))
+        attrs.append(mq.CFST(Parameter=mq.CMQCFC.MQCACH_CHANNEL_NAME, String=utils.py3str2bytes(channel_name)))
         self.pcf.MQCMD_DELETE_CHANNEL(attrs)
 
     def create_auth_rec(self, attrs):

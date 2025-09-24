@@ -68,13 +68,13 @@ class TestMP(unittest.TestCase):
                 mq.CMQCFC.MQIACF_PURGE: mq.CMQCFC.MQPO_YES}
         pcf.MQCMD_DELETE_Q(args)
 
-    def get_value_length(self, property_type, property_value = ''):
+    def get_value_length(self, property_type, property_value=''):
         """How many bytes does each property type use"""
         value_length = 0
         if property_type == mq.CMQC.MQTYPE_BOOLEAN:
             value_length = 4
         elif property_type == mq.CMQC.MQTYPE_BYTE_STRING:
-            value_length=len(property_value)
+            value_length = len(property_value)
         elif property_type == mq.CMQC.MQTYPE_INT8:
             value_length = 1
         elif property_type == mq.CMQC.MQTYPE_INT16:
@@ -88,7 +88,7 @@ class TestMP(unittest.TestCase):
         elif property_type == mq.CMQC.MQTYPE_FLOAT64:
             value_length = 8
         elif property_type == mq.CMQC.MQTYPE_STRING:
-            value_length=len(property_value)
+            value_length = len(property_value)
         elif property_type == mq.CMQC.MQTYPE_NULL:
             value_length = 0
 
@@ -148,7 +148,7 @@ class TestMP(unittest.TestCase):
         if not value_length:
             value_length = self.get_value_length(property_type)
         if property_modify:
-            property_name = self.msg_prop_name*2
+            property_name = self.msg_prop_name * 2
         else:
             property_name = self.msg_prop_name
 
@@ -166,7 +166,8 @@ class TestMP(unittest.TestCase):
         message_hdl_get = self.work_with_property(self.msg_prop_value_bytes, mq.CMQC.MQTYPE_BYTE_STRING)
 
         try:
-            message_hdl_get.properties.get(self.msg_prop_name, max_value_length=len(self.msg_prop_value_bytes)//2)
+            # Use "//" to always get an int value
+            message_hdl_get.properties.get(self.msg_prop_name, max_value_length=len(self.msg_prop_value_bytes) // 2)
         except mq.MQMIError as e:
             self.assertEqual(e.reason, mq.CMQC.MQRC_PROPERTY_VALUE_TOO_BIG, e)
 
@@ -239,6 +240,7 @@ class TestMP(unittest.TestCase):
 
         except mq.MQMIError as e:
             self.assertEqual(e.reason, mq.CMQC.MQRC_PROPERTY_NOT_AVAILABLE, e)
+
 
 if __name__ == "__main__":
     unittest.main()

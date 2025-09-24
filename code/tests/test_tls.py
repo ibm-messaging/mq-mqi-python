@@ -204,15 +204,15 @@ class TestTLS(Tests):
         qmgr = mq.QueueManager(None)
         conn_info = mq.ensure_bytes('{0}({1})'.format(self.host, self.port))
 
-        cd = mq.CD(Version=mq.CMQXC.MQCD_VERSION_7, # pylint: disable=C0103
-                      ChannelName=self.tls_channel_name,
-                      ConnectionName=conn_info,
-                      SSLCipherSpec=self.cypher_spec)
+        cd = mq.CD(Version=mq.CMQXC.MQCD_VERSION_7,  # pylint: disable=C0103
+                   ChannelName=self.tls_channel_name,
+                   ConnectionName=conn_info,
+                   SSLCipherSpec=self.cypher_spec)
 
         sco = mq.SCO(Version=mq.CMQC.MQSCO_VERSION_5,
-                        KeyRepository=os.path.join(self.key_repo_location_client,
-                                                   self.certificate_label_client),
-                        CertificateLabel=self.certificate_label_client)
+                     KeyRepository=os.path.join(self.key_repo_location_client,
+                                                self.certificate_label_client),
+                     CertificateLabel=self.certificate_label_client)
 
         opts = mq.CMQC.MQCNO_HANDLE_SHARE_NO_BLOCK
 
@@ -223,6 +223,7 @@ class TestTLS(Tests):
             qmgr.disconnect()
 
         self.assertTrue(is_connected)
+
 
 if __name__ == '__main__':
     main(module='test_tls')

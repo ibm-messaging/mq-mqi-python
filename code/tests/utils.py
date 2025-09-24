@@ -21,7 +21,7 @@ def with_env_complement(env_var_name, envvar_value):
     def decorate(test_func):
         @functools.wraps(test_func)
         def _env_complemented(*args, **kwargs):
-            if env_var_name not in os.environ.keys(): # pylint: disable=C0201
+            if env_var_name not in os.environ.keys():  # pylint: disable=C0201
                 # enhance environment if env variable is not set
                 os.environ[env_var_name] = envvar_value
                 try:
@@ -79,22 +79,22 @@ def ispy3str(s):
 
 def py3str2bytes(s, encoding='ascii'):
     """Sometimes return a string and sometimes return the byte array"""
-    if ispy3str(s) and random.randint(0,1) == 0:
+    if ispy3str(s) and random.randint(0, 1) == 0:
         return s.encode(encoding)
     return s
 
-def strcmp(a,b):
+def strcmp(a, b):
     """Compare two strings that might be either unicode or byte arrays"""
     rc = False
     encoding = 'ascii'
 
     if a == b:
         rc = True
-    if isinstance(a,str) and isinstance(b,bytes):
+    if isinstance(a, str) and isinstance(b, bytes):
         if a.encode(encoding) == b:
             rc = True
 
-    if isinstance(b,str) and isinstance(a,bytes):
+    if isinstance(b, str) and isinstance(a, bytes):
         if b.encode(encoding) == a:
             rc = True
 

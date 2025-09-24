@@ -150,7 +150,7 @@ class TestGet(Tests):
         if version_info.major >= 3:
             self.queue.put(bytes(4097), md_put)
         else:
-            self.queue.put(bytes(b'\0'*4097), md_put)
+            self.queue.put(bytes(b'\0' * 4097), md_put)
 
         md_get = mq.MD()
         message = self.queue.get(None, md_get)
@@ -164,7 +164,7 @@ class TestGet(Tests):
         if version_info.major >= 3:
             self.queue.put(bytes(4097), md_put)
         else:
-            self.queue.put(bytes(b'\0'*4097), md_put)
+            self.queue.put(bytes(b'\0' * 4097), md_put)
         gmo = mq.GMO()
         gmo.Options = mq.CMQC.MQGMO_ACCEPT_TRUNCATED_MSG
 

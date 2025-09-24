@@ -51,15 +51,13 @@ class TestPubSub(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
                 try:
                     q = queue_info[mq.CMQC.MQCA_Q_NAME]
                     args = {mq.CMQC.MQCA_Q_NAME: q,
-                            mq.CMQC.MQIA_Q_TYPE: mq.CMQC.MQQT_LOCAL
-                           }
+                            mq.CMQC.MQIA_Q_TYPE: mq.CMQC.MQQT_LOCAL}
                     pcf.MQCMD_DELETE_Q(args)
                 except mq.MQMIError:
                     pass
         try:
             sub_prefix = config.MQ.QUEUE.PREFIX + "*"
-            args = {mq.CMQCFC.MQCACF_SUB_NAME: sub_prefix
-                   }
+            args = {mq.CMQCFC.MQCACF_SUB_NAME: sub_prefix}
             response = pcf.MQCMD_INQUIRE_SUBSCRIPTION(args)
         except mq.MQMIError as e:
             if e.comp == mq.CMQC.MQCC_FAILED and e.reason == mq.CMQC.MQRC_NO_SUBSCRIPTION:
@@ -111,8 +109,7 @@ class TestPubSub(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
         if sub_desc["Options"] & mq.CMQC.MQSO_DURABLE:
             subname = sub_desc.get_vs("SubName")
             pcf = mq.PCFExecute(self.qmgr)
-            args = {mq.CMQCFC.MQCACF_SUB_NAME: subname
-                   }
+            args = {mq.CMQCFC.MQCACF_SUB_NAME: subname}
             pcf.MQCMD_DELETE_SUBSCRIPTION(args)
 
     def delete_queue(self, sub_desc, queue_name):
@@ -146,7 +143,7 @@ class TestPubSub(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
     def pub(self, msg, topic_string, *opts):
         topic = mq.Topic(self.qmgr, topic_string=topic_string)
         topic.open(open_opts=mq.CMQC.MQOO_OUTPUT)
-        if not isinstance(msg, (str,bytes)):
+        if not isinstance(msg, (str, bytes)):
             raise AttributeError('msg must be bytes or str to publish to topic.')  # py3
         topic.pub(msg, *opts)
         topic.close()
@@ -154,7 +151,7 @@ class TestPubSub(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
     def pub_rfh2(self, msg, topic_string, *opts):
         topic = mq.Topic(self.qmgr, topic_string=topic_string)
         topic.open(open_opts=mq.CMQC.MQOO_OUTPUT)
-        if not isinstance(msg, (str,bytes)):
+        if not isinstance(msg, (str, bytes)):
             raise AttributeError('msg must be bytes or str to publish to topic.')  # py3
         topic.pub_rfh2(msg, *opts)
         topic.close()
@@ -175,7 +172,7 @@ class TestPubSub(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
     @staticmethod
     def create_get_opts():
         get_opts = mq.GMO(
-            Options=mq.CMQC.MQGMO_NO_SYNCPOINT + mq.CMQC.MQGMO_FAIL_IF_QUIESCING + mq.CMQC.MQGMO_WAIT)
+            Options=mq.CMQC.MQGMO_NO_SYNCPOINT | mq.CMQC.MQGMO_FAIL_IF_QUIESCING | mq.CMQC.MQGMO_WAIT)
         get_opts["WaitInterval"] = 15000
         return get_opts
 
@@ -273,10 +270,9 @@ class TestPubSub(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
         sub.sub(sub_desc=sub_desc)
 
         # publish (put)
-        put_mqmd = mq.md(
-                            Format=mq.CMQC.MQFMT_RF_HEADER_2,
-                            Encoding=273,
-                            CodedCharSetId=1208)
+        put_mqmd = mq.md(Format=mq.CMQC.MQFMT_RF_HEADER_2,
+                         Encoding=273,
+                         CodedCharSetId=1208)
 
         put_opts = mq.pmo()
 
@@ -296,8 +292,8 @@ class TestPubSub(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
         self.pub_rfh2(msg, topic_string, put_mqmd, put_opts, [put_rfh2])
         get_opts = mq.GMO(Version=mq.CMQC.MQGMO_VERSION_4,
                              WaitInterval=15000,
-                             Options=mq.CMQC.MQGMO_NO_SYNCPOINT + \
-                                    mq.CMQC.MQGMO_FAIL_IF_QUIESCING + \
+                             Options=mq.CMQC.MQGMO_NO_SYNCPOINT |
+                                    mq.CMQC.MQGMO_FAIL_IF_QUIESCING |
                                     mq.CMQC.MQGMO_WAIT)
         get_rfh2_list = []
         data = sub.get_rfh2(None, mq.md(Version=mq.CMQC.MQMD_VERSION_2), get_opts, get_rfh2_list)

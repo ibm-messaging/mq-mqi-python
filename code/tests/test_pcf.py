@@ -460,5 +460,6 @@ class TestPCF(Tests):
         self.assertFalse(pcf.reply_queue)
         self.assertFalse(pcf.reply_queue_name)
 
+
 if __name__ == "__main__":
     main(module="test_pcf")

@@ -83,5 +83,6 @@ class Testh2py(unittest.TestCase):
 
         self.assertTrue(test_passed, 'Test does not found DUMMY duplicate entries!')
 
+
 if __name__ == "__main__":
     unittest.main()

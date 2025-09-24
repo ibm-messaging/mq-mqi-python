@@ -99,10 +99,10 @@ class TestMQ80(unittest.TestCase):
         """Connecting without user credentials should succeed for a queue
         manager that has optional user/password connection authentication.
         """
-        qmgr = mq.connect(self.name, self.channel, '{0}({1})'.format(
-                self.host, self.port))
+        qmgr = mq.connect(self.name, self.channel, '{0}({1})'.format(self.host, self.port))
         self.assertTrue(qmgr.is_connected)
         qmgr.disconnect()
+
 
 if __name__ == "__main__":
     unittest.main()
