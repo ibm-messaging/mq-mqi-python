@@ -13,6 +13,8 @@ code/tests/secrets
 code/develop-eggs/*
 build/*
 
+jsdHdrs
+
 # Temporary and binary files
 *.*~
 *.egg-info*

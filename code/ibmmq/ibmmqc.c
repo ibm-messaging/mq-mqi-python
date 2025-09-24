@@ -69,6 +69,10 @@ elements of a tuple. Any other returned elements precede those in the tuple.\
 #include <cmqcfc.h>
 #include <cmqxc.h>
 
+#if MQCMDL_CURRENT_LEVEL < 910
+#error Need to build/install against MQ 9.1 or later
+#endif
+
 #include "ibmmqc.h"
 
 /*

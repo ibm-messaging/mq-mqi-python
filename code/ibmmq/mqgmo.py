@@ -28,7 +28,7 @@ class GMO(MQOpts):
                 ['ReturnedLength', CMQC.MQRL_UNDEFINED, MQLONG_TYPE], ]
 
         gmo_current_version = ibmmqc.__strucversions__.get("gmo", 1)
-        if gmo_current_version >= 4:
+        if gmo_current_version >= CMQC.MQGMO_VERSION_4:
             opts += [
                 ['_Reserved2', (0), MQLONG_TYPE],
                 ['MsgHandle', (0), 'q']]

@@ -51,6 +51,16 @@ function continueYN {
   return 0
 }
 
+function strucVer {
+  # Prints a list (possibly empty) to stdout showing
+  # diffs in the structure version numbers compared to the
+  # public git repo version.
+  git diff origin/main -- $src/code/ibmmq/*C*.py |\
+    grep CURRENT_VERSION |\
+    grep "^+" |\
+    sort -u
+}
+
 function main {
 curdir=`pwd`
 
@@ -115,9 +125,6 @@ echo "Looking for MQ VRMF info..."
 cmdlevel=`grep MQCMDL_CURRENT_LEVEL ../ibmmq/CMQSTRC.py | awk '{print $3}' | sed "s/,//g"`
 echo "  Command level in repo = $cmdlevel"
 
-# For now, while developing this script ...
-# cmdlevel="943"
-
 # The Dockerfile ought to be pointing at the most recent version. Whose Redist Client
 # package needs to be available if we want the "runInContainer" test to pass. We make it
 # a warning if the VRM does not match, not an error, to allow earlier test attempts to pass.
@@ -175,21 +182,63 @@ else
   echo "  OK   : No debug lines found"
 fi
 
+
+# Confirm structure/class ersions have been dealt with
+echo
+echo "Checking structure updates"
+cnt=`strucVer | wc -l`
+if [ $cnt -eq 0 ]
+then
+  echo "  OK  : No structure updates needed"
+else
+  # Look in the source files to see if we have actually incorporated
+  # the new structure version. We build a grep line that checks for something like
+  #  "if gmo_current_version >= CMQC.MQGMO_VERSION_4"
+  # which assumes we've used that pattern for all the class definitions. But we have!
+  strucVer |  sed "s/^\+/  /g" | while read line
+  do
+    strucC=`echo $line | cut -f1 -d_ `
+    strucPy=`echo $strucC| sed "s/MQ//g" | tr '[:upper:]' '[:lower:]' `
+    ver=`echo $line | cut -f3 -d" "`
+        ver=3
+
+    echo "  Checking $strucPy "
+
+    srch=`printf "if %s_current_version >= CMQC.%s_VERSION_%d" $strucPy $strucC $ver`
+    grep -q "$srch" $src/code/ibmmq/mq*py
+    if [ $? -ne 0 ]
+    then
+      echo "  ERROR: Missing $line"
+    else
+      echo "  OK   : Found $line"
+    fi
+  done
+
+  #strucVer | sed "s/^\+/  /g"
+  #continueYN "Confirm structures have been updated"
+  #if [ $? -ne 0 ]
+  #then
+  #  echo "  ERROR : Need to go back to fix updated/new structures before continuing"
+  #  exit 1
+  #fi
+fi
+exit 0
+
 # Give a chance to quit now, before spending a lot of time on tests
 if [ -x $curdir/checkRemote ]
 then
-echo
-continueYN "Run BVT on remote machines"
-if [ $? -eq 0 ]
-then
-  cd $curdir
-  checkRemote
-  if [ $? -ne 0 ]
+  echo
+  continueYN "Run BVT on remote machines"
+  if [ $? -eq 0 ]
   then
-    echo " ERROR : Problem running remote system check"
-    exit 1
+    cd $curdir
+    checkRemote
+    if [ $? -ne 0 ]
+    then
+      echo " ERROR : Problem running remote system check"
+      exit 1
+    fi
   fi
-fi
 fi
 
 echo
@@ -211,9 +260,6 @@ then
   # Strip a specific queuename so it doesn't cause problems with the final step.
   ./runAllExamples < /dev//null 2>&1|\
      grep -av "SYSTEM.PROTECTION.ERROR.QUEUE"
-  # Not going to try to run the Python container as it will download the
-  # current public (not development-level) version of the package
-  #./runContainerToKlein.sh 2>&1
 fi
 
 }

@@ -10,7 +10,7 @@
 ARG BASE_IMAGE=registry.access.redhat.com/ubi8/python-312
 FROM $BASE_IMAGE
 
-ENV VRMF=9.4.3.0 \
+ENV VRMF=9.4.4.0 \
     genmqpkg_incnls=1 \
     genmqpkg_incsdk=1 \
     genmqpkg_inctls=1

@@ -26,7 +26,7 @@ class STS(MQOpts):
                 ['ResolvedQMgrName', b'', '48s']]
 
         sts_current_version = ibmmqc.__strucversions__.get("sts", 1)
-        if sts_current_version >= 2:
+        if sts_current_version >= CMQC.MQSTS_VERSION_2:
             opts += [
                 # ObjectString
                 ['ObjectStringVSPtr', 0, 'P'],

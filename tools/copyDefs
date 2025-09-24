@@ -161,7 +161,7 @@ then
   doLocalBuild
 else
   # Where to temporarily stage the files as they are copied from the build machine
-  jsdHdrs=$curdir/jsdHdrs
+  jsdHdrs=$curdir/../jsdHdrs
   # This is used to hold a copy of the files for various analyses
   flattenDir=$jsdHdrs/flat
   rm -rf $jsdHdrs/*
@@ -247,18 +247,24 @@ do
     # keep the original name as they do not contain variable contents.
     if [ $b = "CMQC" ]
     then
-        cp $f $srcDir/_$b"_"$pyplat.py
-      else
+        cat $f > $srcDir/_$b"_"$pyplat.py
+    elif [ $b = "CMQSTRC" ]
+    then
+        cat $f > $srcDir/$b.py
+    else
         # The generation tool is currently duplicating some defs that are actually
         # unnecessary. So remove them completely until we fix the generator.
-        cat $f | grep -v MQTRANSPORTEXIT | grep -Ev "MQDCC_.*=" > $srcDir
-      fi
+        cat $f | grep -v MQTRANSPORTEXIT |\
+          grep -Ev "MQDCC_.*=" > $srcDir/$b.py
+    fi
   done
 done
 
 # Need to create this block for each structure that has an associated Python class
 # with an ifdef around it:
 #   PyDict_SetItemString(v,"cd", PyLong_FromLong((long)MQCD_CURRENT_VERSION));
+# This code detects any NEW structures and prints the lnie that then needs to be
+# copied into the C part.
 strucVers=$jsdHdrs/strucVers.c
 find $flattenDir -name "*py" |\
     xargs grep CURRENT_VERSION |\
@@ -286,8 +292,14 @@ then
   echo "Copy $strucVers into ibmmqc.c in PyInit_ibmmqc function"
 fi
 
-# Add more checks in here after the first release, when we'll have a meaningful
-# opportunity to do "git diff".
+# Report changes to the structure versions so we can have a look at what might need to be done
+echo
+echo "Looking for structure updates"
+git diff origin/main -- $srcDir/*C*.py |\
+  grep CURRENT_VERSION |\
+  grep "^+" |\
+  sort -u
+echo "End of structure check"
 
 echo
 echo "Done."
