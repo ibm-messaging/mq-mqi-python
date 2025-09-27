@@ -137,4 +137,4 @@ class CD(MQOpts):
 
 
 # Backward compatibility
-cd = CD
+cd = CD  # pylint: disable=invalid-name

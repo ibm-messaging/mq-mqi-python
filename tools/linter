@@ -19,14 +19,18 @@ fi
 # pip install flake8 pylint
 # pip install ddt
 
+if false
+then
 pip uninstall -y ibmmq
 cd $root
 pip install -e .
+fi
 
 dirs=""
 dirs="$dirs $root/code/examples"
 dirs="$dirs $root/code/ibmmq"
 dirs="$dirs $root/code/tests"
+files="setup.py"
 
 args="$*"
 if [ -z "$args" ]
@@ -34,20 +38,24 @@ then
   args="."
 fi
 
-for d in  $dirs
+for d in $dirs $files
 do
-  cd $d
+  if [ -d $d ]
+  then
+    cd $d
+  else
+    cd $root
+    args=$d
+  fi
+
   # Lots of complaints that classes from the "typing" module
   # are not used. But they ARE needed in the comment/annotation processing.
   flake8 --config=$root/tox.ini $args | grep -v typing
 
   export PYTHONPATH=$root/code/ibmmq:.
   # Examples have a lot of variables that really should be considered constants so we
-  # bypass that subclass of the invalid-name test.
-  # Similarly bypass for the backwards-compatibility class names
-  pylint --rcfile=$root/pylintrc $args 2>&1 |\
-    grep -v UPPER_CASE |\
-    grep -v "Class name.*conform to PascalCase" |\
-    grep -v "Instance.*has no"
+  # bypass that subclass of the invalid-name test via the pylintrc config. Some other explicit
+  # warnings disabled in the source code with comment directives.
+  pylint --rcfile=$root/pylintrc $args 2>&1 
 
 done

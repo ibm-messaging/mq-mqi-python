@@ -12,6 +12,8 @@ from mqpcf import *
 
 from mqqmgr import *
 
+# pylint: disable=no-member
+
 try:
     from typing import Any, Union, Dict
 except ImportError:

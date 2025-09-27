@@ -42,4 +42,4 @@ class PMO(MQOpts):
 
 
 # Backward compatibility
-pmo = PMO
+pmo = PMO  # pylint: disable=invalid-name

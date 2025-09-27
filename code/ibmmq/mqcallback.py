@@ -10,6 +10,8 @@ from mqerrors import *
 from ibmmq import CMQC, GMO, MD, CBC, CBD, ibmmqc
 
 
+# pylint: disable=no-member
+
 _callback_lock = Lock()
 
 # A couple of classes hold data that's given to the callback function

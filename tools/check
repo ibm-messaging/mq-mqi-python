@@ -74,7 +74,7 @@ trap cleanup EXIT
 echo
 echo "Looking for version number consistency..."
 cd $src
-v=`grep "version.*=.*[0-9]" setup.py | awk '{print $3}' | sed "s/'//g"`
+v=`grep "VERSION.*=.*[0-9]" setup.py | awk '{print $3}' | sed "s/'//g"`
 echo "  Version in setup.py = $v"
 
 echo 0 > $errFile
@@ -177,7 +177,7 @@ cnt=`cat $errFile | wc -l `
 if [ $cnt -ne 0 ]
 then
   echo "  WARN : Debug printing may need removal"
-  exit 1
+  # exit 1
 else
   echo "  OK   : No debug lines found"
 fi
@@ -222,7 +222,6 @@ else
   #  exit 1
   #fi
 fi
-exit 0
 
 # Give a chance to quit now, before spending a lot of time on tests
 if [ -x $curdir/checkRemote ]
@@ -242,7 +241,7 @@ then
 fi
 
 echo
-continueYN "Continue to run tests"
+continueYN "Continue to run unit tests"
 if [ $? -eq 0 ]
 then
   echo "Running all testcases..."
@@ -281,6 +280,9 @@ fi
 
 main 2>&1 |\
    tee $logFile
+
+echo
+echo "---------------------"
 grep -aq -E "WARN|ERR" $logFile
 if [ $? -eq 0 ]
 then

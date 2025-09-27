@@ -15,7 +15,7 @@ import mqqargs
 
 import mqcallback
 
-unicode = str
+# unicode = str
 
 class Queue(MQObject):
     """ Queue encapsulates all the Queue I/O operations, including
@@ -350,7 +350,7 @@ class Queue(MQObject):
 
     def get_name(self) -> str:
         """Return the name of the queue as a string"""
-        return self.__q_desc.ObjectName.decode(default.bytes_encoding).strip()
+        return self.__q_desc.ObjectName.decode(EncodingDefault.bytes_encoding).strip()
 
     def get_queue_manager(self) -> QueueManager:
         """ Get the queue manager object.

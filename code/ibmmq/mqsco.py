@@ -45,4 +45,4 @@ class SCO(MQOpts):
 
 
 # Backward compatibility
-sco = SCO
+sco = SCO  # pylint: disable=invalid-name

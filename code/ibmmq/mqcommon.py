@@ -5,7 +5,7 @@
 
 import struct
 
-class default:
+class EncodingDefault:
     """Global encoding options"""
     ccsid = 1208
     bytes_encoding = 'utf8'
@@ -36,7 +36,7 @@ def ensure_not_unicode(value) -> None:
         msg = 'Python 3 style string (unicode) found but not allowed here: `{0}`. Convert to bytes.'
         raise TypeError(msg.format(value))
 
-def ensure_strings_are_bytes(s, encoding=default.mqi_encoding) -> bytes:
+def ensure_strings_are_bytes(s, encoding=EncodingDefault.mqi_encoding) -> bytes:
     """MQI CHAR fields need to be handled as byte arrays, even if provided
     via Python 3 unicode strings
     """

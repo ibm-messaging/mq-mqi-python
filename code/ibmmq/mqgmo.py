@@ -37,4 +37,4 @@ class GMO(MQOpts):
 
 
 # Backward compatibility
-gmo = GMO
+gmo = GMO  # pylint: disable=invalid-name

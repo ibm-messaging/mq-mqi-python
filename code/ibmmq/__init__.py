@@ -200,7 +200,7 @@ def get_versions():
     """Return an object containing versions for this library and the underlying MQ"""
     return {"module": __version__, "MQ": __cmdlevel__}
 
-def to_string(v, encoding=default.bytes_encoding):
+def to_string(v, encoding=EncodingDefault.bytes_encoding):
     """Use the specified encoding to convert MQCHAR[] to a Python3 string, stripping trailing NULs/spaces.
     If there's an error, return the input unchanged.
     """

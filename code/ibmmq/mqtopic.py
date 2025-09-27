@@ -12,8 +12,6 @@ from mqsub import *
 
 from mqqmgr import *
 
-unicode = str
-
 # Publish Subscribe support - Hannes Wagener 2011
 class Topic(MQObject):
     """ Topic encapsulates all the Topic I/O operations, including

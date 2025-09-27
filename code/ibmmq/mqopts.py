@@ -174,7 +174,7 @@ class MQOpts:
                 x = x + 1
         return self
 
-    def to_string(self, encoding=default.bytes_encoding):
+    def to_string(self, encoding=EncodingDefault.bytes_encoding):
         """Given an MQI class (eg MQDLH), try to convert any string-like byte arrays into Python 3 strings.
         Fields that are known to be truly binary (like MsgId) are excluded from the conversion, but there
         may still be times that the output is not what you expected. This does modify the input structure

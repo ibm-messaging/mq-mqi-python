@@ -9,7 +9,7 @@ from ibmmq import CMQC, ibmmqc
 
 # This would have to change for running on a z/OS system where
 # the dynamic queue prefix is "CSQ.*"
-_default_dq_prefix = b'AMQ.*'
+_DEFAULT_DQ_PREFIX = b'AMQ.*'
 
 class OD(MQOpts):
     """ Construct an MQOD Structure with default values as per MQI.
@@ -21,7 +21,7 @@ class OD(MQOpts):
                 ['ObjectType', CMQC.MQOT_Q, MQLONG_TYPE],
                 ['ObjectName', b'', '48s'],
                 ['ObjectQMgrName', b'', '48s'],
-                ['DynamicQName', _default_dq_prefix, '48s'],
+                ['DynamicQName', _DEFAULT_DQ_PREFIX, '48s'],
                 ['AlternateUserId', b'', '12s'],
                 ['RecsPresent', 0, MQLONG_TYPE],
                 ['KnownDestCount', 0, MQLONG_TYPE],
@@ -71,4 +71,4 @@ class OD(MQOpts):
 
 
 # Backward compatibility
-od = OD
+od = OD  # pylint: disable=invalid-name

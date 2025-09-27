@@ -47,4 +47,4 @@ class MD(MQOpts):
 
 
 # Backward compatibility
-md = MD
+md = MD  # pylint: disable=invalid-name

@@ -22,8 +22,8 @@ class QueueManager(MQObject):
     the connection may be deferred until a call to connect().
     """
     def __init__(self, name: Optional[Union[str, bytes]] = '', disconnect_on_exit: bool = True,
-                 bytes_encoding: str = default.bytes_encoding,
-                 default_ccsid: int = default.ccsid) -> None:
+                 bytes_encoding: str = EncodingDefault.bytes_encoding,
+                 default_ccsid: int = EncodingDefault.ccsid) -> None:
         """ Connect to the Queue Manager 'name' (default value '').
         If 'name' is None, don't connect now, but defer the connection until connect() is called.
         Input 'bytes_encoding'  and 'default_ccsid' are the encodings that will be used in PCF, MQPUT and MQPUT1 calls
@@ -383,7 +383,7 @@ class QueueManager(MQObject):
         """ Get the queue manager name that was used during MQCONN(X).
         """
         if self.__name:
-            return self.__name.decode(default.bytes_encoding).strip()
+            return self.__name.decode(EncodingDefault.bytes_encoding).strip()
         raise PYIFError('not connected')
 
     # Backward compatibility
@@ -543,7 +543,7 @@ class QueueManager(MQObject):
 # ################################################################################################################################
 
 def connect(queue_manager, channel=None, conn_info=None, user=None, password=None, disconnect_on_exit=True,
-            bytes_encoding=default.bytes_encoding, default_ccsid=default.ccsid,
+            bytes_encoding=EncodingDefault.bytes_encoding, default_ccsid=EncodingDefault.ccsid,
             cd=None, cno=None, csp=None, sco=None, bno=None
             ):
     """ A convenience wrapper for connecting to MQ queue managers without needing to explicitly create a qmgr object first.
