@@ -130,7 +130,8 @@ static char* PyBytesOrText_AsStringAndSize(PyObject *txtObj, MQLONG *outLen) {
     return PyBytes_AsString(txtObj);
   } else if (PyUnicode_Check(txtObj)) {
     PyObject *bytesObj;
-    bytesObj = PyUnicode_AsUTF8String(txtObj);  // PyUnicode_AsUTF8 will return NULL on binary data! Text only.
+    // Using the generic codec so it conforms to the "Limited API" available at Python 3.9
+    bytesObj = PyUnicode_AsEncodedString(txtObj,"utf-8","ignore");  // PyUnicode_As[UTF8] returns NULL on binary data! Text only.
     if (bytesObj != NULL) {
       if (outLen != NULL) {
         (*outLen) = (MQLONG)PyBytes_Size(bytesObj);
@@ -1260,6 +1261,7 @@ static PyObject* ibmmqc_MQSETMP(PyObject *self, PyObject *args) {
   Py_ssize_t value_length = 0;
 
   PyObject *property_value_object;
+  PyObject *v;
 
   if (!PyArg_ParseTuple(args, "lLy#y#y#lOl",
                               &lQmgrHandle, &msg_handle,
@@ -1338,7 +1340,8 @@ static PyObject* ibmmqc_MQSETMP(PyObject *self, PyObject *args) {
 
     /* String value */
     case MQTYPE_STRING:
-      value = (PMQBYTE)PyUnicode_AsUTF8(property_value_object);
+      v = PyUnicode_AsEncodedString(property_value_object,"utf-8","ignore");
+      value = PyBytes_AsString(v); 
       break;
 
     /* 32-bit floating-point number value */

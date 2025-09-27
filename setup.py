@@ -8,16 +8,16 @@
 import os
 import platform
 
-from setuptools import setup, Extension
-
 from shutil import which
 from struct import calcsize
+
+from setuptools import setup, Extension
 
 # This is the only place where package version number is set!
 # The version should correspond to PEP440 and gets normalised if
 # not in the right format. VRM can be followed with a|b|rc with a further numeric
 # to indicate alpha/beta/release candidate versions.
-version = '2.0.0b1'
+VERSION = '2.0.0b2'
 
 # If the MQ SDK is in a non-default location, set MQ_FILE_PATH environment variable.
 # If that env var is not set, then use a default root of the current directory (which
@@ -35,8 +35,8 @@ def get_windows_settings():
     """ Windows settings.
     """
 
-    library_dirs=[r'c:\Program Files\IBM\MQ\tools\Lib64']
-    include_dirs=[r'c:\Program Files\IBM\MQ\tools\c\include']
+    library_dirs = [r'c:\Program Files\IBM\MQ\tools\Lib64']
+    include_dirs = [r'c:\Program Files\IBM\MQ\tools\c\include']
     if custom_path:
         library_dirs.append(r'{}\tools\Lib64'.format(custom_path))
         include_dirs.append(r'{}\tools\c\include'.format(custom_path))
@@ -49,8 +49,8 @@ def get_aix_settings():
     """ AIX settings.
     """
 
-    library_dirs=['/usr/mqm/lib64']
-    include_dirs=['/usr/mqm/inc']
+    library_dirs = ['/usr/mqm/lib64']
+    include_dirs = ['/usr/mqm/inc']
 
     if custom_path:
         library_dirs.append('{}/lib64'.format(custom_path))
@@ -64,8 +64,8 @@ def get_generic_unix_settings():
     """ Generic UNIX, including Linux, settings.
     """
 
-    library_dirs=['/opt/mqm/lib64']
-    include_dirs=['/opt/mqm/inc']
+    library_dirs = ['/opt/mqm/lib64']
+    include_dirs = ['/opt/mqm/inc']
 
     if custom_path:
         library_dirs.append('{}/lib64'.format(custom_path))
@@ -91,6 +91,7 @@ def get_locations_by_command_path(command_path):
 
     return library_dirs, include_dirs, libraries
 
+
 # Define the C part(s) here. So we can potentially modify it
 # for different platforms. For example: c_source.append('windows-specific.c')
 c_source = ['code/ibmmq/ibmmqc.c']
@@ -98,7 +99,7 @@ c_source = ['code/ibmmq/ibmmqc.c']
 ld_flags = []
 
 # Get any platform-specific settings
-plat=platform.system()
+plat = platform.system()
 # Windows
 if plat == "Windows":
     library_dirs, include_dirs, libraries = get_windows_settings()
@@ -134,15 +135,15 @@ else:
 
 # Can we find the MQ C header files? If not, there's no point in continuing, and we can
 # give a reasonable error message immediately instead of trying to decode C compiler errors.
-found_headers = False
+found_headers = False  # pylint: disable=invalid-name
 for d in include_dirs:
-    p = os.path.join(d,"cmqc.h")
+    p = os.path.join(d, "cmqc.h")
     if os.path.isfile(p):
         found_headers = True
 if not found_headers:
     raise FileNotFoundError("Cannot find MQ C header files. Ensure you have already installed the MQ Client and SDK")
 
-long_description = """
+LONG_DESCRIPTION = """
 Python library for IBM MQ
 -------------------------
 
@@ -178,36 +179,38 @@ To read the message back from the queue:
     print('Here is the message:', msg)
 """
 
-# Define how the C module gets built
-mqi_extension = Extension('ibmmq.ibmmqc',c_source, define_macros=[('PYVERSION','"' + version + '"')],
-        library_dirs = library_dirs,
-        include_dirs = include_dirs,
-        extra_link_args = ld_flags,
-        libraries = libraries)
+# Define how the C module gets built. Set flags to try to build using the Python 3.9
+# Limited API which should make the binary extension forwards compatible.
+mqi_extension = Extension('ibmmq.ibmmqc', c_source,
+                          define_macros=[('PYVERSION', '"' + VERSION + '"'),
+                                         ('Py_LIMITED_API', 0x03090000)
+                                         ],
+                          py_limited_api=True,
+                          library_dirs=library_dirs,
+                          include_dirs=include_dirs,
+                          extra_link_args=ld_flags,
+                          libraries=libraries)
 
-_ = setup(name = 'ibmmq',
-    version = version,
-    description = 'Python Extension for IBM MQ (formerly WebSphere MQ and MQSeries).',
-    long_description = long_description,
-    long_description_content_type= 'text/x-rst',
-    author='IBM MQ Development',
-    url='https://ibm.com/software/products/en/ibm-mq',
-    download_url='https://github.com/ibm-messaging/mq-mqi-python',
-    platforms='OS Independent',
-    package_dir = {'': 'code'},
-    packages = ['ibmmq'],
-    python_requires = ">=3.9",
-    license_files = ['LICENSE*'],
-    license='Python-2.0',
-    keywords=('pymqi IBMMQ MQ WebSphere WMQ MQSeries IBM middleware messaging queueing asynchronous SOA EAI ESB integration'),
-    classifiers = [
-        'Development Status :: 5 - Production/Stable',
-        'Intended Audience :: Developers',
-        'Natural Language :: English',
-        'Operating System :: OS Independent',
-        'Programming Language :: C',
-        'Programming Language :: Python',
-        'Topic :: Software Development :: Libraries :: Python Modules',
-        ],
-    ext_modules = [mqi_extension]
-    )
+setup(name='ibmmq',
+      version=VERSION,
+      description='Python Extension for IBM MQ',
+      long_description=LONG_DESCRIPTION,
+      long_description_content_type='text/x-rst',
+      author='IBM MQ Development',
+      url='https://ibm.com/software/products/en/ibm-mq',
+      download_url='https://github.com/ibm-messaging/mq-mqi-python',
+      platforms='OS Independent',
+      package_dir={'': 'code'},
+      packages=['ibmmq'],
+      python_requires=">=3.9",
+      license_files=['LICENSE*'],
+      license='Python-2.0',
+      keywords=('pymqi IBMMQ MQ WebSphere WMQ MQSeries IBM middleware messaging queueing asynchronous SOA EAI ESB integration'),
+      classifiers=['Development Status :: 5 - Production/Stable',
+                   'Intended Audience :: Developers',
+                   'Natural Language :: English',
+                   'Operating System :: OS Independent',
+                   'Programming Language :: C',
+                   'Programming Language :: Python',
+                   'Topic :: Software Development :: Libraries :: Python Modules'],
+      ext_modules=[mqi_extension])
