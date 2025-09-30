@@ -235,7 +235,16 @@ static PyObject * ibmmqc_MQCONNX(PyObject *self, PyObject *args) {
   PMQCD mqcd = NULL;
   PMQSCO sco = NULL;
   PMQCSP csp = NULL;
+
+  /* The MQBNO structure was introduced after the oldest version of MQ (9.1) stated as
+   * supported by this package. So we have to use ifdefs to not refer to it if
+   * that's where we are building.
+   */
+#if defined MQBNO_CURRENT_VERSION
   PMQBNO bno = NULL;
+#else
+  void *bno = NULL;
+#endif
 
   Py_ssize_t mqcd_len = 0;
   Py_ssize_t sco_len = 0;
@@ -270,7 +279,7 @@ static PyObject * ibmmqc_MQCONNX(PyObject *self, PyObject *args) {
 
     // SPLProtection is the only MQCD field more recent than the baseline 9.1
     // ... and it's only really valid for qmgr channels so should never be set by
-    // client applications! But it's convenient for testing VERSION policies here.
+    // client applications. But it's convenient for testing VERSION policies here.
 #if defined(MQCD_VERSION_12)
     if (mqcd->SPLProtection != 0) {
       if (mqcd->Version < MQCD_VERSION_12) {
@@ -290,10 +299,11 @@ static PyObject * ibmmqc_MQCONNX(PyObject *self, PyObject *args) {
     if (cno->Version < MQCNO_VERSION_7) {
       cno->Version = MQCNO_VERSION_7;
     }
-#endif
   }
+#endif
 
   if (sco != NULL) {
+
 #if defined(MQSCO_VERSION_6)
     if (sco->KeyRepoPasswordPtr) {
       if (sco->Version < MQSCO_VERSION_6) {
@@ -314,6 +324,10 @@ static PyObject * ibmmqc_MQCONNX(PyObject *self, PyObject *args) {
 #endif
   }
 
+
+  /* The bno variable is always available even for older levels of MQ. But it is not USABLE without the
+   * MQBNO structure and the CNO versions being suitable.
+   */
   if (bno != NULL) {
 #if defined(MQCNO_VERSION_8)
     if (cno->Version < MQCNO_VERSION_8) {
@@ -1341,7 +1355,7 @@ static PyObject* ibmmqc_MQSETMP(PyObject *self, PyObject *args) {
     /* String value */
     case MQTYPE_STRING:
       v = PyUnicode_AsEncodedString(property_value_object,"utf-8","ignore");
-      value = PyBytes_AsString(v); 
+      value = PyBytes_AsString(v);
       break;
 
     /* 32-bit floating-point number value */

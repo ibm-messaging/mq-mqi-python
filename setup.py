@@ -16,12 +16,10 @@ from setuptools import setup, Extension
 # This is the only place where package version number is set!
 # The version should correspond to PEP440 and gets normalised if
 # not in the right format. VRM can be followed with a|b|rc with a further numeric
-# to indicate alpha/beta/release candidate versions.
+# to indicate alpha/beta/release-candidate versions.
 VERSION = '2.0.0b2'
 
 # If the MQ SDK is in a non-default location, set MQ_FILE_PATH environment variable.
-# If that env var is not set, then use a default root of the current directory (which
-# might not be necessary, but shouldn't do any harm.
 custom_path = os.environ.get('MQ_FILE_PATH', None)
 
 # Always build in 64-bit mode. And use libmqm regardless of whether the package
@@ -31,15 +29,20 @@ if calcsize('P') != 8:
     # Seems the closest exception (now an alias of EnvironmentError)
     raise OSError("Cannot build in 32-bit mode. Only 64-bit systems supported.")
 
+# The include_dirs and library_dirs used to be lists that always included the default
+# directories. But if you've gone to the trouble of setting a non-default
+# custom_path, then we should only use that. Otherwise the compile might get confused and use
+# the "wrong" version of the files.
+
 def get_windows_settings():
     """ Windows settings.
     """
 
-    library_dirs = [r'c:\Program Files\IBM\MQ\tools\Lib64']
     include_dirs = [r'c:\Program Files\IBM\MQ\tools\c\include']
+    library_dirs = [r'c:\Program Files\IBM\MQ\tools\Lib64']
     if custom_path:
-        library_dirs.append(r'{}\tools\Lib64'.format(custom_path))
-        include_dirs.append(r'{}\tools\c\include'.format(custom_path))
+        library_dirs = [r'{}\tools\Lib64'.format(custom_path)]
+        include_dirs = [r'{}\tools\c\include'.format(custom_path)]
 
     libraries = ['mqm']
 
@@ -53,8 +56,8 @@ def get_aix_settings():
     include_dirs = ['/usr/mqm/inc']
 
     if custom_path:
-        library_dirs.append('{}/lib64'.format(custom_path))
-        include_dirs.append('{}/inc'.format(custom_path))
+        library_dirs = ['{}/lib64'.format(custom_path)]
+        include_dirs = ['{}/inc'.format(custom_path)]
 
     libraries = ['mqm_r']
 
@@ -68,8 +71,8 @@ def get_generic_unix_settings():
     include_dirs = ['/opt/mqm/inc']
 
     if custom_path:
-        library_dirs.append('{}/lib64'.format(custom_path))
-        include_dirs.append('{}/inc'.format(custom_path))
+        library_dirs = ['{}/lib64'.format(custom_path)]
+        include_dirs = ['{}/inc'.format(custom_path)]
 
     # Get an embedded rpath into the library which can reduce need for LD_LIBRARY_PATH
     for d in library_dirs:
@@ -141,7 +144,10 @@ for d in include_dirs:
     if os.path.isfile(p):
         found_headers = True
 if not found_headers:
-    raise FileNotFoundError("Cannot find MQ C header files. Ensure you have already installed the MQ Client and SDK")
+    msg = "Cannot find MQ C header files.\n"
+    msg += "Ensure you have already installed the MQ Client and SDK.\n"
+    msg += "Use the MQ_FILE_PATH environment variable to identify a non-default location."
+    raise FileNotFoundError(msg)
 
 LONG_DESCRIPTION = """
 Python library for IBM MQ
@@ -179,7 +185,7 @@ To read the message back from the queue:
     print('Here is the message:', msg)
 """
 
-# Define how the C module gets built. Set flags to try to build using the Python 3.9
+# Define how the C module gets built. Set flags to build using the Python 3.9
 # Limited API which should make the binary extension forwards compatible.
 mqi_extension = Extension('ibmmq.ibmmqc', c_source,
                           define_macros=[('PYVERSION', '"' + VERSION + '"'),

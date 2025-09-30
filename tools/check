@@ -223,6 +223,23 @@ else
   #fi
 fi
 
+# Try building against an old level of MQ
+if [ -x $curdir/checkOld ]
+then
+  echo
+  continueYN "Build against an old level of MQ"
+  if [ $? -eq 0 ]
+  then
+    cd $curdir
+    checkOld
+    if [ $? -ne 0 ]
+    then
+      echo " ERROR : Problem running old level build"
+      exit 1
+    fi
+  fi
+fi
+
 # Give a chance to quit now, before spending a lot of time on tests
 if [ -x $curdir/checkRemote ]
 then
