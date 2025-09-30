@@ -121,7 +121,9 @@ def _internal_cb(hc, md, gmo, buf, cbc):
     else:
         gmo_up = GMO()
 
-    # Call the real user function with the unpacked forms of the structures
+    # Call the real user function with the unpacked forms of the structures.
+    # If the callback_function is actually a method within a class, then the "self"
+    # parameter is automatically added to the parameters.
     cb.callback_function(queue_manager=qmgr, queue=queue, md=md_up, gmo=gmo_up, msg=buf, cbc=cbc_up)
 
 def real_cb(obj, kwargs):

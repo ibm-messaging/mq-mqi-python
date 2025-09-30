@@ -130,19 +130,32 @@ class MQOpts:
         # are in the list elements.
         for i in self.__list:
             v = getattr(self, i[0])
+
             # Flatten attribs that are arrays
             if isinstance(v, list):
                 for x in v:
                     args.append(ensure_strings_are_bytes(x))
             else:
-                # print(f"{i[0]} is of value {v}: type {type(v)}")
+                # print(f"Field: {i[0]} format '{i[2]}' is of value {v}: type {type(v)}")
                 if i[0] in _binary_fields:
                     if not isinstance(v, bytes):
                         err = f'{i[0]} must be a byte array'
                         raise TypeError(err)
+                elif v is None:
+                    # If a string field is set to None, the pack() function
+                    # fails with an unobvious error. Let's try to diagnose
+                    # it a bit earlier. And if there's a Pointer that has escaped being
+                    # set to NULL, then fix it up.
+                    if i[2].endswith('s'):
+                        err = f'Class:{type(self).__name__} Field:{i[0]} must not be None'
+                        raise TypeError(err)
+                    if i[2] == 'P':
+                        v = 0
+
                 args.append(ensure_strings_are_bytes(v))
 
         # print(f"Args to be packed are {args}")
+
         return struct.pack(*args)
 
     def unpack(self, buff: bytes):

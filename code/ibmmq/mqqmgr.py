@@ -231,10 +231,8 @@ class QueueManager(MQObject):
             csp._set_ptr_field('Token', token)
 
             # We need to fix these up even if they are not going to be used
-            if user:
-                csp._set_ptr_field('CSPUserId', None)
-            if password:
-                csp._set_ptr_field('CSPPassword', None)
+            csp._set_ptr_field('CSPUserId', None)
+            csp._set_ptr_field('CSPPassword', None)
 
             csp.AuthenticationType = CMQC.MQCSP_AUTH_ID_TOKEN
             csp.Version = max(csp.Version, CMQC.MQCSP_VERSION_3)
@@ -249,6 +247,10 @@ class QueueManager(MQObject):
             csp._set_ptr_field('CSPUserId', user)
             csp._set_ptr_field('CSPPassword', password)
             csp.AuthenticationType = CMQC.MQCSP_AUTH_USER_ID_AND_PWD
+        else:
+            # Force these to be None
+            csp._set_ptr_field('CSPUserId', None)
+            csp._set_ptr_field('CSPPassword', None)
 
         if initial_key:
             csp._set_ptr_field('InitialKey', initial_key)
