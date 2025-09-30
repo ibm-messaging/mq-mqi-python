@@ -10,7 +10,7 @@
 ARG BASE_IMAGE=registry.access.redhat.com/ubi8/python-312
 FROM $BASE_IMAGE
 
-ENV VRMF=9.4.4.0 \
+ENV VRMF=9.4.3.0 \
     genmqpkg_incnls=1 \
     genmqpkg_incsdk=1 \
     genmqpkg_inctls=1
@@ -108,8 +108,8 @@ ENV LD_LIBRARY_PATH=/opt/mqm/lib64
 USER 1001
 
 # Install the MQ Python library. This will build against the installed SDK
-# RUN pip install --verbose --config-settings=--build-option=server ibmmq
-RUN pip install ibmmq
+RUN pip install --verbose ibmmq
+# RUN pip install ibmmq
 
 # Copy a sample program into the container
 COPY connect_simple.py .      

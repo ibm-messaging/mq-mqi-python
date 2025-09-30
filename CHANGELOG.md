@@ -2,8 +2,15 @@
 # Changelog
 Newest updates are at the top of this file.
 
-## 2025 Sep 10 - V2
-Initial release of the reworked PyMQI library for IBM MQ as `ibmmq`.
+## 2025 Sep 30 - V2.0.0b2
+* Further reduction in pylint/flake8 warnings
+* C extension now conforms to the "Limited" API (Python 3.9) for better forwards-compatibility of the binary library
+* Updates to various documentation files
+* Better diagnostics if apps incorrectly set structure fields to `None`
+* Release process checks the C code builds against MQ 9.1 (#1)
+
+## 2025 Sep 10 - V2.0.0b1
+Initial beta release of the reworked PyMQI library for IBM MQ as `ibmmq`.
 
 Apart from the change in package name, the main changes from the PyMQI V1 library implemented in this V2 release
 include:
@@ -97,6 +104,5 @@ the oldest levels designed for.
   * Added MQObject as superclass of queues, topics etc for potential future simplifications
 * The C module is considered an internal interface and has changed to match new requirements from the Python layer above
   it.
-  * The C extension is now built using the "Limited" API to help with forwards-compatibility of the binary library
 * Text strings from error classes (MQMIError, PYIFError) slightly modified
 * Non-public elements of structures (eg `StrucId` or `Reserved`) given `_` prefix

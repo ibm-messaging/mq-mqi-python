@@ -54,6 +54,7 @@ defaultRepository=$testRepository
 repositoryFlag="--repository"
 
 useTestServer=true
+useLocalServer=false
 verbose=false
 
 keyFileProd="$HOME/.creds/pythonPyPi"
@@ -83,6 +84,7 @@ do
     # Use "testInstServer.sh" to setup a local PyPI server
     repository=$localRepository
     repositoryFlag="--repository-url"
+    useLocalServer=true
     # Option to delete any packages on the server so we can reuse
     # the version number
     case $OPTARG in
@@ -202,7 +204,7 @@ echo "----------------------------"
 cat *tar* | tar -tvzf -
 echo
 
-# Don't care about the wheel as it's not uploaded
+# Don't care about the wheel's contents as it's not normally uploaded
 # unzip -l *whl
 fi
 
@@ -232,7 +234,20 @@ export TWINE_PASSWORD="$tok"
 # And using the "manylinux" prebuilder environments is getting way too complicated.
 
 # verboseUpload="--verbose"
-# If using the local repository, then make sure the pypi-server is running
+
+# If using the local repository, then first make sure the pypi-server is running
+# And uncomment the upload line if you want to try uploading binary wheels to the local server.
+if $useLocalServer
+then
+  echo
+  # python -m twine upload $repositoryFlag $repository $verboseUpload dist/$pkg*whl*
+  if [ $? -ne 0 ]
+  then
+    echo "ERROR: Upload of binary wheel failed"
+    exit 1
+  fi
+fi
+
 python -m twine upload $repositoryFlag $repository $verboseUpload dist/$pkg*.tar.gz
 if [ $? -ne 0 ]
 then
@@ -240,5 +255,5 @@ then
   exit 1
 fi
 
-echo "Upload to repository was successful"
+echo "Upload to repository $repository was successful"
 exit 0

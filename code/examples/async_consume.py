@@ -14,12 +14,15 @@ class Status:
     ok = True
     connBroken = False
 
+
 def cb_func(**kwargs):
     """
     The callback function is called with parameters:
        queue_manager, queue, md, gmo, msg, cbc
     The CallbackContext (cbd) structure holds the reasons for invocation, along with
     object and connection-related correlation buffers. Which we print out here
+
+    The function can be defined as a method within a class by adding a "self" parameter.
     """
     msg = kwargs['msg']
     cbc = kwargs['cbc']

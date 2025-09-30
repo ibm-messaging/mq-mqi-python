@@ -170,6 +170,9 @@ but it is necessary while the C function is executed as it's on a thread that th
 know about otherwise. As some of the requirements for the GIL are relaxed going forward, there might be changes
 needed here - initial reading suggests everything will continue to work unchanged but we can't be certain.
 
+The application callback function can be defined as a class method. In that case, the function signature changes
+from `cbfn(**kwargs)` to `cbfn(self,**kwargs)`.
+
 ## Python/C split
 In general, logic goes into the Python layer rather than C. For example, setting MQCNO_HANDLE_SHARE flags could be done
 in the _connect()_ method or the MQCONNX C wrapper. I've chosen to do it in Python, to keep the C code as
@@ -187,3 +190,21 @@ The split had to be sensitive to import ordering; otherwise you can get errors a
 probably a more elegant split of code across the multiple files, perhaps moving some of the common code to different
 places (maybe into the new `MQObject` class), but this arrangement works for now. The split was important for
 maintainability, being able to more easily find what was where.
+
+## Distributions, binary files, wheels and PyPI
+Only the source distribution gets uploaded to PyPI. That is because of restrictions on platforms and versions: I only
+have access to a few platforms at random versions, and Python wheels are tightly linked to the local versions of the OS
+and Python itself. I do not want to have to create multiple wheels. Even doing a Python-version-specific wheel for Linux
+is non-trivial, needing to be built in a special "multilinux" environment. Perhaps one day, I could automate the process
+of building and uploading with GitHub actions for some architectures. But not at the moment.
+
+I **have** however been able to make the C extension module more agnostic as to the version of Python it's running with.
+It now conforms to the [Limited API](https://docs.python.org/3/c-api/stable.html#limited-c-api) at the Python 3.9 level.
+This ought to make it easier to redistribute applications within your own environment, compiling only once and copying
+the `.so` file to other environments with Python 3.9 or newer levels.
+
+The `tools` subdirectory also includes scripts to let you run your own PyPI-equivalent local server, and to upload
+binary wheels to that location. See the `testInstServer.sh` and `testInstClient.sh` scripts. They will almost certainly
+require modifications for your own systems, but the basic framework is there. This local PyPI server does not have all
+the same constraints that the real PyPI has. For example, it doesn't stop you uploading a Linux wheel that has been
+built outside the "multilinux" framework. Again, that may help with internal distribution of your applications.

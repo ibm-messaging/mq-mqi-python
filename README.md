@@ -28,6 +28,9 @@ enhancements and removed features, see the [CHANGELOG](CHANGELOG.md) file.
 ## Installation
 The package is available from PyPI for easy installation.
 
+See the section on "Distributions and wheels" in the [DesignNotes](docs/DesignNotes.md) file for some other ways you
+might like to build and locally deploy this package with your applications.
+
 ### Prerequisites
 
 * You first need to install an IBM MQ C client including the SDK component on the system where this package is about to
@@ -80,10 +83,14 @@ handling were added. New classes implement missing structures such as MQCNO and 
 [CHANGELOG](CHANGELOG.md).
 
 ### Not implemented
-There are some features of the C MQI that are rarely, if-ever, used by applications and which have not been implemented:
+There are some features of the C MQI that are rarely, if-ever, used by applications. These have not been implemented
+and are not likely to ever be:
 * Distribution Lists (MQDH). Use publish/subscribe instead.
 * Reference Messages (MQRMH)
 * Authinfo strucures for client CRL checking (MQAIR). Using a CCDT can be an alternative.
+
+More likely to be implemented if someone really needed it:
+* MQOPEN for Process or Namelist objects and hence to MQINQ their properties
 
 Anything to do with exits, including data conversion exits, is also excluded. These need to be written in C.
 
@@ -133,8 +140,8 @@ There are many example programs in the `code/examples` directory. These show use
 the [README](code/examples/README.md) file for a fuller list.
 
 And unittest components are in the `code/tests` directory. With a `runAllTests.sh` script to exercise them. That script
-is very likely to need changing for your environment (including how it starts a queue manager) but they may still
-be helpful to see use of the functions.
+is very likely to need changing for your environment (including how it starts a queue manager) but they may still be
+helpful to see use of the functions.
 
 ## Contributions and Pull requests
 
@@ -164,8 +171,8 @@ original repository were not available to be migrated across to the new location
 
 ## Acknowledgments
 This package builds on the work done in PyMQI V1. Contributors to that include:
-* Dariusz Suchojad (primary contributor/maintainer) 
+* Dariusz Suchojad (primary contributor/maintainer)
 * Vyacheslav Savchenko
-* L. Smithson 
+* L. Smithson
 * hjoukl
 
