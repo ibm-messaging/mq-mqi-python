@@ -90,10 +90,19 @@ elements of a tuple. Any other returned elements precede those in the tuple.\
 #include "Python.h"
 static PyObject *ErrorObj;
 
+#if 0
+/* To control any trace logging */
+static FILE *fp = NULL;
+static int fpOpened = 0;
+static long debugOpts = 0; /* Not a BOOL so we can use bitmask to control what's logged */
+#endif
+
 /*
  * MQI Structure sizes for the current supported MQ version are
  * defined here for convenience. This allows older versions of the
  * module to work with newer versions of MQI.
+ * Some structures may have sizeof() not the same as CURRENT_LENGTH because
+ * of implied padding. Need to check that.
  */
 
 #define PY_IBMMQ_CD_SIZEOF MQCD_CURRENT_LENGTH
@@ -102,6 +111,7 @@ static PyObject *ErrorObj;
 #define PY_IBMMQ_PMO_SIZEOF MQPMO_CURRENT_LENGTH
 #define PY_IBMMQ_GMO_SIZEOF sizeof(MQGMO)
 #define PY_IBMMQ_SCO_SIZEOF sizeof(MQSCO)
+#define PY_IBMMQ_CNO_SIZEOF sizeof(MQCNO)
 
 #define PY_IBMMQ_SD_SIZEOF sizeof(MQSD)
 #define PY_IBMMQ_SRO_SIZEOF sizeof(MQSRO)
@@ -158,12 +168,12 @@ static char* PyBytesOrText_AsString(PyObject *txtObj) {
  * have to malloc space for the error message.
  */
 #define ERRORBUF 256
-static char mallocError[ERRORBUF] = {0};
+static char errorBuf[ERRORBUF] = {0};
 static void *myAlloc(size_t s,char *cause) {
   void *p = malloc(s);
   if (!p) {
-    snprintf(mallocError,ERRORBUF-1,"Cannot allocate memory buffer:%d bytes. Caller: %s",(int)s,cause);
-    PyErr_SetString(ErrorObj, mallocError);
+    snprintf(errorBuf,ERRORBUF-1,"Cannot allocate memory buffer:%d bytes. Caller: %s",(int)s,cause);
+    PyErr_SetString(ErrorObj, errorBuf);
   }
   return p;
 }
@@ -183,6 +193,92 @@ static int checkArgSize(Py_ssize_t given, Py_ssize_t expected, const char *name)
   }
   return 0;
 }
+
+#if 0 /* Not enabled for now */
+
+/* Print the debug info to the log file. */
+/* Do we need to add timestamp and other boilerplate? */
+/* Do we need to add locking to avoid mingling output? */
+static void debug(int opts, char *fmt, ...) {
+    va_list vaArgs;
+
+    if (debugOpts == 0) {
+        return;
+    }
+
+    va_start(vaArgs,fmt);
+    if (fp) {
+        vfprintf(fp,fmt,vaArgs);
+        if !(fmt ends with '\n')
+          fprintf(fp,"\n");
+        fflush(fp);
+    }
+    va_end(vaArgs);
+}
+
+/*
+TODO: Actually add debug statements that make use of this!
+TODO: Define granulariy masks to opts.
+*/
+static char ibmmqc_MQDEBUG__doc__[] =
+"MQDEBUG(opts, filename) \
+A call to control any debug logging from this module. \
+If opts is non-zero, debug info gets reported to filename. Or stderr if \
+that is empty/not supplied.\
+";
+
+static PyObject * ibmmqc_MQDEBUG(PyObject *self, PyObject *args) {
+  char *filename = NULL;
+  long lOpts;
+  PyObject *nameObj;
+
+  if (!PyArg_ParseTuple(args, "l|s", &lOpts,&filename)) {
+    return NULL;
+  }
+
+  if (lOpts != 0) {
+    /* Might be resetting to a different output file */
+    if (fpOpened && fp) {
+        fclose(fp);
+        fp = NULL;
+        fpOpened = 0;
+    }
+
+    if (filename) {
+      fp = fopen(filename,"a");
+      if (fp) {
+        fpOpened = 1;
+      } else {
+        snprintf(errorBuf,ERRORBUF-1,"Cannot open log file. Errno: %d ",(int)errno);
+        PyErr_SetString(ErrorObj, errorBuf);
+      }
+    } else {
+      /* Don't set fpOpened, as we don't want to try to close stderr later */
+      fp = stderr;
+    }
+    setbuf(fp,NULL); /* Force the log file to be flushed immediately */
+  }
+
+  /* Debug is being turned off. So close the log file */
+  if (lOpts == 0 && fpOpened) {
+    if (fp) {
+        fflush(fp);
+        fclose(fp);
+
+        fp = NULL;
+        fpOpened = 0;
+    }
+  }
+
+  debugOpts = lOpts;
+
+  debug(1,"MQDEBUG Opts: %ld File: %s",lOpts,filename?filename:"N/A");
+
+  return Py_BuildValue("(l)", (long) 0L);
+}
+
+#endif
+
 
 static char ibmmqc_MQCONN__doc__[] =
 "MQCONN(mgrName) \
@@ -472,7 +568,6 @@ static PyObject *mqputN(int put1Flag, PyObject *self, PyObject *args) {
     /* PUT call, expects qHandle for an open q */
 
     if (!PyArg_ParseTuple(args, "lly#y#y#", &lQmgrHandle, &lqHandle,
-
               &mDescBuffer, &mDescBufferLength,
               &putOptsBuffer, &putOptsBufferLength,
               &msgBuffer, &msgBufferLength)) {
@@ -481,7 +576,6 @@ static PyObject *mqputN(int put1Flag, PyObject *self, PyObject *args) {
   } else {
     /* PUT1 call, expects od for a queue to be opened */
     if (!PyArg_ParseTuple(args, "ly#y#y#y#", &lQmgrHandle,
-
               &qDescBuffer, &qDescBufferLength,
               &mDescBuffer, &mDescBufferLength,
               &putOptsBuffer, &putOptsBufferLength,
@@ -1266,6 +1360,7 @@ static PyObject* ibmmqc_MQSETMP(PyObject *self, PyObject *args) {
   char *property_name;
   Py_ssize_t property_name_length = 0;
 
+  long lPropertyType;
   MQLONG property_type;
 
   MQLONG compCode = MQCC_UNKNOWN;
@@ -1282,8 +1377,17 @@ static PyObject* ibmmqc_MQSETMP(PyObject *self, PyObject *args) {
                               &smpo_buffer, &smpo_buffer_length,
                               &property_name, &property_name_length,
                               &pd_buffer, &pd_buffer_length,
-                              &property_type, &property_value_object, &value_length)) {
+                              &lPropertyType, &property_value_object, &value_length)) {
     return NULL;
+  }
+
+  property_type = (MQLONG)lPropertyType;
+
+  /* printf("SETMP: PropertyName '%s' Type: %d\n",property_name, property_type);  */
+  /* printf("       PropertyName Length=%d\n",(int)property_name_length);         */
+
+  if (property_name_length <= 0) {
+    property_name_length = strlen(property_name);
   }
 
   Py_ssize_t property_value_free = 0;
@@ -1436,6 +1540,7 @@ static PyObject* ibmmqc_MQINQMP(PyObject *self, PyObject *args) {
   MQPD *pd;
   long pd_length;
 
+  long lPropertyType;
   MQLONG property_type;
   MQLONG data_length;
   long value_length;
@@ -1450,11 +1555,11 @@ static PyObject* ibmmqc_MQINQMP(PyObject *self, PyObject *args) {
                         &impo, &impo_length,
                         &property_name, &property_name_length,
                         &pd, &pd_length,
-                        &property_type, &value_length)) {
+                        &lPropertyType, &value_length)) {
     return NULL;
   }
 
-
+  property_type = (MQLONG)lPropertyType;
   name.VSPtr = property_name;
   name.VSLength = property_name_length;
 
@@ -1642,6 +1747,8 @@ static PyObject* ibmmqc_MQDLTMP(PyObject *self, PyObject *args) {
 
 /* List of methods defined and exported in the module */
 static struct PyMethodDef ibmmqc_methods[] = {
+  /*{"MQDEBUG", (PyCFunction)ibmmqc_MQDEBUG,    METH_VARARGS, ibmmqc_MQDEBUG__doc__},*/
+
   {"MQCONN", (PyCFunction)ibmmqc_MQCONN,    METH_VARARGS, ibmmqc_MQCONN__doc__},
   {"MQCONNX", (PyCFunction)ibmmqc_MQCONNX, METH_VARARGS, ibmmqc_MQCONNX__doc__},
   {"MQDISC", (PyCFunction)ibmmqc_MQDISC,    METH_VARARGS, ibmmqc_MQDISC__doc__},
