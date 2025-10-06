@@ -183,6 +183,12 @@ To read the message back from the queue:
     q = ibmmq.Queue(queue_manager, 'DEV.QUEUE.1')
     msg = q.get()
     print('Here is the message:', msg)
+
+Many more examples are in the `project repository
+<https://github.com/ibm-messaging/mq-mqi-python/tree/main/code/examples/>`_.
+and in the `dev-patterns repository
+<https://github.com/ibm-messaging/mq-dev-patterns/tree/master/Python/>'_.
+
 """
 
 # Define how the C module gets built. Set flags to build using the Python 3.9

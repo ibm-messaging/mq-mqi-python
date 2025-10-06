@@ -171,7 +171,10 @@ find . -name "*.py" -type f | xargs grep "print(" |\
 
 # find . -name "*.py" -type f | xargs grep log
 
-find . -name "*.c" -type f | xargs grep printf | grep -v snprintf
+find . -name "*.c" -type f | xargs grep printf |\
+     grep -v snprintf |\
+     grep -v fprintf |\
+     grep -v vfprintf
 ) | tee $errFile
 cnt=`cat $errFile | wc -l `
 if [ $cnt -ne 0 ]
@@ -223,15 +226,15 @@ else
   #fi
 fi
 
-# Try building against an old level of MQ
-if [ -x $curdir/checkOld ]
+# Try building against an old level of MQ and against the base level of Python
+if [ -x $curdir/checkBaseLevel.sh ]
 then
   echo
   continueYN "Build against an old level of MQ"
   if [ $? -eq 0 ]
   then
     cd $curdir
-    checkOld
+    checkBaseLevel.sh
     if [ $? -ne 0 ]
     then
       echo " ERROR : Problem running old level build"
@@ -304,7 +307,7 @@ grep -aq -E "WARN|ERR" $logFile
 if [ $? -eq 0 ]
 then
   echo
-  echo "ERROR: Checking process has a problem."
+  echo "ERROR: Checking process has a problem. Review $logFile for details."
   exit 1
 fi
 

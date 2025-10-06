@@ -124,11 +124,11 @@ print('Here is the message:', msg)
 ### Problems
 You may also need to run the `setmqenv` command to ensure the MQ environment is correctly recognised before installing
 and/or running applications. In particular, if you get an error about not being able to load the `ibmmqc` module, that
-is very likely due to an incorrect LIBPATH/LD_LIBRARY_PATH setting.
+is very likely due to an incorrect LIBPATH/LD_LIBRARY_PATH/DYLD_LIBRARY_PATH setting.
 
 ## Provided Examples and Tests
-Download the source distribution directly from PyPI or running `git clone` for the examples and unittest programs. These
-are not included with the simple `pip install` process as that is fundamentally for runtime-only execution.
+Download the source distribution directly from PyPI or run `git clone` of this repository for the examples and unittest
+programs. These are not included with the `pip install` process as that is fundamentally for runtime-only execution.
 
 To use `pip` to download just the source distribution, you can use
 
@@ -142,6 +142,8 @@ the [README](code/examples/README.md) file for a fuller list.
 And unittest components are in the `code/tests` directory. With a `runAllTests.sh` script to exercise them. That script
 is very likely to need changing for your environment (including how it starts a queue manager) but they may still be
 helpful to see use of the functions.
+
+Additional example programs can be found [here](https://github.com/ibm-messaging/mq-dev-patterns/Python).
 
 ## Contributions and Pull requests
 

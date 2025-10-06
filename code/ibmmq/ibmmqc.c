@@ -1383,9 +1383,6 @@ static PyObject* ibmmqc_MQSETMP(PyObject *self, PyObject *args) {
 
   property_type = (MQLONG)lPropertyType;
 
-  /* printf("SETMP: PropertyName '%s' Type: %d\n",property_name, property_type);  */
-  /* printf("       PropertyName Length=%d\n",(int)property_name_length);         */
-
   if (property_name_length <= 0) {
     property_name_length = strlen(property_name);
   }

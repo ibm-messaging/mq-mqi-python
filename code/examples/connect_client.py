@@ -5,6 +5,7 @@
 This example shows a way to connect as a client to a remote queue manager, passing
 credentials as explicit positional parameters to the connect() method.
 """
+import sys
 import ibmmq as mq
 
 queue_manager = 'QM1'
@@ -16,6 +17,6 @@ user = 'app'
 password = 'password'
 
 qmgr = mq.connect(queue_manager, channel, conn_info, user, password)
-print("Connection succeeded.")
+print(f"Connection succeeded using Python {sys.version_info.major}.{sys.version_info.minor}")
 
 qmgr.disconnect()
