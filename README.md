@@ -33,8 +33,11 @@ might like to build and locally deploy this package with your applications.
 
 ### Prerequisites
 
-* You first need to install an IBM MQ C client including the SDK component on the system where this package is about to
-  be installed
+* You first need to install an IBM MQ C client, including the SDK component, on the system where this package is about
+  to be installed
+  * The MQ
+    [Redistributable Client](https://www.ibm.com/docs/en/ibm-mq/latest?topic=overview-redistributable-mq-clients)
+    package is sufficient, on platforms where that exists
 * A C compiler
   * For Windows, you need a suitable C++ compiler. You need to install the compiler version that corresponds to your
     Python version. See [here](https://wiki.python.org/moin/WindowsCompilers) for more information.
@@ -43,7 +46,7 @@ might like to build and locally deploy this package with your applications.
 * If you have not installed the MQ client in the default directory (`/opt/mqm` on Linux and MacOS), then set the
   `MQ_FILE_PATH` environment variable to reference that directory.
 * Now you can use pip to install the Python package itself. To install globally, for all users on a machine, you will
-  probably need to use `sudo`. More commonly, you can install in a local virtual environment:
+  probably need to use `sudo`. More commonly, you will likely want to use a local virtual environment:
 
 ```bash
     $ pip install ibmmq
@@ -124,13 +127,14 @@ print('Here is the message:', msg)
 ### Problems
 You may also need to run the `setmqenv` command to ensure the MQ environment is correctly recognised before installing
 and/or running applications. In particular, if you get an error about not being able to load the `ibmmqc` module, that
-is very likely due to an incorrect LIBPATH/LD_LIBRARY_PATH/DYLD_LIBRARY_PATH setting.
+is very likely due to an incorrect `LD_LIBRARY_PATH` or `LIBPATH`/`DYLD_LIBRARY_PATH` setting which `setmqenv` ought to
+cure.
 
-## Provided Examples and Tests
+## Example programs and Tests
 Download the source distribution directly from PyPI or run `git clone` of this repository for the examples and unittest
 programs. These are not included with the `pip install` process as that is fundamentally for runtime-only execution.
 
-To use `pip` to download just the source distribution, you can use
+To use `pip` to download just the source distribution, which also includes the examples, you can use
 
 ```bash
 pip download --no-binary=:all: ibmmq
@@ -139,7 +143,7 @@ pip download --no-binary=:all: ibmmq
 There are many example programs in the `code/examples` directory. These show use of many of the package's methods. See
 the [README](code/examples/README.md) file for a fuller list.
 
-And unittest components are in the `code/tests` directory. With a `runAllTests.sh` script to exercise them. That script
+And unit-test components are in the `code/tests` directory. With a `runAllTests.sh` script to exercise them. That script
 is very likely to need changing for your environment (including how it starts a queue manager) but they may still be
 helpful to see use of the functions.
 

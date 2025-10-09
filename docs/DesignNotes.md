@@ -1,8 +1,9 @@
 # Design Notes
 
-A collection of thoughts on extending or modifying the Python code. This document describes the rationale behind some of
-the decisions made for the re-implementation. These sections are not in any particular order; just how things came to
-me. This is not intended to be a complete design, but a description of specific issues/solutions that I worked through.
+This is a collection of thoughts on extending or modifying the Python code. This document describes the rationale behind
+some of the decisions made for the re-implementation. These sections are not in any particular order; just how things
+came to me. This is not intended to be a complete design, but a description of specific issues/solutions that I worked
+through.
 
 ## MQI Structure Contents
 We want to be able to compile and run against older (to some level) versions of the MQI. Fields are added to a structure
@@ -20,7 +21,7 @@ structure. So we can then extract the version and use it:
 ```
 
 The version check can use a symbolic MQCSP_VERSION_2 because, regardless of the underlying C libraries, these are known
-in the CMQC.py files we ship (always at the latest level). If new structures are defined in the MQI with corresponding
+in the CMQC files we ship (always at the latest level). If new structures are defined in the MQI with corresponding
 classes in Python (right now the MQBNO is the most recent), it's possible that the map will not contain the
 CURRENT_VERSION value when built against older C libraries. So we force a version 1 as the returned value. The class may
 not be USABLE, but at least the code will compile and you'll get some kind of MQ-level error.
@@ -74,7 +75,8 @@ definitions - could also get individual classes.
 
 ## String/Pointer fields
 There are a number of fields in the MQI that are passed with a pointer. This is apart from the MQCHARV fields that
-already had a public mechanism - for those, the application uses `set_vs` directly.
+already had a public mechanism - for those, the application uses `set_vs` directly. But this version of the library
+makes more such fields available.
 
 For example, in the MQCNO we have
 ```
@@ -84,10 +86,10 @@ MQLONG     CCDTUrlLength;
 ```
 
 For the Python equivalent, these become a single public string (renamed) attribute with private attributes for the
-length and offset. The "_" prefix is a hint that applications should not use these fields directly.
+length and offset. The "_" prefix is a strong hint that applications should not use these fields directly.
 ```
   ['CCDTUrl', 0, 'P'],
-  ['_CCDTUrlOffset', 0, MQLONG_TYPE],  # At least one attribute (SSLPeerNamePtr) does not have a corresponding offset
+  ['_CCDTUrlOffset', 0, MQLONG_TYPE],  # One similar field (SSLPeerNamePtr) does not have a corresponding "offset"
   ['_CCDTUrlLength',0, MQLONG_TYPE],
 ```
 
@@ -106,8 +108,8 @@ you had do to something like `qName=b"SYSTEM.DEFAULT.MODEL.QUEUE"` to force the 
 
 Since we no longer support Python2 this becomes irritating. All input strings can now be given in either byte or unicode
 format, with the conversion done automatically. Output strings, however will continue to be returned as bytes as we
-don't know how the application is going to process them. Encoding from unicode to bytes will be done based on the
-default `ascii` codepage, but that will be a global definition which could change in an EBCDIC environment.
+don't know how the application is going to process them. Encoding from unicode to bytes will be done based on a default
+`ascii` codepage, but that will be a global definition which could change if we need to work in an EBCDIC environment.
 
 A future version of the library might conceivably also have a global setting that hooks into the `unpack` method, and
 does automatic conversion to Python3 unicode strings. It's likely too complex to have some fields being done one way,
@@ -115,7 +117,7 @@ and some the other. And we can't base it on the type of the input to that field,
 global setting could be dynamically changed in between MQI verbs.
 
 Note that we DO check some specific fields like MsgId to ensure that you have passed in a byte array. As these
-correspond to MQBYTE[] buffers in the MQI. Setting them to a string will cause a TypeError.
+correspond to MQBYTE[] buffers in the MQI, not MQCHAR[]. Setting them to a string will cause a TypeError.
 
 A `to_string` method is available for unpacked structures which changes all string fields to the unicode string, and
 trims trailing NUL/spaces. The MQBYTE fields are not modified from their byte format.
@@ -170,7 +172,7 @@ but it is necessary while the C function is executed as it's on a thread that th
 know about otherwise. As some of the requirements for the GIL are relaxed going forward, there might be changes
 needed here - initial reading suggests everything will continue to work unchanged but we can't be certain.
 
-The application callback function can be defined as a class method. In that case, the function signature changes
+The application's callback function can be defined as a class method. In that case, the function signature changes
 from `cbfn(**kwargs)` to `cbfn(self,**kwargs)`.
 
 ## Python/C split
@@ -206,5 +208,5 @@ the `.so` file to other environments with Python 3.9 or newer levels.
 The `tools` subdirectory also includes scripts to let you run your own PyPI-equivalent local server, and to upload
 binary wheels to that location. See the `testInstServer.sh` and `testInstClient.sh` scripts. They will almost certainly
 require modifications for your own systems, but the basic framework is there. This local PyPI server does not have all
-the same constraints that the real PyPI has. For example, it doesn't stop you uploading a Linux wheel that has been
-built outside the "multilinux" framework. Again, that may help with internal distribution of your applications.
+the same constraints that the real PyPI has. For example, it doesn't stop you uploading a Linux binary wheel that has
+been built outside the "multilinux" framework. Again, that may help with internal distribution of your applications.

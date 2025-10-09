@@ -2,6 +2,14 @@
 # Changelog
 Newest updates are at the top of this file.
 
+## 2025 Oct 16 - V2.0.0
+* First production release, based on MQ 9.4.4
+* Fix SETMP/INQMP problem found in beta
+
+---
+
+## PRE-PRODUCTION VERSIONS: CHANGE INFO BELOW
+
 ## 2025 Sep 30 - V2.0.0b2
 * Further reduction in pylint/flake8 warnings
 * C extension now conforms to the "Limited" API (Python 3.9) for better forwards-compatibility of the binary library
@@ -12,7 +20,7 @@ Newest updates are at the top of this file.
 ## 2025 Sep 10 - V2.0.0b1
 Initial beta release of the reworked PyMQI library for IBM MQ as `ibmmq`.
 
-Apart from the change in package name, the main changes from the PyMQI V1 library implemented in this V2 release
+Apart from the change in package name, the main changes from the original library implemented in this V2 release
 include:
 
 ### Basic requirements
