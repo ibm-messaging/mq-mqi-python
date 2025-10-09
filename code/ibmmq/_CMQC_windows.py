@@ -36,7 +36,8 @@
 
 ----------------------------------------------------------------
 <BEGIN_BUILDINFO>
-   Generated on:  6/24/25 2:08 PM                             
+   Generated on:  10/3/25, 11:37 AM                           
+   Build Level:   p944-L251003                                
    Build Type:    Production                                  
    Pointer Size:  64 Bit                                      
    Source File:
@@ -2331,6 +2332,7 @@ MQ_FUNCTION_LENGTH                       = 4
 MQ_GROUP_ID_LENGTH                       = 24
 MQ_APPL_FUNCTION_NAME_LENGTH             = 10
 MQ_INITIAL_KEY_LENGTH                    = 256
+MQ_ENCRYPTION_KEY_LENGTH                 = 256
 MQ_INSTALLATION_DESC_LENGTH              = 64
 MQ_INSTALLATION_NAME_LENGTH              = 16
 MQ_INSTALLATION_PATH_LENGTH              = 256
@@ -3276,7 +3278,8 @@ MQCMDL_LEVEL_940                         = 940
 MQCMDL_LEVEL_941                         = 941
 MQCMDL_LEVEL_942                         = 942
 MQCMDL_LEVEL_943                         = 943
-MQCMDL_CURRENT_LEVEL       = 943
+MQCMDL_LEVEL_944                         = 944
+MQCMDL_CURRENT_LEVEL                     = 944
 
 # Command Server Options
 MQCSRV_CONVERT_NO                        = 0

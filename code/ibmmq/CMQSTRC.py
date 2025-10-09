@@ -38,7 +38,8 @@
 """
   -----------------------------------------------------------------
   <BEGIN_BUILDINFO>
-  Generated on:  6/24/25 2:08 PM
+  Generated on:  10/3/25, 11:37 AM
+  Build Level:   p944-L251003
   Build Type:    Production
   <END_BUILDINFO>
   -----------------------------------------------------------------
@@ -1215,6 +1216,7 @@ MQCMDL_DICT = {
     941: "MQCMDL_LEVEL_941",
     942: "MQCMDL_LEVEL_942",
     943: "MQCMDL_LEVEL_943",
+    944: "MQCMDL_LEVEL_944",
 }
 
 MQCMD_DICT = {
@@ -8233,6 +8235,7 @@ MQI_VALUE_NAME_LIST = [
     {  "value":        256, "name": "MQ_AMQP_CLIENT_ID_LENGTH" },
     {  "value":        256, "name": "MQ_AUTH_INFO_OCSP_URL_LENGTH" },
     {  "value":        256, "name": "MQ_CSP_PASSWORD_LENGTH" },
+    {  "value":        256, "name": "MQ_ENCRYPTION_KEY_LENGTH" },
     {  "value":        256, "name": "MQ_HOST_NAME_LENGTH" },
     {  "value":        256, "name": "MQ_INITIAL_KEY_LENGTH" },
     {  "value":        256, "name": "MQ_INSTALLATION_PATH_LENGTH" },
@@ -8611,7 +8614,8 @@ MQI_VALUE_NAME_LIST = [
     {  "value":        941, "name": "MQCMDL_LEVEL_941" },
     {  "value":        942, "name": "MQCMDL_LEVEL_942" },
     {  "value":        943, "name": "MQCMDL_LEVEL_943" },
-    {  "value":        943, "name": "MQCMDL_CURRENT_LEVEL" },
+    {  "value":        944, "name": "MQCMDL_CURRENT_LEVEL" },
+    {  "value":        944, "name": "MQCMDL_LEVEL_944" },
     {  "value":        984, "name": "MQCDC_LENGTH_1" },
     {  "value":        984, "name": "MQCD_LENGTH_1" },
     {  "value":        999, "name": "MQOT_RESERVED_1" },
