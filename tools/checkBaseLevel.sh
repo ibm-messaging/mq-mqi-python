@@ -19,7 +19,7 @@ do
 
   cd $curdir
   . $venv/bin/activate
-  pip uninstall -y ibmmq
+  pip uninstall -y ibmmq >/dev/null 2>&1
   cd ..
 
   # Do an install of the local tree to check it builds

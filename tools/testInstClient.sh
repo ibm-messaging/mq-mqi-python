@@ -31,7 +31,7 @@ fi
 
 cd $venv
 
-pip uninstall -y $pkg
+pip uninstall -y $pkg >/dev/null 2>&1
 # List available versions including pre-release
 echo
 pip index --index http://localhost:8080 --pre versions $pkg

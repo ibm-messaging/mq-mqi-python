@@ -25,7 +25,7 @@ trap cleanup EXIT
 
 if [ -z "$NOREBUILD" ]
 then
-pip uninstall -y ibmmq
+pip uninstall -y ibmmq >/dev/null 2>&1
 
 # verbose="-v"
 

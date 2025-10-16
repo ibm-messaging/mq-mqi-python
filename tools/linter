@@ -21,7 +21,7 @@ fi
 
 if false
 then
-pip uninstall -y ibmmq
+pip uninstall -y ibmmq >/dev/null 2>&1
 cd $root
 pip install -e .
 fi

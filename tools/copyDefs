@@ -8,7 +8,6 @@
 # Files are renamed as they are copied, and the primary
 # CMQC.py uses the correct platform-specific variant.
 
-
 # Copyright (c) 2025 IBM Corporation. All Rights Reserved.
 
 function printSyntax {
@@ -19,9 +18,9 @@ Options:
       1 or USER   : release-stream-USER-level_P
       2 or STREAM : release-stream-level_P
       3 or RELEASE: release-level_P
-      4 or FREE   : the full level as entered (no added _P)
-      5 or GOLD   : gold/level_P
-    -l level   (no default)
+      4 or FREE   : the full level as entered (no automatically added _P)
+      5 or GOLD   : gold/release-level_P
+    -l level   (no default, example "L251003.10")
     -m major number in output tree (default: $defaultMajor)
     -r release (default: $defaultRelease)
     -s stream  (default: $defaultStream)
@@ -67,7 +66,7 @@ curdir=`pwd`
 
 # Default values
 defaultMajor=p940
-defaultRelease=p943
+defaultRelease=p944
 defaultStream=dfct
 defaultFormat=USER
 defaultLevel="" # No default
@@ -144,7 +143,7 @@ case $FORMAT in
   ;;
 5|GOLD)
   gold=true
-  BUILD="gold/$LEVEL"
+  BUILD="gold/$RELEASE-$LEVEL"
   ;;
 *)
   printSyntax

@@ -119,10 +119,10 @@ then
   exit 1
 fi
 
-cd $src/code/examples
+cd $src
 echo
 echo "Looking for MQ VRMF info..."
-cmdlevel=`grep MQCMDL_CURRENT_LEVEL ../ibmmq/CMQSTRC.py | awk '{print $3}' | sed "s/,//g"`
+cmdlevel=`grep MQCMDL_CURRENT_LEVEL code/ibmmq/CMQSTRC.py | awk '{print $3}' | sed "s/,//g"`
 echo "  Command level in repo = $cmdlevel"
 
 # The Dockerfile ought to be pointing at the most recent version. Whose Redist Client
@@ -131,7 +131,7 @@ echo "  Command level in repo = $cmdlevel"
 # Though we can point the container to download from a local server instead of public instead.
 #
 # No other files currently seem to have a VRMF dependency.
-for f in Dockerfile
+for f in code/examples/Dockerfile
 do
   vrmf=`grep "VRMF=" $f | cut -f2 -d" " | cut -f2 -d=`
   if [ -z "$vrmf" ]
@@ -303,8 +303,9 @@ main 2>&1 |\
 
 echo
 echo "---------------------"
-grep -aq -E "WARN|ERR" $logFile
-if [ $? -eq 0 ]
+# It's ok to get a warning when an uninstall fails because it's not already installed
+cnt=`grep -a -E "WARN|ERR" $logFile | grep -v "Skipping" | wc -l`
+if [ $cnt -ne 0 ]
 then
   echo
   echo "ERROR: Checking process has a problem. Review $logFile for details."

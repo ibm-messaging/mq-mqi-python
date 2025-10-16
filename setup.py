@@ -17,7 +17,7 @@ from setuptools import setup, Extension
 # The version should correspond to PEP440 and gets normalised if
 # not in the right format. VRM can be followed with a|b|rc with a further numeric
 # to indicate alpha/beta/release-candidate versions.
-VERSION = '2.0.0b2'
+VERSION = '2.0.0'
 
 # If the MQ SDK is in a non-default location, set MQ_FILE_PATH environment variable.
 custom_path = os.environ.get('MQ_FILE_PATH', None)
@@ -185,9 +185,9 @@ To read the message back from the queue:
     print('Here is the message:', msg)
 
 Many more examples are in the `project repository
-<https://github.com/ibm-messaging/mq-mqi-python/tree/main/code/examples/>`_.
+<https://github.com/ibm-messaging/mq-mqi-python/tree/main/code/examples/>`_
 and in the `dev-patterns repository
-<https://github.com/ibm-messaging/mq-dev-patterns/tree/master/Python/>'_.
+<https://github.com/ibm-messaging/mq-dev-patterns/tree/master/Python/>`_.
 
 """
 

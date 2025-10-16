@@ -6,7 +6,7 @@
 # Basic name for the container. If we have a version tag from a git clone, use that
 # in the container tag. Otherwise just use "latest"
 TAG=mq-python-example-connect
-VER=`git tag -l 2>/dev/null| sort | tail -1 `
+VER=`git tag -l 2>/dev/null| grep -v "^v1" | sort | tail -1 `
 if [ -z "$VER" ]
 then
   VER="latest"
@@ -29,14 +29,14 @@ then
   # set an environment variable to explicitly configure it.
   addr=`ip -4 addr | grep -v altname | grep "state UP" -A2 | grep inet | tail -n1 | awk '{print $2}' | cut -f1 -d'/'`
 
-  if [ ! -z "FORCE_ADDR" ]
+  if [ ! -z "$FORCE_ADDR" ]
   then
     addr=$FORCE_ADDR
   fi
 
   echo "Local address is $addr"
   port="1414"
-  if [ ! -z "addr" ]
+  if [ ! -z "$addr" ]
   then
     # Run the container.
     docker run --rm \
