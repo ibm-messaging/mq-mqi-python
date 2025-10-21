@@ -147,7 +147,7 @@ And unit-test components are in the `code/tests` directory. With a `runAllTests.
 is very likely to need changing for your environment (including how it starts a queue manager) but they may still be
 helpful to see use of the functions.
 
-Additional example programs can be found [here](https://github.com/ibm-messaging/mq-dev-patterns/Python).
+Additional example programs can be found [here](https://github.com/ibm-messaging/mq-dev-patterns/tree/master/Python).
 
 ## Contributions and Pull requests
 

@@ -1,13 +1,13 @@
 To migrate from PyMQI V1 to the IBMMQ V2 package:
 
-* Make sure your versions of MQ and Python meet the minimum levels given in the [README](README.md)
+* Make sure your versions of MQ and Python meet the minimum levels given in the [README](../README.md)
 * Use pip with the new package name: `pip install ibmmq`
 * Change applications to import the new name. You can use `import ibmmq as pymqi`to avoid changing the rest of the
   application code.
 * Check application code for use of previously-deprecated definitions. The most likely misuse is of the `MQCHT_`
   variables, which are in CMQXC, not CMQC.
 
-See the `V2.0.0b1` entry at the bottom of the [CHANGELOG](CHANGELOG.md) for more details on what has been removed and
+See the `V2.0.0b1` entry at the bottom of the [CHANGELOG](../CHANGELOG.md) for more details on what has been removed and
 added.
 
 PyMQI V1 had its own backwards-compatibility option for some of its original classes and method names. Those old names
