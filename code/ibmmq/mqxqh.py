@@ -20,3 +20,9 @@ class XQH(MQOpts):
                 ['RemoteQMgrName', b'', '48s'], ]
 
         super().__init__(tuple(opts), **kw)
+
+    # Return the XQH as a formatted structure based on the message buffer.
+    def get_header(self, buf):
+        """Return the unpacked header from the full message buffer"""
+        xqh = super().unpack(buf[:104])
+        return xqh
