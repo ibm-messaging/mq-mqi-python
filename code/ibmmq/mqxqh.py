@@ -24,5 +24,5 @@ class XQH(MQOpts):
     # Return the XQH as a formatted structure based on the message buffer.
     def get_header(self, buf):
         """Return the unpacked header from the full message buffer"""
-        xqh = super().unpack(buf[:104])
+        xqh = super().unpack(buf[:CMQC.MQXQH_CURRENT_LENGTH - CMQC.MQMD_LENGTH_1])
         return xqh
