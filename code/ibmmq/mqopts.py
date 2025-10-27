@@ -118,6 +118,10 @@ class MQOpts:
         """ Pack the attributes into a 'C' structure to be passed to MQI
         calls. The pack order is as defined to the MQOpts
         ctor. Returns the structure as a bytes buffer.
+
+        This may also be useful when you need to construct message bodies that have
+        chained MQ headers (eg an MQDLH followed by the real body). For example,
+           q.put(dlh.pack() + bytes(text, 'utf8'), md)
         """
 
         # Build tuple for struct.pack() argument. Start with format string.

@@ -22,6 +22,7 @@ structure members by attribute, dictionary etc.
 External classes corresponding to MQI structures include:
 
     * MD              - Main MQI structures
+    * MDE
     * CNO, CSP
     * BNO, SCO, CD
     * OD,  SD
@@ -134,6 +135,7 @@ from ibmmq import CMQC
 from mqopts import *
 
 from mqmd import *
+from mqmde import *
 from mqgmo import *
 from mqpmo import *
 
