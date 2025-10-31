@@ -1,0 +1,116 @@
+name: Build the wheels and publish to PyPI
+on:
+  push:
+    branches:
+      - default
+    # To simplify the release process, the publishing is triggered on tag.
+    # We should make sure to only push tags for new releases.
+    # If we start using tags for non-release purposes,
+    # this needs to be updated.
+    #
+    # We need to explicitly configure an expression that matches anything.
+    tags: [ "**" ]
+  pull_request:
+
+
+env:
+  LINUX_URL: "https://bin.chevah.com:20443/third-party-stuff/ibm-mqc-redist/9.4.3.1-IBM-MQC-Redist-LinuxX64.tar.gz"
+  WINDOWS_URL: "https://bin.chevah.com:20443/third-party-stuff/ibm-mqc-redist/9.4.3.1-IBM-MQC-Redist-Win64.zip"
+
+defaults:
+  run:
+    # Use bash on Windows for consistency.
+    shell: bash
+
+
+jobs:
+  build_wheels:
+    name: Build ${{ matrix.runs-on }}
+    runs-on: ${{ matrix.runs-on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [ubuntu-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
+        name: Install Python
+        with:
+          python-version: '3.9'
+
+      - name: Install deps
+        run: |
+          python -m pip install -r tools/requirements-dev.txt
+
+      - name: Get IBM MQ C Linux Redistributables
+        if: matrix.runs-on == 'ubuntu-latest'
+        run: |
+          python tools/getRedistributables.py "$LINUX_URL" ibm-mq-c
+
+      - name: Get IBM MQ C Windows Redistributables
+        if: matrix.runs-on == 'windows-latest'
+        run: |
+          python tools/getRedistributables.py "$WINDOWS_URL" ibm-mq-c
+
+      - name: Get IBM MQ C Windows Redistributables
+        if: matrix.runs-on == 'windows-latest'
+        run: |
+          python tools/getRedistributables.py "$WINDOWS_URL" ibm-mq-c
+
+      - name: Build wheels
+        run: |
+          python -m build --wheel
+
+      - name: Check files
+        run: ls -al dist/
+
+      - name: Audit ABI3 wheels
+        run: |
+          abi3audit -vsS dist/*.whl
+
+  build_sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
+        name: Install Python
+        with:
+          python-version: '3.9'
+
+      - name: Install build
+        run: |
+          python -m pip install build
+
+      - name: Build sdist
+        run: python -m build --sdist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: artifact-sdist
+          path: dist/*.tar.gz
+
+
+  upload_pypi:
+    needs: [build_wheels, build_sdist]
+    runs-on: ubuntu-latest
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: artifact-*
+          merge-multiple: true
+          path: dist
+
+      - name: Check files
+        run: ls -al dist/
+
+      - name: Publish to PyPI - on tag
+        # Skip upload to PyPI if we don't have a tag
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: pypa/gh-action-pypi-publish@release/v1
