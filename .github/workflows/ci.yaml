@@ -61,6 +61,7 @@ jobs:
 
       - name: Build wheels
         run: |
+          export MQ_FILE_PATH=`pwd`/ibm-mq-c
           python -m build --wheel
 
       - name: Check files
