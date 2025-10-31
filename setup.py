@@ -147,12 +147,14 @@ else:
 
 # Can we find the MQ C header files? If not, there's no point in continuing, and we can
 # give a reasonable error message immediately instead of trying to decode C compiler errors.
+# If we are in the CI environment, we still build the package as we want
+# to be able to build the source package without the MQ C headers.
 found_headers = False  # pylint: disable=invalid-name
 for d in include_dirs:
     p = os.path.join(d, "cmqc.h")
     if os.path.isfile(p):
         found_headers = True
-if not found_headers:
+if not found_headers and not os.environ.get('CI', ''):
     msg = "Cannot find MQ C header files.\n"
     msg += "Ensure you have already installed the MQ Client and SDK.\n"
     msg += "Use the MQ_FILE_PATH environment variable to identify a non-default location."

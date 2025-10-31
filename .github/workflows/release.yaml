@@ -1,4 +1,4 @@
-name: Build the wheels and publish to PyPI
+name: Release
 on:
   push:
     branches:
@@ -48,11 +48,6 @@ jobs:
         if: matrix.runs-on == 'ubuntu-latest'
         run: |
           python tools/getRedistributables.py "$LINUX_URL" ibm-mq-c
-
-      - name: Get IBM MQ C Windows Redistributables
-        if: matrix.runs-on == 'windows-latest'
-        run: |
-          python tools/getRedistributables.py "$WINDOWS_URL" ibm-mq-c
 
       - name: Get IBM MQ C Windows Redistributables
         if: matrix.runs-on == 'windows-latest'
