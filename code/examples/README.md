@@ -31,6 +31,7 @@ You might need to change these assumptions in the examples for your own queue ma
   * async_consume
   * inq_set
   * dlq_browse
+  * hdr_browse
   * channel_compression
   * message_priority
   * message_properties

@@ -249,6 +249,27 @@ class MQOpts:
         """
         return getattr(self, key)
 
+    def _remove(self, key: str) -> None:
+        """Remove an attribute from the object. Not meant for general use.
+        This removes both the attribute and knowledge about how it is formatted
+        """
+        # Have to convert tuples into a list so it can be modified
+        l = list(self.__list)
+
+        for item in l:
+            if item[0] == key:
+                l.remove(item)
+                try:
+                     delattr(self,key)
+                except AttributeError:
+                    pass
+                break
+
+        # And then convert back to the tuple format
+        self.__list = tuple(l)
+
+        return
+
     def __str__(self) -> str:
         rv = ''
         for i in self.__list:

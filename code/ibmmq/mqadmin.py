@@ -391,12 +391,19 @@ class PCFExecute(QueueManager):
         self.__command_queue_name = command_queue_name
 
         self.__convert = convert
+
+        # Don't allow Unlimited waits. Force it to something large, but
+        # not forever. This gives an hour. Setting it to zero would also be foolish,
+        # as there would be no time at all to wait for the response. But we'll allow you to
+        # find that for yourself.
+        if response_wait_interval < 0:
+            response_wait_interval = 60 * 60 * 1000  
         self.__response_wait_interval = response_wait_interval
 
         if model_queue_name and reply_queue_name:
             raise PYIFError('Do not specify both a model_queue_name and a reply_queue_name')
 
-        # From here, we can treat the 2 qnames as equivalent. So assign to one and use it
+        # From here, we can treat the 2 qnames as equivalent. So assign to one and use it.
         # There is an internal __reply_queue_name field, but that comes from the result of the
         # MQOPEN - gives the TDQ name if that's been created.
         if reply_queue_name:

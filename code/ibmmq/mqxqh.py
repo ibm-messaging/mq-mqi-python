@@ -36,7 +36,8 @@ class XQH(MQOpts):
     # Return the MQMD that is part of the real (full) MQXQH structure. It is always
     # an MQMDv1, but this package usually deals with MQMDv2. So we extract the block and add
     # a zero-filled pad array to ensure it's the right length. Which means that the MDv2 fields
-    # (eg GroupId) may not be accurate if the original message was using those MDv2 fields.
+    # (eg GroupId) may not be accurate if the original message was using those MDv2 fields. So we
+    # remove them from the returned MD.
     # If the Format in this MD indicates there is a subsequent MQMDE, which corresponds to
     # the MDv2 fields, then you can extract that and unpack it directly before then
     # continuing on to the rest of the message body.
@@ -46,4 +47,10 @@ class XQH(MQOpts):
         pad = CMQC.MQMD_LENGTH_2 - CMQC.MQMD_LENGTH_1                   # How long is the padding
         md_buf = buf[offset:CMQC.MQXQH_CURRENT_LENGTH] + bytearray(pad)
         md = MD().unpack(md_buf)
+        # Remove the MDv2-specific fields.
+        md._remove('GroupId')
+        md._remove('MsgSeqNumber')
+        md._remove('Offset')
+        md._remove('MsgFlags')
+        md._remove('OriginalLength')
         return md

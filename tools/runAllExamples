@@ -44,6 +44,7 @@ examples=`ls ../code/examples/*py |\
    grep -v "async_consume" |\
    grep -v put_get_correl_id |\
    grep -v publish |\
+   grep -v hdr_browse |\
    grep -v subscribe`
 for testcase in $examples
 do
