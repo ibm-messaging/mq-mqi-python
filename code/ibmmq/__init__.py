@@ -208,6 +208,9 @@ def to_string(v, encoding=EncodingDefault.bytes_encoding):
     """
     if isinstance(v, bytes):
         try:
+            null_index = v.find(0)
+            if null_index != -1:
+                v = v[:null_index]
             return v.decode(encoding).strip()
         except UnicodeError:
             pass
