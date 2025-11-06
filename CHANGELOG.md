@@ -2,7 +2,7 @@
 # Changelog
 Newest updates are at the top of this file.
 
-## 202x xxx xx - V2.0.1
+## 2025 Nov 06 - V2.0.1
 * MQXQH 
   - get_header() function to extract structure (#4)
   - get_embedded_md() function
