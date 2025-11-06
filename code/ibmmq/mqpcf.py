@@ -229,6 +229,8 @@ class CFSL(MQOpts):
 class CFST(MQOpts):
     """ Construct an MQCFST (PCF String) structure with default values as per MQI.
     The default values may be overridden by the optional keyword arguments 'kw'.
+    Note that the "String" may include the padding bytes, so you have to use the
+    StringLength field to extract the real value.
     """
 
     def __init__(self, **kw: Dict[str, Any]):

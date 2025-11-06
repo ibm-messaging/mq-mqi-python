@@ -80,7 +80,13 @@ if not no_queues:
             try:
                 queue_name = queue_info[mq.CMQC.MQCA_Q_NAME]
                 depth = queue_info[mq.CMQC.MQIA_CURRENT_Q_DEPTH]
-                print(f'Found queue {queue_name} depth: {depth}')
+                lputtime = mq.to_string(queue_info[mq.CMQCFC.MQCACF_LAST_PUT_TIME])
+                lputdate = mq.to_string(queue_info[mq.CMQCFC.MQCACF_LAST_PUT_DATE])
+                if lputdate != "":
+                    lput = lputdate + ":" + lputtime
+                else:
+                    lput = "N/A"
+                print(f'Found queue {queue_name} depth: {depth} lastPut: {lput}')
             except KeyError as e:
                 print('Failure to decode msg because ', e)
 

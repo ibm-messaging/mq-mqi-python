@@ -397,7 +397,7 @@ class PCFExecute(QueueManager):
         # as there would be no time at all to wait for the response. But we'll allow you to
         # find that for yourself.
         if response_wait_interval < 0:
-            response_wait_interval = 60 * 60 * 1000  
+            response_wait_interval = 60 * 60 * 1000
         self.__response_wait_interval = response_wait_interval
 
         if model_queue_name and reply_queue_name:
@@ -542,7 +542,10 @@ class PCFExecute(QueueManager):
                 if parameter.StringLength > 1:
                     parameter = CFST(StringLength=parameter.StringLength)
                     parameter.unpack(message[cursor:cursor + parameter.StrucLength])
-                value = parameter.String
+                # The parameter.String contents might include padding bytes that round up the length.
+                # Ideally we'd truncate, but this was behaviour in the original library so I'm reluctant
+                # to fix it.
+                value = parameter.String   # [:parameter.StringLength] - would truncate
             elif parameter_type == CMQCFC.MQCFT_STRING_LIST:
                 parameter = CFSL()
                 parameter.unpack(message[cursor:cursor + CMQCFC.MQCFSL_STRUC_LENGTH_FIXED])
@@ -551,6 +554,8 @@ class PCFExecute(QueueManager):
                                      Count=parameter.Count,
                                      StrucLength=parameter.StrucLength)
                     parameter.unpack(message[cursor:cursor + parameter.StrucLength])
+                # CFSL doesn't have the same padding issue as CFST as all supported
+                # attributes are multiples of 4.
                 value = parameter.Strings
             elif parameter_type == CMQCFC.MQCFT_INTEGER:
                 parameter = CFIN()

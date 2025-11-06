@@ -7,6 +7,7 @@ Newest updates are at the top of this file.
   - get_header() function to extract structure (#4)
   - get_embedded_md() function
 * Added MQMDE class for if you want to parse MQXQH messages
+* Add comments about PCF parser leaving padding on strings that are not rounded to 4 bytes (#10)
 
 ## 2025 Oct 16 - V2.0.0
 * First production release, based on MQ 9.4.4

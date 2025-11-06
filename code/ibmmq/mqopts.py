@@ -254,21 +254,19 @@ class MQOpts:
         This removes both the attribute and knowledge about how it is formatted
         """
         # Have to convert tuples into a list so it can be modified
-        l = list(self.__list)
+        tmp_list = list(self.__list)
 
-        for item in l:
+        for item in tmp_list:
             if item[0] == key:
-                l.remove(item)
+                tmp_list.remove(item)
                 try:
-                     delattr(self,key)
+                    delattr(self, key)
                 except AttributeError:
                     pass
                 break
 
         # And then convert back to the tuple format
-        self.__list = tuple(l)
-
-        return
+        self.__list = tuple(tmp_list)
 
     def __str__(self) -> str:
         rv = ''
