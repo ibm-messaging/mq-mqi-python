@@ -1868,6 +1868,9 @@ PyMODINIT_FUNC PyInit_ibmmqc(void) {
 #if defined(MQMD_CURRENT_VERSION)
   PyDict_SetItemString(v,"md", PyLong_FromLong((long)MQMD_CURRENT_VERSION));
 #endif
+#if defined(MQMDE_CURRENT_VERSION)
+  PyDict_SetItemString(v,"mde", PyLong_FromLong((long)MQMDE_CURRENT_VERSION));
+#endif
 #if defined(MQOD_CURRENT_VERSION)
   PyDict_SetItemString(v,"od", PyLong_FromLong((long)MQOD_CURRENT_VERSION));
 #endif

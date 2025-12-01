@@ -205,6 +205,9 @@ class MQOpts:
             if isinstance(v, bytes):
                 if k not in _binary_fields:
                     try:
+                        null_index = v.find(0)
+                        if null_index != -1:
+                            v = v[:null_index]
                         setattr(self, k, v.decode(encoding).strip())
                     except UnicodeError:
                         pass
