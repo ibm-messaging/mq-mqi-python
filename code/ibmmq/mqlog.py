@@ -15,16 +15,16 @@ logger = logging.getLogger('ibmmq')
 trace_level = False
 
 def trace(msg, *args):
-    '''The Python logger doesn't have a separate trace level
+    """The Python logger doesn't have a separate trace level
     so we fake it. Trace is more detailed than debug.
-    '''
+    """
     if logger and trace_level:
         logger.debug(msg, *args)
 
 def debug(msg, *args):
-    '''Add some indent to the message if we are also
+    """Add some indent to the message if we are also
     using the TRACE pseudo-loglevel
-    '''
+    """
     indent = ""
     if trace_level:
         indent = "  "
@@ -32,18 +32,18 @@ def debug(msg, *args):
         logger.debug(indent + msg, *args)
 
 def error(msg, *args):
-    '''Record an error message'''
+    """Record an error message"""
     logger.error(msg, *args)
 
 def trace_entry(s, *args):
-    '''Record entry to a function'''
+    """Record entry to a function"""
     trace("> " + s, *args)
 
 def trace_exit(s: str, **kwargs):
-    '''Record exit of a function. The "ep" attribute lets us
+    """Record exit of a function. The "ep" attribute lets us
     annotate when there are multiple potential exits from a function (usually
     because of error handling).
-    '''
+    """
     ep = kwargs.get('ep')
     if ep:
         trace("<" + s + " EP:" + str(ep))

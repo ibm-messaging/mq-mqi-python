@@ -22,9 +22,9 @@ from ibmmq import CMQC, MessageHandle, Queue, OD, PD, IMPO, SMPO, RFH2
 # from mqqmgr import *
 
 class PropOptions:
-    '''Keep track of the options used for a GET so we can preserve them across the Before/After calls.
+    """Keep track of the options used for a GET so we can preserve them across the Before/After calls.
     This class is only used in this module; more effort than it's worth to have the full setter/getter/init routines
-    '''
+    """
     prop_ctl = -1  # The PROPCTL attribute on the queue, or -1 if unknown
     gmo = 0  # Currently-active GMO Options value so we can reset
     managed_ho = None  # To link a managed queue with its corresponding MQSUB hObj
@@ -113,7 +113,7 @@ def _compare_msg_handle(hc, ho, mh_value) -> bool:
     return rc
 
 def _props_contain(mh: MessageHandle, prop: str) -> bool:
-    ''' Is there a property of the given name?'''
+    """ Is there a property of the given name?"""
     rc = False
 
     pd = PD()
@@ -149,8 +149,8 @@ def _extract_rfh2_prop_val(props: bytes, prop: str) -> str:
 
 
 def otel_disc(hc):
-    '''Get rid of entries in the hconn/hobj maps when the application calls MQDISC
-     '''
+    """Get rid of entries in the hconn/hobj maps when the application calls MQDISC
+     """
 
     mqlog.trace_entry("otel_disc")
     # Both the maps are keyed by a string which begins with
@@ -180,14 +180,14 @@ def otel_disc(hc):
     mqlog.trace_exit("otel_disc")
 
 def otel_open(ho, od, open_options, managed_ho):
-    '''When a queue is opened for INPUT, then it will help to
+    """When a queue is opened for INPUT, then it will help to
     know the PROPCTL setting so we know if we can add a MsgHandle or to expect
     an RFH2 response. If the MQINQ fails, that's OK - we'll just ignore the error
     but might not be able to get any property/RFH from an inbound message
 
     Note that we can't (and don't need to) do the same for an MQPUT1 because the
     information we are trying to discover is only useful on MQGET/CallBack.
-     '''
+     """
 
     prop_ctl = -1
 
@@ -278,7 +278,7 @@ def otel_open(ho, od, open_options, managed_ho):
     mqlog.trace_exit("otel_open")
 
 def otel_close(ho):
-    '''Called during the MQCLOSE'''
+    """Called during the MQCLOSE"""
     mqlog.trace_entry("otel_close")
     key = _make_key(ho.get_queue_manager(), ho)
     with object_options_lock:
@@ -290,9 +290,9 @@ def otel_close(ho):
     mqlog.trace_exit("otel_close")
 
 def otel_close_nolock(ho):
-    '''Called during the MQCLOSE of a subscription to cleanup any managed
+    """Called during the MQCLOSE of a subscription to cleanup any managed
     queues. The object lock is already held when this is called
-    '''
+    """
     mqlog.trace_entry("otel_close_nolock")
 
     key = _make_key(ho.get_queue_manager(), ho)
@@ -301,7 +301,7 @@ def otel_close_nolock(ho):
     mqlog.trace_exit("otel_close_nolock")
 
 def otel_put_trace_before(hc, md, pmo, buffer):
-    '''Insert any span-provided properties from the environment'''
+    """Insert any span-provided properties from the environment"""
 
     mh = None
     mho = None
@@ -648,7 +648,7 @@ def otel_get_trace_after(ho, gmo, md, buffer, asynchronous):
     return removed
 
 def init():
-    '''Any initialisation operations needed for the OTel interface'''
+    """Any initialisation operations needed for the OTel interface"""
 
     # Set the function pointers to invoke the code in here
     OTelFunctions.disc = otel_disc
