@@ -1,7 +1,7 @@
 """Topic class: for MQOPEN, MQSUB, MQPUT (ie publish), MQCLOSE
 """
 
-# Copyright (c) 2025 IBM Corporation and other Contributors. All Rights Reserved.
+# Copyright (c) 2025,2026 IBM Corporation and other Contributors. All Rights Reserved.
 # Copyright (c) 2009-2024 Dariusz Suchojad. All Rights Reserved.
 
 from mqcommon import *
@@ -185,6 +185,10 @@ class Topic(MQObject):
         if not self.__topic_handle:
             self.__open_opts = CMQC.MQOO_OUTPUT
             self.__real_open()
+
+        if OTelFunctions.put_trace_before:
+            OTelFunctions.put_trace_before(self.__queue_manager, msg_desc, put_opts, msg)
+
         # Now send the message
         rv = ibmmqc.MQPUT(self.__queue_manager.getHandle(), self.__topic_handle, msg_desc.pack(), put_opts.pack(), msg)
         if rv[-2]:
@@ -192,6 +196,9 @@ class Topic(MQObject):
 
         _ = msg_desc.unpack(rv[0])
         _ = put_opts.unpack(rv[1])
+
+        if OTelFunctions.put_trace_after:
+            OTelFunctions.put_trace_after(self.__queue_manager, put_opts)
 
     # Create an alias as the underlying MQ verb is MQPUT
     put = pub

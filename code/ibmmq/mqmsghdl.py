@@ -1,6 +1,6 @@
 """Message Handles and Message Properties"""
 
-# Copyright (c) 2025 IBM Corporation and other Contributors. All Rights Reserved.
+# Copyright (c) 2025,2026 IBM Corporation and other Contributors. All Rights Reserved.
 # Copyright (c) 2009-2024 Dariusz Suchojad. All Rights Reserved.
 
 from mqcommon import *
@@ -143,16 +143,34 @@ class MessageHandle:
             if comp_code != CMQC.MQCC_OK:
                 raise MQMIError(comp_code, comp_reason)
 
-    def __init__(self, qmgr=None, cmho=None):
+    def __init__(self, qmgr=None, cmho=None, dup_handle=None):
+        """There may be times when we need to create a message handle object
+        when all we have is the integer handle value (the PMO/GMO fields are
+        set to the integers, not objects). So we can't use those directly
+        to set/inquire additional properties. The dup_handle field lets us
+        set the properties using this new object that is still the same
+        thing in the underlying C code.
+        """
         self.conn_handle = qmgr.get_handle() if qmgr else CMQC.MQHO_NONE
         cmho = cmho if cmho else CMHO()
 
-        self.msg_handle, comp_code, comp_reason = ibmmqc.MQCRTMH(self.conn_handle, cmho.pack())
+        if dup_handle is None:
+            self.msg_handle, comp_code, comp_reason = ibmmqc.MQCRTMH(self.conn_handle, cmho.pack())
 
-        if comp_code != CMQC.MQCC_OK:
-            raise MQMIError(comp_code, comp_reason)
+            if comp_code != CMQC.MQCC_OK:
+                raise MQMIError(comp_code, comp_reason)
+        else:
+            self.msg_handle = dup_handle
 
         self.properties = self._Properties(self.conn_handle, self.msg_handle)
+
+    def get_handle(self):
+        """Get the actual integer value"""
+        return self.msg_handle
+
+    def get_queue_manager(self):
+        """Get the associated hConn"""
+        return self.conn_handle
 
     # Note that this deletes a MsgHandle at the MQI level and is not __del__ (the object destructor)
     def dlt(self, dmho=None):

@@ -1,6 +1,6 @@
 """MQRFH2 Structure: Name/Value pairs"""
 
-# Copyright (c) 2025 IBM Corporation and other Contributors. All Rights Reserved.
+# Copyright (c) 2025, 2026 IBM Corporation and other Contributors. All Rights Reserved.
 # Copyright (c) 2009-2024 Dariusz Suchojad. All Rights Reserved.
 
 import xml.etree.ElementTree as ET
@@ -186,3 +186,14 @@ class RFH2(MQOpts):
 
         # Set from saved values
         self.set(**saved_values)
+
+    def get_folders(self):
+        """Return the list of folders in this RFH2"""
+        folders = []
+        d = self.get()
+        for f in d:
+            # All the folders have a pair of attributes: xxx and xxxLength
+            if f.endswith("Length") and f != "StrucLength":
+                f = f[0:len(f) - 6]
+                folders.append(f)
+        return folders

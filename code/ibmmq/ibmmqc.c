@@ -37,7 +37,7 @@ PERFORMANCE OF THIS SOFTWARE.
  * Author: Dariusz Suchojad (dsuch at zato.io)
  * Author: Mark Taylor (ibmmqmet on GitHub)
  *
- * Copyright (c) 2025 IBM Corporation and other Contributors. All Rights Reserved.
+ * Copyright (c) 2025, 2026 IBM Corporation and other Contributors. All Rights Reserved.
  * Copyright (c) 2009-2024 Dariusz Suchojad. All Rights Reserved.
  */
 
@@ -65,12 +65,21 @@ elements of a tuple. Any other returned elements precede those in the tuple.\
  \
 ";
 
+#include <time.h>
+
 #include <cmqc.h>
 #include <cmqcfc.h>
 #include <cmqxc.h>
 
 #if MQCMDL_CURRENT_LEVEL < 910
 #error Need to build/install against MQ 9.1 or later
+#endif
+
+#if !defined(TRUE)
+#define TRUE (1)
+#endif
+#if !defined(FALSE)
+#define FALSE (0)
 #endif
 
 #include "ibmmqc.h"
@@ -90,12 +99,11 @@ elements of a tuple. Any other returned elements precede those in the tuple.\
 #include "Python.h"
 static PyObject *ErrorObj;
 
-#if 0
 /* To control any trace logging */
 static FILE *fp = NULL;
 static int fpOpened = 0;
 static long debugOpts = 0; /* Not a BOOL so we can use bitmask to control what's logged */
-#endif
+static int shortTrace = FALSE;
 
 /*
  * MQI Structure sizes for the current supported MQ version are
@@ -194,22 +202,28 @@ static int checkArgSize(Py_ssize_t given, Py_ssize_t expected, const char *name)
   return 0;
 }
 
-#if 0 /* Not enabled for now */
-
-/* Print the debug info to the log file. */
-/* Do we need to add timestamp and other boilerplate? */
-/* Do we need to add locking to avoid mingling output? */
-static void debug(int opts, char *fmt, ...) {
+/* Print the debug info to the log file. Note that that boilerplate prefix   */
+/* is designed to match the Formatter object in mqlog.py associated with     */
+/* a configured filename. The default (stderr) formatter is a bit different. */
+static void debug(int level, char *fmt, ...) {
     va_list vaArgs;
 
+    /* Not filtering any output based on logLevel for now. Just on/off */
     if (debugOpts == 0) {
         return;
     }
 
     va_start(vaArgs,fmt);
     if (fp) {
-        vfprintf(fp,fmt,vaArgs);
-        if !(fmt ends with '\n')
+        if (shortTrace) {
+          fprintf(fp,"%s:%s:","DEBUG","ibmmqc");
+        } else {
+          time_t t = time(NULL);
+          char *now = ctime(&t);
+          fprintf(fp,"%-8.8s %-8s %-8s ",&now[11],"DEBUG","ibmmqc");
+        }
+         vfprintf(fp,fmt,vaArgs);
+        if (fmt[strlen(fmt) -1] != '\n')
           fprintf(fp,"\n");
         fflush(fp);
     }
@@ -218,16 +232,16 @@ static void debug(int opts, char *fmt, ...) {
 
 /*
 TODO: Actually add debug statements that make use of this!
-TODO: Define granulariy masks to opts.
+TODO: Define granularity masks or loglevel distinctions to opts.
 */
-static char ibmmqc_MQDEBUG__doc__[] =
-"MQDEBUG(opts, filename) \
-A call to control any debug logging from this module. \
+static char ibmmqc_MQLOGCF__doc__[] =
+"MQLOGCF(opts, filename) \
+An internal call to configure any debug logging from this module. \
 If opts is non-zero, debug info gets reported to filename. Or stderr if \
 that is empty/not supplied.\
 ";
 
-static PyObject * ibmmqc_MQDEBUG(PyObject *self, PyObject *args) {
+static PyObject * ibmmqc_MQLOGCF(PyObject *self, PyObject *args) {
   char *filename = NULL;
   long lOpts;
   PyObject *nameObj;
@@ -255,6 +269,7 @@ static PyObject * ibmmqc_MQDEBUG(PyObject *self, PyObject *args) {
     } else {
       /* Don't set fpOpened, as we don't want to try to close stderr later */
       fp = stderr;
+      shortTrace=TRUE;
     }
     setbuf(fp,NULL); /* Force the log file to be flushed immediately */
   }
@@ -272,13 +287,11 @@ static PyObject * ibmmqc_MQDEBUG(PyObject *self, PyObject *args) {
 
   debugOpts = lOpts;
 
-  debug(1,"MQDEBUG Opts: %ld File: %s",lOpts,filename?filename:"N/A");
+  debug(1,"MQLOGCF Opts: %ld File: %s",lOpts,filename?filename:"N/A");
+  // fprintf(stderr,"MQLOGCF Opts: %ld File: %s\n",lOpts,filename?filename:"N/A");
 
   return Py_BuildValue("(l)", (long) 0L);
 }
-
-#endif
-
 
 static char ibmmqc_MQCONN__doc__[] =
 "MQCONN(mgrName) \
@@ -1744,7 +1757,7 @@ static PyObject* ibmmqc_MQDLTMP(PyObject *self, PyObject *args) {
 
 /* List of methods defined and exported in the module */
 static struct PyMethodDef ibmmqc_methods[] = {
-  /*{"MQDEBUG", (PyCFunction)ibmmqc_MQDEBUG,    METH_VARARGS, ibmmqc_MQDEBUG__doc__},*/
+  {"MQLOGCF", (PyCFunction)ibmmqc_MQLOGCF,    METH_VARARGS, ibmmqc_MQLOGCF__doc__},
 
   {"MQCONN", (PyCFunction)ibmmqc_MQCONN,    METH_VARARGS, ibmmqc_MQCONN__doc__},
   {"MQCONNX", (PyCFunction)ibmmqc_MQCONNX, METH_VARARGS, ibmmqc_MQCONNX__doc__},

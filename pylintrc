@@ -435,8 +435,8 @@ disable=raw-checker-failed,
         too-few-public-methods,
         redefined-outer-name,
         c-extension-no-member,
-        protected-access
-
+        protected-access,
+        not-callable
 
 
 # Enable the message, report, category or checker with the given id(s). You can

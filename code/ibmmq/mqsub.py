@@ -2,7 +2,7 @@
 Will reference a managed queue for the MQGET if that has been requested.
 """
 
-# Copyright (c) 2025 IBM Corporation and other Contributors. All Rights Reserved.
+# Copyright (c) 2025, 2026 IBM Corporation and other Contributors. All Rights Reserved.
 # Copyright (c) 2009-2024 Dariusz Suchojad. All Rights Reserved.
 
 from typing import Union
@@ -43,6 +43,14 @@ class Subscription(MQObject):
             else:
                 object_name = topic_string
         super().__init__(object_name)
+
+    def get_handle(self):
+        """Return the subscription's hObj object"""
+        return self.__sub_handle
+
+    def get_queue_manager(self):
+        """Return the subscriptions hConn object"""
+        return self.__queue_manager
 
     def get_sub_queue(self) -> Queue:
         """ Return the subscription queue.
@@ -113,6 +121,9 @@ class Subscription(MQObject):
         self.sub_queue.set_handle(rv[1])
         self.__sub_handle = rv[2]
 
+        if OTelFunctions.open and (sub_desc.Options & CMQC.MQSO_MANAGED) != 0:
+            OTelFunctions.open(self, None, 0, self.sub_queue)
+
     def close(self, sub_close_options=CMQC.MQCO_NONE, close_sub_queue=False, close_sub_queue_options=CMQC.MQCO_NONE):
         """Close the subscription"""
 
@@ -122,6 +133,9 @@ class Subscription(MQObject):
         rv = ibmmqc.MQCLOSE(self.__queue_manager.getHandle(), self.__sub_handle, sub_close_options)
         if rv[0]:
             raise MQMIError(rv[-2], rv[-1])
+
+        if OTelFunctions.close:
+            OTelFunctions.close(self)
 
         self.__sub_handle = None
         self.__sub_desc = None

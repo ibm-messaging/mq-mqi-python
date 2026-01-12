@@ -2,9 +2,8 @@
 MQOPEN, MQPUT, MQGET, MQCLOSE, MQCB, MQINQ, MQSET
 """
 
-# Copyright (c) 2025 IBM Corporation and other Contributors. All Rights Reserved.
+# Copyright (c) 2025, 2026 IBM Corporation and other Contributors. All Rights Reserved.
 # Copyright (c) 2009-2024 Dariusz Suchojad. All Rights Reserved.
-
 from mqcommon import *
 from mqerrors import *
 from ibmmq import CMQC, PMO, GMO, RFH2, ibmmqc, MQObject
@@ -33,8 +32,12 @@ class Queue(MQObject):
         rv = ibmmqc.MQOPEN(self.__q_mgr.get_handle(), self.__q_desc.pack(), self.__open_opts)
         if rv[-2]:
             raise MQMIError(rv[-2], rv[-1])
+
         self.__q_handle = rv[0]
         self.__q_desc.unpack(rv[1])
+
+        if OTelFunctions.open:
+            OTelFunctions.open(self, self.__q_desc, self.__open_opts, None)
 
     def __init__(self, qmgr: QueueManager, *opts):
         """ Associate a Queue instance with the QueueManager object 'qmgr'
@@ -121,7 +124,6 @@ class Queue(MQObject):
         updated by the put operation.
         """
         m_desc, put_opts = mqqargs.common_q_args(*opts)
-
         if not isinstance(msg, bytes):
             if isinstance(msg, str):
                 msg = msg.encode(self.__q_mgr.bytes_encoding)
@@ -139,12 +141,18 @@ class Queue(MQObject):
             self.__open_opts = CMQC.MQOO_OUTPUT
             self.__real_open()
 
+        if OTelFunctions.put_trace_before:
+            OTelFunctions.put_trace_before(self.__q_mgr, m_desc, put_opts, msg)
+
         # Now send the message
         rv = ibmmqc.MQPUT(self.__q_mgr.get_handle(), self.__q_handle, m_desc.pack(), put_opts.pack(), msg)
         if rv[-2]:
             raise MQMIError(rv[-2], rv[-1])
         _ = m_desc.unpack(rv[0])
         _ = put_opts.unpack(rv[1])
+
+        if OTelFunctions.put_trace_after:
+            OTelFunctions.put_trace_after(self.__q_mgr, put_opts)
 
     def put_rfh2(self, msg, *opts):
         """ Put a RFH2 message. opts[2] is a list of RFH2 headers. MQMD and RFH2's must be correct.
@@ -202,6 +210,8 @@ class Queue(MQObject):
         supply a maxLength value.
         """
 
+        removed = 0
+
         max_length = maxLength  # Work with the "right" name style from here on
         m_desc, get_opts = mqqargs.common_q_args(*opts)
         if get_opts is None:
@@ -220,13 +230,19 @@ class Queue(MQObject):
         else:
             length = max_length
 
+        if OTelFunctions.get_trace_before:
+            OTelFunctions.get_trace_before(self.__q_mgr, self, get_opts, False)
+
         rv = ibmmqc.MQGET(self.__q_mgr.get_handle(), self.__q_handle, m_desc.pack(), get_opts.pack(), length)
 
         if not rv[-2]:
             # Everything is OK
             _ = m_desc.unpack(rv[1])
             _ = get_opts.unpack(rv[2])
-            return rv[0]
+
+            if OTelFunctions.get_trace_after:
+                removed = OTelFunctions.get_trace_after(self, get_opts, m_desc, rv[0], False)
+            return rv[0][removed:]
 
         # Accept truncated message
         if ((rv[-1] == CMQC.MQRC_TRUNCATED_MSG_ACCEPTED) or
@@ -249,7 +265,12 @@ class Queue(MQObject):
         _ = m_desc.unpack(rv[1])
         _ = get_opts.unpack(rv[2])
 
-        return rv[0]
+        # Only process OTel tracing if we actually got a message
+        if rv[-2] == CMQC.MQCC_OK or rv[-1] == CMQC.MQRC_TRUNCATED_MSG_ACCEPTED:
+            if OTelFunctions.get_trace_after:
+                removed = OTelFunctions.get_trace_after(self, get_opts, m_desc, rv[0])
+
+        return rv[0][removed:]
 
     def get_no_jms(self, max_length=None, *args):  # pylint: disable=keyword-arg-before-vararg
         """Get a message but force there to be no properties returned."""
@@ -300,6 +321,10 @@ class Queue(MQObject):
         rv = ibmmqc.MQCLOSE(self.__q_mgr.get_handle(), self.__q_handle, options)
         if rv[0]:
             raise MQMIError(rv[-2], rv[-1])
+
+        if OTelFunctions.close:
+            OTelFunctions.close(self)
+
         self.__q_handle = self.__q_desc = self.__open_opts = None
 
     def inquire(self, selectors: Union[int, list[int]]) -> Union[Any, dict[int, Any]]:

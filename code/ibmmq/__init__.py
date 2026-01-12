@@ -6,7 +6,7 @@
 # Author: Mark Taylor (ibmmqmet on GitHub)
 #
 
-# Copyright (c) 2025 IBM Corporation and other Contributors. All Rights Reserved.
+# Copyright (c) 2025, 2026 IBM Corporation and other Contributors. All Rights Reserved.
 # Copyright (c) 2009-2024 Dariusz Suchojad. All Rights Reserved.
 
 """
@@ -128,6 +128,8 @@ from ibmmq import CMQXC, CMQSTRC
 
 from ibmmq import CMQC
 
+import mqlog
+
 # Import the classes that implement each MQI structure. Order can be
 # critical here to ensure we don't get loops in the definitions
 
@@ -181,6 +183,13 @@ from mqmsghdl import *
 
 # And the PCF parse/execute module
 from mqadmin import *
+
+try:
+    from mqotel import *
+    otel_enabled = True
+except ImportError:
+    otel_enabled = False
+mqlog.debug(f"__init__: OtelEnabled = {otel_enabled}")
 
 # The versions of this package (as found in the C and Python layers)
 __c_version__ = ibmmqc.__version__

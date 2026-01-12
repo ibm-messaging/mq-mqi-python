@@ -1,6 +1,6 @@
 """MQCB/MQCTL implementation, including the proxy Python callback"""
 
-# Copyright (c) 2025 IBM Corporation and other Contributors. All Rights Reserved.
+# Copyright (c) 2025,2026 IBM Corporation and other Contributors. All Rights Reserved.
 # Copyright (c) 2009-2024 Dariusz Suchojad. All Rights Reserved.
 
 from threading import Lock
@@ -121,10 +121,14 @@ def _internal_cb(hc, md, gmo, buf, cbc):
     else:
         gmo_up = GMO()
 
+    removed = 0
+    if OTelFunctions.get_trace_after:
+        removed = OTelFunctions.get_trace_after(queue, gmo, md, buf, True)
+
     # Call the real user function with the unpacked forms of the structures.
     # If the callback_function is actually a method within a class, then the "self"
     # parameter is automatically added to the parameters.
-    cb.callback_function(queue_manager=qmgr, queue=queue, md=md_up, gmo=gmo_up, msg=buf, cbc=cbc_up)
+    cb.callback_function(queue_manager=qmgr, queue=queue, md=md_up, gmo=gmo_up, msg=buf[removed:], cbc=cbc_up)
 
 def real_cb(obj, kwargs):
     """
@@ -165,6 +169,9 @@ def real_cb(obj, kwargs):
     original_cba = cbd.CallbackArea
     cbd.CallbackFunction = 0
     cbd.CallbackArea = 0
+
+    if OTelFunctions.get_trace_before:
+        OTelFunctions.get_trace_before(hconn, hobj, gmo, True)
 
     rv = ibmmqc.MQCB(hconn, operation, cbd.pack(), hobj, md.pack(), gmo.pack())
 

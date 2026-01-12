@@ -1,6 +1,6 @@
 """QueueManager class: Implements MQI functions that do not require an hObj"""
 
-# Copyright (c) 2025 IBM Corporation and other Contributors. All Rights Reserved.
+# Copyright (c) 2025, 2026 IBM Corporation and other Contributors. All Rights Reserved.
 # Copyright (c) 2009-2024 Dariusz Suchojad. All Rights Reserved.
 
 from mqcommon import *
@@ -368,6 +368,9 @@ class QueueManager(MQObject):
             raise PYIFError('not connected')
         saved_handle = self.__handle
 
+        if OTelFunctions.disc:
+            OTelFunctions.disc(self)
+
         rv = ibmmqc.MQDISC(self.__handle)
         if rv[0]:
             raise MQMIError(rv[0], rv[1])
@@ -414,7 +417,7 @@ class QueueManager(MQObject):
 
     def put1(self, q_desc: Union[str, bytes, OD], msg: Optional[bytes], *opts: Union[MD, OD]) -> None:
         """ Put the single message in string buffer 'msg' on the queue
-        using the MQI PUT1 call. This encapsulates calls to MQOPEN,: Incompatible default for argumen
+        using the MQI PUT1 call. This encapsulates calls to MQOPEN,
         MQPUT and MQCLOSE. put1 is the optimal way to put a single
         message on a queue.
 
@@ -445,12 +448,18 @@ class QueueManager(MQObject):
         if put_opts is None:
             put_opts = PMO()
 
+        if OTelFunctions.put_trace_before:
+            OTelFunctions.put_trace_before(self, m_desc, put_opts, msg)
+
         # Now send the message
         rv = ibmmqc.MQPUT1(self.__handle, mqqargs._make_q_desc(q_desc).pack(), m_desc.pack(), put_opts.pack(), msg)
         if rv[-2]:
             raise MQMIError(rv[-2], rv[-1])
         _ = m_desc.unpack(rv[0])
         _ = put_opts.unpack(rv[1])
+
+        if OTelFunctions.put_trace_after:
+            OTelFunctions.put_trace_after(self, put_opts)
 
     def inquire(self, selectors: Union[int, list[int]]) -> Union[Any, Dict[int, Any]]:
         """ Inquire on qmgr attributes. If the qmgr is not already

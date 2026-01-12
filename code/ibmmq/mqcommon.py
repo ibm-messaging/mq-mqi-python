@@ -1,9 +1,10 @@
 """Some basic functions mostly needed for data conversions"""
 
-# Copyright (c) 2025 IBM Corporation and other Contributors. All Rights Reserved.
+# Copyright (c) 2025, 2026 IBM Corporation and other Contributors. All Rights Reserved.
 # Copyright (c) 2009-2024 Dariusz Suchojad. All Rights Reserved.
 
 import struct
+from typing import Callable, Union
 
 class EncodingDefault:
     """Global encoding options"""
@@ -14,6 +15,19 @@ class EncodingDefault:
     # that is good for the majority of codepages where an MQ app is running.
     # A z/OS system might need to override this to ebcdic: "cp500" perhaps.
     mqi_encoding = 'ascii'
+
+
+class OTelFunctions:
+    """This class contains indirections to the OTel tracing functions. They
+    are only set to real values when we are in an OTel-enabled environment
+    """
+    disc = None
+    open = None
+    close = None
+    put_trace_before = None  # type: Union[None,Callable]
+    put_trace_after = None
+    get_trace_before = None
+    get_trace_after = None
 
 def padded_count(count: int, boundary: int = 4) -> int:
     """Calculate padded bytes count
