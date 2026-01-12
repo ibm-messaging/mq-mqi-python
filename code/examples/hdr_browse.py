@@ -89,6 +89,10 @@ while ok:
                 offset += rfh2['StrucLength']
 
                 print(rfh2.to_string())
+                # Extract the separate folders ...
+                folders = rfh2.get_folders()
+                for folder in folders:
+                    print(f'  Folder {folder} = ', rfh2[folder])
 
             elif fmt == CMQC.MQFMT_DEAD_LETTER_HEADER:
                 dlh = mq.DLH()
