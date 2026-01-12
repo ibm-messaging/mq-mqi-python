@@ -123,12 +123,16 @@ def _internal_cb(hc, md, gmo, buf, cbc):
 
     removed = 0
     if OTelFunctions.get_trace_after:
-        removed = OTelFunctions.get_trace_after(queue, gmo, md, buf, True)
+        removed = OTelFunctions.get_trace_after(queue, gmo_up, md_up, buf, True)
 
     # Call the real user function with the unpacked forms of the structures.
     # If the callback_function is actually a method within a class, then the "self"
     # parameter is automatically added to the parameters.
-    cb.callback_function(queue_manager=qmgr, queue=queue, md=md_up, gmo=gmo_up, msg=buf[removed:], cbc=cbc_up)
+    if buf:
+        msg = buf[removed:]
+    else:
+        msg = buf
+    cb.callback_function(queue_manager=qmgr, queue=queue, md=md_up, gmo=gmo_up, msg=msg, cbc=cbc_up)
 
 def real_cb(obj, kwargs):
     """

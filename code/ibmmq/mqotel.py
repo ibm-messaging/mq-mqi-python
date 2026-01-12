@@ -59,9 +59,18 @@ open_get_options = CMQC.MQOO_INPUT_AS_Q_DEF |\
 def _make_key(hc, ho) -> str:
     suffix = "*"
     if ho is not None:
-        suffix = str(ho.get_handle())
+        if isinstance(ho, int):
+            if ho not in (CMQC.MQHO_NONE, CMQC.MQHO_UNUSABLE_HOBJ):
+                suffix = str(ho)
+        else:
+            suffix = str(ho.get_handle())
 
-    k = str(hc.get_handle()) + "/" + suffix
+    if isinstance(hc, int):
+        prefix = str(hc)
+    else:
+        prefix = str(hc.get_handle())
+
+    k = prefix + "/" + suffix
     mqlog.debug(f"make_key: {k}")
     return k
 
@@ -487,6 +496,10 @@ def otel_get_trace_after(ho, gmo, md, buffer, asynchronous):
 
     traceparent_val = ""
     tracestate_val = ""
+
+    if buffer is None:
+        mqlog.trace_exit("otel_get_trace_after", ep=1)
+        return 0
 
     removed = 0
     mh = gmo.MsgHandle
