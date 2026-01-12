@@ -3,6 +3,8 @@
 # Copyright (c) 2025, 2026 IBM Corporation and other Contributors. All Rights Reserved.
 # Copyright (c) 2009-2024 Dariusz Suchojad. All Rights Reserved.
 
+import mqlog
+
 from mqcommon import *
 from ibmmq import CMQC, CMQXC, CNO, CSP, CTLO, SCO, PMO, STS, MD, OD, CD, MQObject, ibmmqc
 from mqerrors import *
@@ -65,6 +67,7 @@ class QueueManager(MQObject):
 
         Connect immediately to the Queue Manager 'name'."""
 
+        mqlog.debug(f"About to connect to {name}")
         rv = ibmmqc.MQCONN(name)
         if rv[1]:
             raise MQMIError(rv[1], rv[2])
@@ -282,6 +285,7 @@ class QueueManager(MQObject):
             cd_pack = cd.pack()
 
         # We are now able to call the real C function with all its parameters
+        mqlog.debug(f"About to connect to {name}")
         rv = ibmmqc.MQCONNX(name, cno_pack, cd_pack, csp_pack, sco_pack, bno_pack)
 
         # The CSP/CNO structures might have been modified so restore the original parameters from

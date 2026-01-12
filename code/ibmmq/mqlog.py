@@ -1,8 +1,11 @@
 """
-A common interface to the logging functions.
+A common interface to logging functions that can be used by the ibmmq package.
+All log messages are shown as coming from the same module - we don't have a per-file
+logger.
 
 It's expected that the strings passed here are already formatted
-for simplicity (ie use f"xxx{var}" in the caller)
+for simplicity (ie use f"xxx{var}" in the caller). Though you probably could use the %-style
+with additional parameters to the functions as an alternative.
 """
 
 # Copyright (c) 2025, 2026 IBM Corporation and other Contributors. All Rights Reserved.
@@ -11,6 +14,8 @@ import os
 import logging
 from ibmmq import ibmmqc
 
+# We do NOT use basicConfig as that could affect any application logging; instead,
+# set the configuration specific to this module's logger.
 logger = logging.getLogger('ibmmq')
 trace_level = False
 
@@ -31,9 +36,22 @@ def debug(msg, *args):
     if logger:
         logger.debug(indent + msg, *args)
 
+def critical(msg, *args):
+    """Record a critical message. Not used in this package, but defined
+    here for completeness.
+    """
+    if logger:
+        logger.critical(msg, *args)
+
 def error(msg, *args):
     """Record an error message"""
-    logger.error(msg, *args)
+    if logger:
+        logger.error(msg, *args)
+
+def warning(msg, *args):
+    """Record a warning message"""
+    if logger:
+        logger.warning(msg, *args)
 
 def trace_entry(s, *args):
     """Record entry to a function"""
@@ -57,7 +75,9 @@ enable_native_logging = False
 
 # TRACE takes precedence over DEBUG
 if os.environ.get('MQIPY_TRACE'):
-    level = logging.DEBUG  # There's no separate "trace" level in the Python logging API
+    # There's no separate "TRACE" level in the Python logging API so we separate
+    # it from DEBUG with a local flag.
+    level = logging.DEBUG
     enable_native_logging = True
     trace_level = True
 elif os.environ.get('MQIPY_DEBUG'):
@@ -66,7 +86,7 @@ elif os.environ.get('MQIPY_DEBUG'):
 else:
     level = logging.WARN  # We only use WARN/ERROR in normal use, so no point in enabling INFO
 
-logging.basicConfig(level=level)
+logger.setLevel(level)
 
 # If you've asked for a specfic filename, then override the default
 # logging propagation and only allow that file to be used. If the
@@ -75,7 +95,7 @@ filename = os.environ.get('MQIPY_LOG_FILENAME')
 if filename:
     for h in logger.handlers:
         logger.removeHandler(h)
-    h = logging.FileHandler(filename)
+    h = logging.FileHandler(filename)  # Default constructor has mode=append
     # consider adding: "%(threadName)s %(thread)d"
     h.setFormatter(logging.Formatter('%(asctime)s %(levelname)-8s %(name)-8s %(message)s', datefmt='%H:%M:%S'))
     logger.addHandler(h)
