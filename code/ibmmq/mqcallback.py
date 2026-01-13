@@ -5,6 +5,7 @@
 
 from threading import Lock
 
+import mqlog
 from mqcommon import *
 from mqerrors import *
 from ibmmq import CMQC, GMO, MD, CBC, CBD, ibmmqc
@@ -17,10 +18,11 @@ _callback_lock = Lock()
 # A couple of classes hold data that's given to the callback function
 # _cbCBD has a per-callback block; _cbCTLO has a per-connection block
 class _cbCBD:
-    def __init__(self, obj, cbd):
+    def __init__(self, obj, cbd, otel_options):
         self.callback_function = cbd.CallbackFunction
         self.callback_area = cbd.CallbackArea
         self.object = obj
+        self.otel_options = otel_options
 
 
 class _cbCTLO:
@@ -43,10 +45,10 @@ def _make_partial_key(hc):
 
 # The hConn and hObj are the actual numbers, while we also stash the object (Queue or QueueManager) and other fields
 # from the CBD structure
-def _save_callback(obj, qmgr, queue, cbd):
+def _save_callback(obj, qmgr, queue, cbd, otel_opts):
     key = _make_key(qmgr, queue)
     with _callback_lock:
-        _stashedCBD[key] = _cbCBD(obj, cbd)
+        _stashedCBD[key] = _cbCBD(obj, cbd, otel_opts)
 
 def _delete_callback(hconn, hobj):
     key = _make_key(hconn, hobj)
@@ -123,7 +125,7 @@ def _internal_cb(hc, md, gmo, buf, cbc):
 
     removed = 0
     if OTelFunctions.get_trace_after:
-        removed = OTelFunctions.get_trace_after(queue, gmo_up, md_up, buf, True)
+        removed = OTelFunctions.get_trace_after(queue, gmo_up, md_up, cb.otel_options, buf, True)
 
     # Call the real user function with the unpacked forms of the structures.
     # If the callback_function is actually a method within a class, then the "self"
@@ -145,6 +147,7 @@ def real_cb(obj, kwargs):
     md = kwargs['md'] if 'md' in kwargs else MD()
     cbd = kwargs['cbd'] if 'cbd' in kwargs else CBD()
     gmo = kwargs['gmo'] if 'gmo' in kwargs else GMO()
+    otel_options = kwargs['otel_options'] if 'otel_options' in kwargs else None
 
     if not isinstance(cbd, CBD):
         raise TypeError("cbd must be an instance of CBD")
@@ -187,7 +190,7 @@ def real_cb(obj, kwargs):
         raise MQMIError(rv[-2], rv[-1])
 
     if operation == CMQC.MQOP_REGISTER:
-        _save_callback(obj, hconn, hobj, cbd)
+        _save_callback(obj, hconn, hobj, cbd, otel_options)
     elif operation == CMQC.MQOP_DEREGISTER:
         _delete_callback(hconn, hobj)
 

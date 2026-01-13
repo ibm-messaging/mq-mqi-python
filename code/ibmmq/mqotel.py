@@ -487,7 +487,7 @@ def _int_from_hex(s: str, default: int) -> int:
     except ValueError:
         return default
 
-def otel_get_trace_after(ho, gmo, md, buffer, asynchronous):
+def otel_get_trace_after(ho, gmo, md, otel_options, buffer, asynchronous):
     """ Extract the properties from the message, either with the properties API
     or from the RFH2. Construct an object with the span information.
     We do not try to extract/propagate any baggage-related fields.
@@ -500,6 +500,12 @@ def otel_get_trace_after(ho, gmo, md, buffer, asynchronous):
     if buffer is None:
         mqlog.trace_exit("otel_get_trace_after", ep=1)
         return 0
+
+    if otel_options:
+        remove_rfh2 = otel_options['remove_rfh2'] if 'remove_rfh2' in otel_options else False
+    else:
+        remove_rfh2 = False
+    mqlog.debug(f"OTelOptions={otel_options} removeRFH2={remove_rfh2}")
 
     removed = 0
     mh = gmo.MsgHandle
@@ -569,15 +575,15 @@ def otel_get_trace_after(ho, gmo, md, buffer, asynchronous):
         # the application cannot process the message. But we don't know for sure,
         # and maybe the properties are useful for higher-level span generation.
         # So we should have an option to forcibly remove the RFH2. Other bindings
-        # have extended the GMO to give an extra option. But that's hard to do
-        # with the python way of handling MQI structures. So we disable it for now.
-        # Perhaps do it via an environment variable or separate setter.
-        #
-        # if otelOpts.RemoveRFH2
-        #    md.Format = rfh2.Format
-        #    md.CodedCharSetId = rfh2.CodedCharSetId
-        #    md.Encoding = rfh2.Encoding
-        #    removed = rfh2.StrucLength
+        # have extended the GMO to give an extra option. That's hard to do
+        # with the python way of handling MQI structures, so we do it
+        # via an extra keyword parameter on get() and cb().
+        #    otel_opts = {'remove_rfh2': True}
+        if remove_rfh2:
+            md.Format = rfh2.Format
+            md.CodedCharSetId = rfh2.CodedCharSetId
+            md.Encoding = rfh2.Encoding
+            removed = rfh2.StrucLength
 
     # We now should have the relevant message properties to pass upwards
     trace_id = 0

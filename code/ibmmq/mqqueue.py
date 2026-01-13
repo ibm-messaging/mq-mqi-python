@@ -181,7 +181,7 @@ class Queue(MQObject):
 
     # pylint complains about a couple of things here which we will ignore in order to maintain
     # backwards compatibility
-    def get(self, maxLength=None, *opts):  # pylint: disable=invalid-name,keyword-arg-before-vararg
+    def get(self, maxLength=None, *opts, **kwargs):  # pylint: disable=invalid-name,keyword-arg-before-vararg
         """ Return a message from the queue. If the queue is not already
         open, it is opened now with the option 'MQOO_INPUT_AS_Q_DEF'.
 
@@ -212,6 +212,8 @@ class Queue(MQObject):
 
         removed = 0
 
+        otel_options = kwargs['otel_options'] if 'otel_options' in kwargs else None
+
         max_length = maxLength  # Work with the "right" name style from here on
         m_desc, get_opts = mqqargs.common_q_args(*opts)
         if get_opts is None:
@@ -241,7 +243,7 @@ class Queue(MQObject):
             _ = get_opts.unpack(rv[2])
 
             if OTelFunctions.get_trace_after:
-                removed = OTelFunctions.get_trace_after(self, get_opts, m_desc, rv[0], False)
+                removed = OTelFunctions.get_trace_after(self, get_opts, m_desc, otel_options, rv[0], False)
             return rv[0][removed:]
 
         # Accept truncated message
@@ -268,7 +270,7 @@ class Queue(MQObject):
         # Only process OTel tracing if we actually got a message
         if rv[-2] == CMQC.MQCC_OK or rv[-1] == CMQC.MQRC_TRUNCATED_MSG_ACCEPTED:
             if OTelFunctions.get_trace_after:
-                removed = OTelFunctions.get_trace_after(self, get_opts, m_desc, rv[0])
+                removed = OTelFunctions.get_trace_after(self, get_opts, m_desc, otel_options, rv[0], False)
 
         return rv[0][removed:]
 
