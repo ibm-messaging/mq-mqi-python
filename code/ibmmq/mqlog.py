@@ -60,13 +60,14 @@ def trace_entry(s, *args):
 def trace_exit(s: str, **kwargs):
     """Record exit of a function. The "ep" attribute lets us
     annotate when there are multiple potential exits from a function (usually
-    because of error handling).
+    because of error handling). For a given function, the exitpoint value
+    should be unique. There may also be an MQRC value if the underlying MQI
+    function has returned a non-zero MQCC.
     """
-    ep = kwargs.get('ep')
-    if ep:
-        trace("<" + s + " EP:" + str(ep))
-    else:
-        trace("< " + s)
+
+    expt = f" EXPT:{kwargs['ep']}" if 'ep' in kwargs else ""
+    mqrc = f" MQRC:{kwargs['rc']}" if 'rc' in kwargs else ""
+    trace("< " + s + expt + mqrc)
 
 
 # Create a logger for Python. Also configure the C layer
@@ -103,5 +104,19 @@ if filename:
     if enable_native_logging:
         ibmmqc.MQLOGCF(level, filename)
 else:
+    logger.propagate = True
+    p = logger
+    found_handler = False
+    while p.parent:
+        p = logger.parent
+        if len(p.handlers) != 0:
+            found_handler = True
+    # print(f"Using default log output stream. Current={logger} Parent={logger.parent} Effective={logger.getEffectiveLevel()} p.handlers={p.handlers}")
+
+    # If there is no available handler, then attach a stderr stream to the root
+    if not found_handler:
+        # print(f"Adding stream handler to {p}")
+        p.addHandler(logging.StreamHandler())
+
     if enable_native_logging:
         ibmmqc.MQLOGCF(level)

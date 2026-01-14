@@ -4,6 +4,7 @@
 # Copyright (c) 2009-2024 Dariusz Suchojad. All Rights Reserved.
 
 from ibmmq import CMQC, MQMIError, ibmmqc, mqcommon
+import mqlog
 
 # This object deals with the lengths of attributes that may be processed
 # by the MQSET/MQINQ calls. Only a small set of the object attributes
@@ -111,6 +112,8 @@ def get_attr_length(attr):
 
 def common_inq(hconn, hobj, selectors):
     """Call MQINQ - renamed from 'inq' to match the 'common_set' function"""
+
+    mqlog.trace_entry("inq:common_inq")
     is_list = True
     single_attr = None
 
@@ -134,6 +137,7 @@ def common_inq(hconn, hobj, selectors):
                       attr_info['charAttrCount'],
                       attr_info['charAttrLen'])
     if rv[-1]:
+        mqlog.trace_exit("inq:common_inq", ep=1, rc=rv[-1])
         raise MQMIError(rv[-2], rv[-1])
 
     #
@@ -167,6 +171,7 @@ def common_inq(hconn, hobj, selectors):
     if not is_list:
         return attrs[single_attr]
 
+    mqlog.trace_exit("inq:common_inq")
     return attrs
 
 # For MQSET, the input is usually a dict of {selector:value}, similar to what's
@@ -174,6 +179,8 @@ def common_inq(hconn, hobj, selectors):
 # of parameters.
 def common_set(hconn, hobj, *args):
     """Call MQSET - renamed from 'set' to avoid overloading language function"""
+    mqlog.trace_entry("inq:common_set")
+
     temp = args[0][0]
     if not isinstance(temp, dict):
         # Convert an old-style k/v pair into a dict
@@ -199,7 +206,11 @@ def common_set(hconn, hobj, *args):
             # Throw an immediate error if it's too long
             pad_len = ll - len(v)
             if pad_len < 0:
+                mqlog.trace_exit("inq:common_set", ep=1)
                 raise MQMIError(CMQC.MQCC_FAILED, CMQC.MQRC_CHAR_ATTR_LENGTH_ERROR)
             char_attrs += v + (pad_len * b'\0')
 
-    return ibmmqc.MQSET(hconn, hobj, selectors, int_attrs, char_attrs)
+    rv = ibmmqc.MQSET(hconn, hobj, selectors, int_attrs, char_attrs)
+
+    mqlog.trace_exit("inq:common_set")
+    return rv

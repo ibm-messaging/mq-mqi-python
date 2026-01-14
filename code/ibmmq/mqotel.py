@@ -152,12 +152,12 @@ def otel_disc(hc):
     """Get rid of entries in the hconn/hobj maps when the application calls MQDISC
      """
 
-    mqlog.trace_entry("otel_disc")
+    mqlog.trace_entry("otel:disc")
     # Both the maps are keyed by a string which begins with
     # the hConn value. As this is MQDISC, we don't care about
     # any specific hObj
     prefix = str(hc.get_handle()) + "/"
-    mqlog.debug(f"otel_disc: prefix={prefix}")
+    mqlog.debug(f"otel:disc prefix={prefix}")
     with object_handle_lock:
         for k in object_handle.copy():  # Use copy to avoid changing dict underneath the iteration
             if k.startswith(prefix):
@@ -177,7 +177,7 @@ def otel_disc(hc):
                 if mho:
                     otel_close_nolock(mho)
                 del object_options[k]
-    mqlog.trace_exit("otel_disc")
+    mqlog.trace_exit("otel:disc")
 
 def otel_open(ho, od, open_options, managed_ho):
     """When a queue is opened for INPUT, then it will help to
@@ -191,8 +191,8 @@ def otel_open(ho, od, open_options, managed_ho):
 
     prop_ctl = -1
 
-    mqlog.trace_entry("otel_open")
-    mqlog.trace(f"otel_open: hobjReal={ho.get_handle()} open_options={open_options} mho={managed_ho}")
+    mqlog.trace_entry("otel:open")
+    mqlog.trace(f"otel:open: hobjReal={ho.get_handle()} open_options={open_options} mho={managed_ho}")
 
     # Do the MQINQ and stash the information
     # Only care if there's an INPUT (MQGET) option. We do the MQINQ on every relevant MQOPEN
@@ -208,13 +208,13 @@ def otel_open(ho, od, open_options, managed_ho):
         prop_ctl = 0
         selectors = [CMQC.MQIA_PROPERTY_CONTROL]
         if managed_ho is None and (open_options & CMQC.MQOO_INQUIRE) != 0:
-            mqlog.debug("open: Reusing existing hObj")
+            mqlog.debug("otel:open: Reusing existing hObj")
             try:
                 values = ho.inquire(selectors)
                 mqlog.debug(f"Inq Responses: {values}")
                 prop_ctl = values[selectors[0]]
             except MQMIError as e:
-                mqlog.error(f"open: Inq err {e}")
+                mqlog.error(f"otel:open: Inq err {e}")
                 prop_ctl = -1
 
         elif managed_ho is not None:
@@ -224,7 +224,7 @@ def otel_open(ho, od, open_options, managed_ho):
                 mqlog.debug(f"Inq Responses: {values}")
                 prop_ctl = values[selectors[0]]
             except MQMIError as e:
-                mqlog.error(f"open: Inq err {e}")
+                mqlog.error(f"otel:open: Inq err {e}")
                 prop_ctl = -1
 
             # And add this to the map so it can be referenced during MQGETs
@@ -242,7 +242,7 @@ def otel_open(ho, od, open_options, managed_ho):
             inq_od.ObjectType = CMQC.MQOT_Q
             inq_open_options = CMQC.MQOO_INQUIRE
 
-            mqlog.debug("open: pre-Reopen")
+            mqlog.debug("otel:open: pre-Reopen")
             # This gets a little recursive as this Open will end up calling back into this function. But
             # as it's only doing MQOO_INQUIRE, then we don't nest any further
             try:
@@ -252,7 +252,7 @@ def otel_open(ho, od, open_options, managed_ho):
                     mqlog.debug(f"Inq Responses: {values}")
                     prop_ctl = values[selectors[0]]
                 except MQMIError as e:
-                    mqlog.error(f"open: Inq err {e}")
+                    mqlog.error(f"otel:open: Inq err {e}")
                     prop_ctl = -1
 
                 try:
@@ -261,7 +261,7 @@ def otel_open(ho, od, open_options, managed_ho):
                     pass
 
             except MQMIError as e:
-                mqlog.error(f"open: Reopen err {e}")
+                mqlog.error(f"otel:open: Reopen err {e}")
                 prop_ctl = -1
 
         # Create an object to hold the discovered value
@@ -275,11 +275,11 @@ def otel_open(ho, od, open_options, managed_ho):
     else:
         mqlog.trace("open: not doing Inquire")
 
-    mqlog.trace_exit("otel_open")
+    mqlog.trace_exit("otel:open")
 
 def otel_close(ho):
     """Called during the MQCLOSE"""
-    mqlog.trace_entry("otel_close")
+    mqlog.trace_entry("otel:close")
     key = _make_key(ho.get_queue_manager(), ho)
     with object_options_lock:
         if object_options.get(key):
@@ -287,18 +287,18 @@ def otel_close(ho):
             if mho:
                 otel_close_nolock(mho)
             del object_options[key]
-    mqlog.trace_exit("otel_close")
+    mqlog.trace_exit("otel:close")
 
 def otel_close_nolock(ho):
     """Called during the MQCLOSE of a subscription to cleanup any managed
     queues. The object lock is already held when this is called
     """
-    mqlog.trace_entry("otel_close_nolock")
+    mqlog.trace_entry("otel:close_nolock")
 
     key = _make_key(ho.get_queue_manager(), ho)
     if object_options.get(key):
         del object_options[key]
-    mqlog.trace_exit("otel_close_nolock")
+    mqlog.trace_exit("otel:close_nolock")
 
 def otel_put_trace_before(hc, md, pmo, buffer):
     """Insert any span-provided properties from the environment"""
@@ -306,7 +306,7 @@ def otel_put_trace_before(hc, md, pmo, buffer):
     mh = None
     mho = None
 
-    mqlog.trace_entry("otel_put_trace_before")
+    mqlog.trace_entry("otel:put_trace_before")
 
     skip_parent = False
     skip_state = False
@@ -413,8 +413,10 @@ def otel_put_trace_before(hc, md, pmo, buffer):
                     except MQMIError:
                         # Fail silently?
                         pass
+    else:
+        mqlog.debug("No valid active span")
 
-    mqlog.trace_exit("otel_put_trace_before")
+    mqlog.trace_exit("otel:put_trace_before")
 
 
 def otel_put_trace_after(hc, pmo):
@@ -423,14 +425,14 @@ def otel_put_trace_after(hc, pmo):
     before returning to the application. We don't need to delete
     the handle as it can be reused for subsequent PUTs on this hConn
     """
-    mqlog.trace_entry("otel_put_trace_after")
+    mqlog.trace_entry("otel:put_trace_after")
 
     mh = pmo.OriginalMsgHandle
     if _compare_msg_handle(hc, None, mh):
         mqlog.debug("Replacing handle with default")
         pmo.OriginalMsgHandle = 0
 
-    mqlog.trace_exit("otel_put_trace_after")
+    mqlog.trace_exit("otel:put_trace_after")
 
 def otel_get_trace_before(hc, ho, gmo, asynchronous):
     """Decide whether or not to use a message handle when retrieving a message
@@ -438,7 +440,7 @@ def otel_get_trace_before(hc, ho, gmo, asynchronous):
     """
     prop_ctl = 0
 
-    mqlog.trace_entry("otel_get_trace_before")
+    mqlog.trace_entry("otel:get_trace_before")
 
     # Option combinations:
     # MQGMO_NO_PROPERTIES: Always add our own handle
@@ -449,7 +451,7 @@ def otel_get_trace_before(hc, ho, gmo, asynchronous):
     #               ALL/COMPATV6COMPAT: Any returned properties will be either in RFH2 or Handle if supplied
     #               FORCE: Any returned properties will be in RFH2
     prop_get_options = gmo.Options & get_props_options
-    mqlog.debug(f"propGetOptions: {prop_get_options}")
+    mqlog.debug(f"propGetOptions: 0x{prop_get_options:08x}")
 
     if _is_usable_handle(gmo.MsgHandle):
         mqlog.debug("Using app-supplied msg handle")
@@ -473,13 +475,13 @@ def otel_get_trace_before(hc, ho, gmo, asynchronous):
                 tmp_ho = None
 
             gmo.MsgHandle = _get_msg_handle(hc, tmp_ho).get_handle()
-            mqlog.debug(f"Using mqiotel msg handle. get_props_options={prop_get_options} prop_ctl={prop_ctl}")
+            mqlog.debug(f"Using mqotel msg handle. get_props_options=0x{prop_get_options:08x} prop_ctl={prop_ctl}")
         else:
             # Hopefully they will have set something suitable on the PROPCTL attribute
             # or are asking specifically for an RFH2-style response
-            mqlog.debug(f"Not setting a message handle. prop_get_options={prop_get_options}")
+            mqlog.debug(f"Not setting a message handle. prop_get_options=0x{prop_get_options:08x}")
 
-    mqlog.trace_exit("otel_get_trace_before")
+    mqlog.trace_exit("otel:get_trace_before")
 
 def _int_from_hex(s: str, default: int) -> int:
     try:
@@ -492,17 +494,17 @@ def otel_get_trace_after(ho, gmo, md, otel_options, buffer, asynchronous):
     or from the RFH2. Construct an object with the span information.
     We do not try to extract/propagate any baggage-related fields.
     """
-    mqlog.trace_entry("otel_get_trace_after")
+    mqlog.trace_entry("otel:get_trace_after")
 
     traceparent_val = ""
     tracestate_val = ""
 
     if buffer is None:
-        mqlog.trace_exit("otel_get_trace_after", ep=1)
+        mqlog.trace_exit("otel:get_trace_after", ep=1)
         return 0
 
     if otel_options:
-        remove_rfh2 = otel_options['remove_rfh2'] if 'remove_rfh2' in otel_options else False
+        remove_rfh2 = otel_options.remove_rfh2
     else:
         remove_rfh2 = False
     mqlog.debug(f"OTelOptions={otel_options} removeRFH2={remove_rfh2}")
@@ -647,14 +649,15 @@ def otel_get_trace_after(ho, gmo, md, otel_options, buffer, asynchronous):
         # try to create a new one, as we would have no way of knowing when it
         # ends. The properties are (probably) still available to the application if
         # it wants to work with them itself.
-        mqlog.debug("No current span to update")
+        mqlog.debug("No current active span to update")
 
     mqlog.debug(f"removed:{removed}")
-    mqlog.trace_exit("otel_get_trace_after")
+    mqlog.trace_exit("otel:get_trace_after")
     return removed
 
 def init():
     """Any initialisation operations needed for the OTel interface"""
+    mqlog.trace_entry("otel:init")
 
     # Set the function pointers to invoke the code in here
     OTelFunctions.disc = otel_disc
@@ -667,6 +670,8 @@ def init():
 
     # Set this so any underlying equivalent code in the C library (my API Exit) will not try to do its own thing
     environ["AMQ_OTEL_INSTRUMENTED"] = "true"
+
+    mqlog.trace_exit("otel:init")
 
 
 if environ.get("MQIPY_NOOTEL", None) is None:

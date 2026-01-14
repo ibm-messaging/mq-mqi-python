@@ -17,17 +17,22 @@ class EncodingDefault:
     mqi_encoding = 'ascii'
 
 
+class OTelOptions:
+    """This public class allows applications to set OTel-related options when processing messages"""
+    def __init__(self, **kwargs):
+        self.remove_rfh2 = kwargs['remove_rfh2'] if 'remove_rfh2' in kwargs else False
+
 class OTelFunctions:
-    """This class contains indirections to the OTel tracing functions. They
+    """This internal class contains indirections to the OTel tracing functions. They
     are only set to real values when we are in an OTel-enabled environment
     """
-    disc = None
-    open = None
-    close = None
+    disc = None  # type: Union[None,Callable]
+    open = None  # type: Union[None,Callable]
+    close = None  # type: Union[None,Callable]
     put_trace_before = None  # type: Union[None,Callable]
-    put_trace_after = None
-    get_trace_before = None
-    get_trace_after = None
+    put_trace_after = None  # type: Union[None,Callable]
+    get_trace_before = None  # type: Union[None,Callable]
+    get_trace_after = None  # type: Union[None,Callable]
 
 def padded_count(count: int, boundary: int = 4) -> int:
     """Calculate padded bytes count

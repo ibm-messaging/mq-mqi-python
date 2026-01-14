@@ -60,6 +60,10 @@ Classes for MQ objects include
     * MQMIError - MQI specific error
     * PYIFError - Python library error
 
+
+Other public classes include
+    * OTelOptions - to control processing of OTel information in messages
+
 The following MQI operations are supported:
 
     * MQCONN, MQDISC (QueueManager.connect()/QueueManager.disconnect())
@@ -184,12 +188,15 @@ from mqmsghdl import *
 # And the PCF parse/execute module
 from mqadmin import *
 
+# Import the OpenTelemetry propagator. If it fails,
+# it's probably because OTel is not in use or configured for this
+# environment. Ignore the error.
 try:
     from mqotel import *
     otel_enabled = True
 except ImportError:
     otel_enabled = False
-mqlog.debug(f"__init__: OtelEnabled = {otel_enabled}")
+mqlog.debug(f"__init__: otel_enabled = {otel_enabled}")
 
 # The versions of this package (as found in the C and Python layers)
 __c_version__ = ibmmqc.__version__

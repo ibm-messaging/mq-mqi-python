@@ -12,6 +12,8 @@ from mqsub import *
 
 from mqqmgr import *
 
+import mqlog
+
 # Publish Subscribe support - Hannes Wagener 2011
 class Topic(MQObject):
     """ Topic encapsulates all the Topic I/O operations, including
@@ -32,16 +34,20 @@ class Topic(MQObject):
     def __real_open(self):
         """ Really open the topic.  Only do this in pub()?
         """
+        mqlog.trace_entry("topic:__real_open")
         if self.__topic_desc is None:
+            mqlog.trace_exit("topic:__real_open", ep=1)
             raise PYIFError('The Topic Descriptor has not been set.')
 
         rv = ibmmqc.MQOPEN(self.__queue_manager.getHandle(),
                            self.__topic_desc.pack(), self.__open_opts)
         if rv[-2]:
+            mqlog.trace_exit("topic:__real_open", ep=2, rc=rv[-1])
             raise MQMIError(rv[-2], rv[-1])
 
         _ = self.__topic_handle = rv[0]
         _ = self.__topic_desc.unpack(rv[1])
+        mqlog.trace_exit("topic:__real_open")
 
     def __init__(self, queue_manager, topic_name=None, topic_string=None, topic_desc=None, open_opts=None):
         """ Associate a Topic instance with the QueueManager object 'queue_manager'
@@ -61,6 +67,7 @@ class Topic(MQObject):
              Y       N       open() or pub()
              Y       Y       Immediately
         """
+        mqlog.trace_entry("topic:__init__")
 
         queue_manager = ensure_strings_are_bytes(queue_manager)
         topic_name = ensure_strings_are_bytes(topic_name)
@@ -76,8 +83,10 @@ class Topic(MQObject):
 
         if self.__topic_desc:
             if self.__topic_desc['ObjectType'] is not CMQC.MQOT_TOPIC:
+                mqlog.trace_exit("topic:__init__", ep=1)
                 raise PYIFError('The Topic Descriptor ObjectType is not MQOT_TOPIC.')
             if self.__topic_desc['Version'] < CMQC.MQOD_VERSION_4:
+                mqlog.trace_exit("topic:__init__", ep=2)
                 raise PYIFError('The Topic Descriptor Version must be at least MQOD_VERSION_4.')
         else:
             self.__topic_desc = self.__create_topic_desc(topic_name, topic_string)
@@ -93,6 +102,7 @@ class Topic(MQObject):
             else:
                 object_name = topic_string
         super().__init__(object_name)
+        mqlog.trace_exit("topic:__init__")
 
     @staticmethod
     def __create_topic_desc(topic_name, topic_string):
@@ -116,11 +126,14 @@ class Topic(MQObject):
     def __del__(self):
         """ Close the Topic, if it has been opened.
         """
+        mqlog.trace_entry("topic:__del__")
+
         try:
             if self.__topic_handle:
                 self.close()
         except (PYIFError, MQMIError):
             pass
+        mqlog.trace_exit("topic:__del__")
 
     def open(self, topic_name=None, topic_string=None, topic_desc=None, open_opts=None):
         """ Open the Topic specified by topic_desc or create a object descriptor
@@ -130,10 +143,12 @@ class Topic(MQObject):
         open_opts is not passed, the Topic open is deferred until a
         subsequent pub() call.
         """
+        mqlog.trace_entry("topic:open")
         topic_name = ensure_strings_are_bytes(topic_name)
         topic_string = ensure_strings_are_bytes(topic_string)
 
         if self.__topic_handle:
+            mqlog.trace_exit("topic:open", ep=1)
             raise PYIFError('The Topic is already open.')
 
         if topic_name:
@@ -150,6 +165,7 @@ class Topic(MQObject):
         if open_opts:
             self.__open_opts = open_opts
             self.__real_open()
+        mqlog.trace_exit("topic:open")
 
     def pub(self, msg, *opts):
         """ Publish the string buffer 'msg' to the Topic. If the Topic is not
@@ -166,6 +182,7 @@ class Topic(MQObject):
         If msg_desc and/or put_opts arguments were supplied, they may be
         updated by the put operation.
         """
+        mqlog.trace_entry("topic:pub")
 
         msg_desc, put_opts = common_q_args(*opts)
 
@@ -176,6 +193,7 @@ class Topic(MQObject):
                 msg_desc.Format = CMQC.MQFMT_STRING
             else:
                 error_message = 'Message type is {0}. Convert to bytes.'
+                mqlog.trace_exit("topic:pub", ep=1)
                 raise TypeError(error_message.format(type(msg)))
 
         if put_opts is None:
@@ -192,6 +210,7 @@ class Topic(MQObject):
         # Now send the message
         rv = ibmmqc.MQPUT(self.__queue_manager.getHandle(), self.__topic_handle, msg_desc.pack(), put_opts.pack(), msg)
         if rv[-2]:
+            mqlog.trace_exit("topic:pub", ep=2, rc=rv[-1])
             raise MQMIError(rv[-2], rv[-1])
 
         _ = msg_desc.unpack(rv[0])
@@ -199,6 +218,7 @@ class Topic(MQObject):
 
         if OTelFunctions.put_trace_after:
             OTelFunctions.put_trace_after(self.__queue_manager, put_opts)
+        mqlog.trace_exit("topic:pub")
 
     # Create an alias as the underlying MQ verb is MQPUT
     put = pub
@@ -208,11 +228,13 @@ class Topic(MQObject):
         Put a RFH2 message. opts[2] is a list of RFH2 headers.
         MQMD and RFH2's must be correct.
         """
+        mqlog.trace_entry("topic:pub_rfh2")
 
         rfh2_buff = b''
         if len(opts) >= 3:
             if opts[2] is not None:
                 if not isinstance(opts[2], list):
+                    mqlog.trace_exit("topic:pub_rfh2", ep=1)
                     raise TypeError('Third item of opts should be a list.')
                 encoding = CMQC.MQENC_NATIVE
                 if opts[0] is not None:
@@ -228,6 +250,7 @@ class Topic(MQObject):
             self.pub(msg, *opts[0:2])
         else:
             self.pub(msg, *opts)
+        mqlog.trace_exit("topic:pub_rfh2")
 
     # Create an alias as the underlying MQ verb is MQPUT
     put_rfh2 = pub_rfh2
@@ -238,6 +261,8 @@ class Topic(MQObject):
         by pasing a Queue object or a string at which case the queue will
         be opened with default options.
         """
+        mqlog.trace_entry("topic:sub")
+
         sub_desc = None
         if len(opts) > 0:
             sub_desc = opts[0]
@@ -249,18 +274,23 @@ class Topic(MQObject):
         sub = Subscription(self.__queue_manager)
         sub.sub(sub_desc=sub_desc, sub_queue=sub_queue, topic_name=self.topic_name, topic_string=self.topic_string)
 
+        mqlog.trace_exit("topic:sub")
         return sub
 
     def close(self, options=CMQC.MQCO_NONE):
         """ Close the topic, using options.
         """
+        mqlog.trace_entry("topic:close")
+
         if not self.__topic_handle:
             raise PYIFError('Topic not open.')
 
         rv = ibmmqc.MQCLOSE(self.__queue_manager.getHandle(), self.__topic_handle, options)
         if rv[0]:
+            mqlog.trace_exit("topic:close", ep=1, rc=rv[-1])
             raise MQMIError(rv[-2], rv[-1])
 
         self.__topic_handle = None
         self.__topic_desc = None
         self.__open_opts = None
+        mqlog.trace_exit("topic:close")

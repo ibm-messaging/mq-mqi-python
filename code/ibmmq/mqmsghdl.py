@@ -10,6 +10,7 @@ from mqsub import *
 from mqprops import *
 
 from mqqmgr import *
+import mqlog
 
 class MessageHandle:
     """ A higher-level wrapper around the MQI's native Message Handle and
@@ -69,9 +70,10 @@ class MessageHandle:
             folder. For example, 'usr.%'. But you cannot use, say, 'ABC%'. The
             wildcard means all properties within a single folder.
             """
-
+            mqlog.trace_entry("msghdl:get")
             if impo:
                 if not isinstance(impo, IMPO):
+                    mqlog.trace_exit("msghdl:get", ep=1)
                     raise TypeError("impo must be an instance of IMPO")
             else:
                 impo = IMPO()
@@ -83,6 +85,7 @@ class MessageHandle:
                     pd = PD()
                     pd.Options = pd
                 if not isinstance(pd, PD):
+                    mqlog.trace_exit("msghdl:get", ep=2)
                     raise TypeError("pd must be an instance of PD")
             else:
                 pd = PD()
@@ -96,10 +99,13 @@ class MessageHandle:
                 self.conn_handle, self.msg_handle, impo.pack(), name, pd.pack(), property_type, max_value_length)
 
             if comp_code != CMQC.MQCC_OK:
+                mqlog.trace_exit("msghdl:get", ep=2, rc=comp_reason)
                 raise MQMIError(comp_code, comp_reason, value=default, data_length=data_length)
 
             if returned_name:
+                mqlog.trace_exit("msghdl:get", ep=3)
                 return value, returned_name
+            mqlog.trace_exit("msghdl:get")
             return value
 
         def set(self, name, value, property_type=CMQC.MQTYPE_STRING,
@@ -111,6 +117,7 @@ class MessageHandle:
             customization, you can also use 'pd' and 'smpo' parameters for
             passing in MQPD and MQSMPO structures.
             """
+            mqlog.trace_entry("msghdl:set")
 
             name = ensure_strings_are_bytes(name)
 
@@ -125,13 +132,16 @@ class MessageHandle:
                 self.conn_handle, self.msg_handle, smpo.pack(), name, pd.pack(), property_type, value, value_length)
 
             if comp_code != CMQC.MQCC_OK:
+                mqlog.trace_exit("msghdl:set", ep=1, rc=comp_reason)
                 raise MQMIError(comp_code, comp_reason)
+            mqlog.trace_exit("msghdl:set")
 
         def dlt(self, name, dmpo=None):
             """ Deletes a message property. Only the name is required. For further
             customization, you can also use the 'dmpo' parameters for
             passing in the MQDMPO structure.
             """
+            mqlog.trace_entry("msghdl:dltproperty")
 
             name = ensure_strings_are_bytes(name)
 
@@ -141,7 +151,9 @@ class MessageHandle:
                 self.conn_handle, self.msg_handle, dmpo.pack(), name)
 
             if comp_code != CMQC.MQCC_OK:
+                mqlog.trace_exit("msghdl:dlt", ep=1, rc=comp_reason)
                 raise MQMIError(comp_code, comp_reason)
+            mqlog.trace_exit("msghdl:dltproperty")
 
     def __init__(self, qmgr=None, cmho=None, dup_handle=None):
         """There may be times when we need to create a message handle object
@@ -151,6 +163,8 @@ class MessageHandle:
         set the properties using this new object that is still the same
         thing in the underlying C code.
         """
+        mqlog.trace_entry("msghdl:__init__")
+
         self.conn_handle = qmgr.get_handle() if qmgr else CMQC.MQHO_NONE
         cmho = cmho if cmho else CMHO()
 
@@ -158,11 +172,13 @@ class MessageHandle:
             self.msg_handle, comp_code, comp_reason = ibmmqc.MQCRTMH(self.conn_handle, cmho.pack())
 
             if comp_code != CMQC.MQCC_OK:
+                mqlog.trace_exit("msghdl:__init__", ep=1, rc=comp_reason)
                 raise MQMIError(comp_code, comp_reason)
         else:
             self.msg_handle = dup_handle
 
         self.properties = self._Properties(self.conn_handle, self.msg_handle)
+        mqlog.trace_exit("msghdl:__init__")
 
     def get_handle(self):
         """Get the actual integer value"""
@@ -175,11 +191,14 @@ class MessageHandle:
     # Note that this deletes a MsgHandle at the MQI level and is not __del__ (the object destructor)
     def dlt(self, dmho=None):
         """Delete a message handle"""
+        mqlog.trace_entry("msghdl:dlthdl")
         dmho = dmho if dmho else DMHO()
 
         comp_code, comp_reason = ibmmqc.MQDLTMH(self.conn_handle, self.msg_handle, dmho.pack())
 
         if comp_code != CMQC.MQCC_OK:
+            mqlog.trace_exit("msghdl:dlthdl", ep=1, rc=comp_reason)
             raise MQMIError(comp_code, comp_reason)
 
         self.properties = self._Properties(CMQC.MQHC_UNUSABLE_HCONN, CMQC.MQHM_NONE)
+        mqlog.trace_exit("msghdl:dlthdl")

@@ -5,11 +5,10 @@
 
 from threading import Lock
 
-import mqlog
 from mqcommon import *
 from mqerrors import *
 from ibmmq import CMQC, GMO, MD, CBC, CBD, ibmmqc
-
+import mqlog
 
 # pylint: disable=no-member
 
@@ -84,11 +83,14 @@ def _save_connection_area(hconn, ctlo):
 # the hConn and hObj. It then calls the user function
 # with suitably-reformatted parameters.
 def _internal_cb(hc, md, gmo, buf, cbc):
+    mqlog.trace_entry("callback:_internal_cb")
+
     key = _make_key(hc, CBC().unpack(cbc).Hobj)
     try:
         cb = _stashedCBD[key]
     except KeyError as exc:
         # Should not happen as we've got control of the map. But just in case ...
+        mqlog.trace_exit("callback:_internal_cb", ep=1)
         raise KeyError(f'Cannot find key {key} in callback map') from exc
 
     try:
@@ -134,7 +136,11 @@ def _internal_cb(hc, md, gmo, buf, cbc):
         msg = buf[removed:]
     else:
         msg = buf
+    mqlog.trace("before calling user callback function")
     cb.callback_function(queue_manager=qmgr, queue=queue, md=md_up, gmo=gmo_up, msg=msg, cbc=cbc_up)
+    mqlog.trace("after  calling user callback function")
+
+    mqlog.trace_exit("callback:_internal_cb")
 
 def real_cb(obj, kwargs):
     """
@@ -143,6 +149,8 @@ def real_cb(obj, kwargs):
     in the proxy callback function.
     The related MQCTL is called as a method on the QMgr object
     """
+    mqlog.trace_entry("callback:real_cb")
+
     operation = kwargs['operation'] if 'operation' in kwargs else CMQC.MQOP_REGISTER
     md = kwargs['md'] if 'md' in kwargs else MD()
     cbd = kwargs['cbd'] if 'cbd' in kwargs else CBD()
@@ -150,11 +158,17 @@ def real_cb(obj, kwargs):
     otel_options = kwargs['otel_options'] if 'otel_options' in kwargs else None
 
     if not isinstance(cbd, CBD):
+        mqlog.trace_exit("callback:real_cb", ep=1)
         raise TypeError("cbd must be an instance of CBD")
     if not isinstance(md, MD):
+        mqlog.trace_exit("callback:real_cb", ep=2)
         raise TypeError("md must be an instance of MD")
     if not isinstance(gmo, GMO):
+        mqlog.trace_exit("callback:real_cb", ep=3)
         raise TypeError("gmo must be an instance of GMO")
+    if otel_options and not isinstance(otel_options, OTelOptions):
+        mqlog.trace_exit("callback:real_cb", ep=4)
+        raise TypeError("otel_options must be an instance of OTelOptions")
 
     # The object must be either a queue or qmgr class.
     # But we can't use isinstance here because of circular
@@ -187,12 +201,14 @@ def real_cb(obj, kwargs):
     cbd.CallbackArea = original_cba
 
     if rv[0]:
+        mqlog.trace_exit("callback:real_cb", ep=5, rc=rv[-1])
         raise MQMIError(rv[-2], rv[-1])
 
     if operation == CMQC.MQOP_REGISTER:
         _save_callback(obj, hconn, hobj, cbd, otel_options)
     elif operation == CMQC.MQOP_DEREGISTER:
         _delete_callback(hconn, hobj)
+    mqlog.trace_exit("callback:real_cb")
 
 
 # Initialise the C layer with the address of this module's proxy callback function.

@@ -146,6 +146,8 @@ class _Method:
 
     def __call__(self, *args):
         # type: (Union[dict, list, _Filter]) -> list
+        mqlog.trace_entry("admin:method:__call__")
+
         if self.__name[0:7] == 'CMQCFC.':
             self.__name = self.__name[7:]
         if self.__pcf.qm:
@@ -336,11 +338,14 @@ class _Method:
             except MQMIError as e:
                 # There might be something special we want to do with 2033s.
                 # But for now, just report it in the same way as any other failure.
+                mqlog.trace_exit("admin:method:__call__", ep=1, rc=e.reason)
+
                 if e.reason == CMQC.MQRC_NO_MSG_AVAILABLE:
                     # print("Timed out...")
                     raise e
                     # return ress
                 raise e
+        mqlog.trace_exit("admin:method:__call__")
 
         return ress
 
@@ -383,6 +388,8 @@ class PCFExecute(QueueManager):
         for a PCF command. If name is a QueueManager instance, it is
         used for the connection, otherwise a new connection is made """
 
+        mqlog.trace_entry("admin:pcfexecute:__init__")
+
         # The default value gives backwards-compatible version where the
         # command queue is opened for each execution. But we can supply
         # a pre-opened queue handle
@@ -401,6 +408,7 @@ class PCFExecute(QueueManager):
         self.__response_wait_interval = response_wait_interval
 
         if model_queue_name and reply_queue_name:
+            mqlog.trace_exit("admin:pcfexecute:__init__", ep=1)
             raise PYIFError('Do not specify both a model_queue_name and a reply_queue_name')
 
         # From here, we can treat the 2 qnames as equivalent. So assign to one and use it.
@@ -421,6 +429,7 @@ class PCFExecute(QueueManager):
 
         self.__reply_queue = Queue(self.qm, od, CMQC.MQOO_INPUT_EXCLUSIVE)
         self.__reply_queue_name = od.ObjectName.strip()
+        mqlog.trace_exit("admin:pcfexecute:__init__")
 
     @property
     def command_queue_name(self):
@@ -496,6 +505,8 @@ class PCFExecute(QueueManager):
     def disconnect(self):
         """ Disconnect from reply_queue
         """
+        mqlog.trace_entry("admin:pcfexecute:disconnect")
+
         try:
             if self.__reply_queue and self.__reply_queue.get_handle():
                 self.__reply_queue.close()
@@ -504,6 +515,8 @@ class PCFExecute(QueueManager):
         finally:
             self.__reply_queue = None
             self.__reply_queue_name = None
+
+        mqlog.trace_exit("admin:pcfexecute:disconnect")
 
     @staticmethod
     def unpack(message: bytes) -> tuple[dict, CFH]:

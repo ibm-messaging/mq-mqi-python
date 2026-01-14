@@ -31,6 +31,8 @@ class QueueManager(MQObject):
         Input 'bytes_encoding'  and 'default_ccsid' are the encodings that will be used in PCF, MQPUT and MQPUT1 calls
         using this MQ connection in case Unicode objects should be given on input.
         """
+        mqlog.trace_entry("qmgr:__init__")
+
         name = ensure_strings_are_bytes(name)
 
         self.__handle = None
@@ -43,11 +45,13 @@ class QueueManager(MQObject):
         if name is not None:
             self.connect(name)
         super().__init__(name)
+        mqlog.trace_exit("qmgr:__init__")
 
     def __del__(self) -> None:
         """ Disconnect from the queue Manager, if connected. Ignore any
         errors from the MQI as there's nothing that can be done about it anyway.
         """
+        mqlog.trace_entry("qmgr:__del__")
         if self.__handle:
             if self.__qmobj:
                 try:
@@ -60,6 +64,7 @@ class QueueManager(MQObject):
                     self.disconnect()
                 except (PYIFError, MQMIError):
                     pass
+        mqlog.trace_exit("qmgr:__del__")
 
     # This is the simplest form of MQCONN and allows for no options. Not even authentication.
     def connect(self, name) -> None:
@@ -67,12 +72,14 @@ class QueueManager(MQObject):
 
         Connect immediately to the Queue Manager 'name'."""
 
-        mqlog.debug(f"About to connect to {name}")
+        mqlog.trace_entry("qmgr:connect")
         rv = ibmmqc.MQCONN(name)
         if rv[1]:
+            mqlog.trace_exit("qmgr:connect", ep=1, rc=rv[2])
             raise MQMIError(rv[1], rv[2])
         self.__handle = rv[0]
         self.__name = name
+        mqlog.trace_exit("qmgr:connect")
 
 # MQCONNX code courtesy of John OSullivan (mailto:jos@onebox.com)
 # SSL additions courtesy of Brian Vicente (mailto:sailbv@netscape.net)
@@ -101,12 +108,15 @@ class QueueManager(MQObject):
         CSPUserId and CSPPassword. Other authentication mechanisms - in particular
         using Tokens - require the CSP to be supplied.
         """
+        mqlog.trace_entry("qmgr:connect_with_options")
+
         name = ensure_strings_are_bytes(name)
 
         # Deal with old style args
         len_args = len(args)
         if len_args:
             if len_args > 2:
+                mqlog.trace_exit("qmgr:connect_with_options", ep=10)
                 raise TypeError('Too many positional args provided')
             if len_args >= 1:
                 kwargs['cd'] = args[0]
@@ -137,6 +147,7 @@ class QueueManager(MQObject):
         cno = kwargs['cno'] if 'cno' in kwargs else None
         if cno:
             if not isinstance(cno, CNO):
+                mqlog.trace_exit("qmgr:connect_with_options", ep=1)
                 raise TypeError("cno must be an instance of CNO")
 
             # The only field we need to work on is the CCDTUrl
@@ -162,6 +173,7 @@ class QueueManager(MQObject):
         sco = kwargs['sco'] if 'sco' in kwargs else None
         if sco:
             if not isinstance(sco, SCO):
+                mqlog.trace_exit("qmgr:connect_with_options", ep=2)
                 raise TypeError("sco must be an instance of SCO")
 
             try:
@@ -183,6 +195,7 @@ class QueueManager(MQObject):
         csp = kwargs['csp'] if 'csp' in kwargs else None
         if csp:
             if not isinstance(csp, CSP):
+                mqlog.trace_exit("qmgr:connect_with_options", ep=3)
                 raise TypeError("csp must be an instance of CSP")
             # The real names of the user/password field also start with CSP
             # but it's very easy to forget that and we don't get compile errors
@@ -195,6 +208,7 @@ class QueueManager(MQObject):
             user = csp.CSPUserId
             try:
                 _ = csp.UserId
+                mqlog.trace_exit("qmgr:connect_with_options", ep=4)
                 raise PYIFError('UserId field in CSP class is called CSPUserId')
             except AttributeError:
                 pass
@@ -202,6 +216,7 @@ class QueueManager(MQObject):
             password = csp.CSPPassword
             try:
                 _ = csp.Password
+                mqlog.trace_exit("qmgr:connect_with_options", ep=5)
                 raise PYIFError('Password field in CSP class is called CSPPassword')
             except AttributeError:
                 pass
@@ -229,6 +244,8 @@ class QueueManager(MQObject):
         # If you give a token, the user/password are ignored
         if token:
             if not isinstance(token, (str, bytes)):
+                mqlog.trace_exit("qmgr:connect_with_options", ep=6)
+
                 raise TypeError('Token must be an instance of str or bytes')
 
             csp._set_ptr_field('Token', token)
@@ -243,9 +260,11 @@ class QueueManager(MQObject):
         elif user:
             # We check for None because password can be an empty string
             if password is None:
+                mqlog.trace_exit("qmgr:connect_with_options", ep=7)
                 raise ValueError('Password must not be None if user is provided')
 
             if not (isinstance(user, (str, bytes)) and isinstance(password, (str, bytes))):
+                mqlog.trace_exit("qmgr:connect_with_options", ep=8)
                 raise ValueError('Both user and password must be instances of str or bytes')
             csp._set_ptr_field('CSPUserId', user)
             csp._set_ptr_field('CSPPassword', password)
@@ -317,7 +336,10 @@ class QueueManager(MQObject):
             self.__name = name
 
         if rv[1]:
+            mqlog.trace_exit("qmgr:connect_with_options", ep=9, rc=rv[2])
             raise MQMIError(rv[1], rv[2])
+
+        mqlog.trace_exit("qmgr:connect_with_options")
 
     # Backward compatibility
     connectWithOptions = connect_with_options
@@ -338,6 +360,7 @@ class QueueManager(MQObject):
         classes.
         """
 
+        mqlog.trace_entry("qmgr:connect_tcp_client")
         cd.ChannelName = ensure_strings_are_bytes(channel)
         cd.ConnectionName = ensure_strings_are_bytes(conn_name)
         cd.ChannelType = CMQXC.MQCHT_CLNTCONN
@@ -361,6 +384,7 @@ class QueueManager(MQObject):
             kwargs['bno'] = bno
 
         self.connect_with_options(name, **kwargs)
+        mqlog.trace_exit("qmgr:connect_tcp_client")
 
     # Backward compatibility
     connectTCPClient = connect_tcp_client
@@ -368,7 +392,10 @@ class QueueManager(MQObject):
     def disconnect(self) -> None:
         """ Disconnect from queue manager, if connected.
         """
+        mqlog.trace_entry("qmgr:disconnect")
+
         if not self.__handle:
+            mqlog.trace_exit("qmgr:disconnect", ep=1)
             raise PYIFError('not connected')
         saved_handle = self.__handle
 
@@ -377,15 +404,19 @@ class QueueManager(MQObject):
 
         rv = ibmmqc.MQDISC(self.__handle)
         if rv[0]:
+            mqlog.trace_exit("qmgr:disconnect", ep=2, rc=rv[2])
             raise MQMIError(rv[0], rv[1])
         self.__handle = self.__qmobj = None
         mqcallback._delete_all_callbacks(saved_handle)
+        mqlog.trace_exit("qmgr:disconnect")
 
     def get_handle(self) -> int:
         """ Get the queue manager handle. The handle is used for most other MQI calls.
+        We don't trace this function in normal path as it would make things too verbose
         """
         if self.__handle:
             return self.__handle
+        mqlog.trace("qmgr:get_handle raising PYIFError")
         raise PYIFError('not connected')
 
     def get_name(self) -> str:
@@ -401,23 +432,35 @@ class QueueManager(MQObject):
     def begin(self) -> None:
         """ Begin a new global transaction.
         """
+        mqlog.trace_entry("qmgr:begin")
+
         rv = ibmmqc.MQBEGIN(self.__handle)
         if rv[0]:
+            mqlog.trace_exit("qmgr:begin", ep=1, rc=rv[1])
             raise MQMIError(rv[0], rv[1])
+        mqlog.trace_exit("qmgr:begin")
 
     def commit(self) -> None:
         """ Commits any outstanding gets/puts in the current unit of work.
         """
+        mqlog.trace_entry("qmgr:commit")
+
         rv = ibmmqc.MQCMIT(self.__handle)
         if rv[0]:
+            mqlog.trace_exit("qmgr:commit", ep=1, rc=rv[1])
             raise MQMIError(rv[0], rv[1])
+        mqlog.trace_exit("qmgr:commit")
 
     def backout(self) -> None:
         """ Backout any outstanding gets/puts in the current unit of work.
         """
+        mqlog.trace_entry("qmgr:backout")
+
         rv = ibmmqc.MQBACK(self.__handle)
         if rv[0]:
+            mqlog.trace_exit("qmgr:backout", ep=1, rc=rv[1])
             raise MQMIError(rv[0], rv[1])
+        mqlog.trace_exit("qmgr:backout")
 
     def put1(self, q_desc: Union[str, bytes, OD], msg: Optional[bytes], *opts: Union[MD, OD]) -> None:
         """ Put the single message in string buffer 'msg' on the queue
@@ -439,6 +482,9 @@ class QueueManager(MQObject):
         If mDesc and/or putOpts arguments were supplied, they may be
         updated by the put1 operation.
         """
+
+        mqlog.trace_entry("qmgr:put1")
+
         m_desc, put_opts = mqqargs.common_q_args(*opts)
 
         if not isinstance(msg, bytes):
@@ -448,6 +494,7 @@ class QueueManager(MQObject):
                 m_desc.Format = CMQC.MQFMT_STRING
             else:
                 error_message = 'Message type is {0}. Convert to bytes.'
+                mqlog.trace_exit("qmgr:put1", ep=1)
                 raise TypeError(error_message.format(type(msg)))
         if put_opts is None:
             put_opts = PMO()
@@ -458,12 +505,14 @@ class QueueManager(MQObject):
         # Now send the message
         rv = ibmmqc.MQPUT1(self.__handle, mqqargs._make_q_desc(q_desc).pack(), m_desc.pack(), put_opts.pack(), msg)
         if rv[-2]:
+            mqlog.trace_exit("qmgr:put1", ep=1, rc=rv[-1])
             raise MQMIError(rv[-2], rv[-1])
         _ = m_desc.unpack(rv[0])
         _ = put_opts.unpack(rv[1])
 
         if OTelFunctions.put_trace_after:
             OTelFunctions.put_trace_after(self, put_opts)
+        mqlog.trace_exit("qmgr:put1")
 
     def inquire(self, selectors: Union[int, list[int]]) -> Union[Any, Dict[int, Any]]:
         """ Inquire on qmgr attributes. If the qmgr is not already
@@ -475,6 +524,7 @@ class QueueManager(MQObject):
         If the selectors parameter is a list of values, then a dict is returned
         where all the values are stored using each element of the selectors as the keys.
         """
+        mqlog.trace_entry("qmgr:inquire")
 
         if self.__qmobj is None:
             # Make an od for the queue manager, open the qmgr & cache result
@@ -482,10 +532,13 @@ class QueueManager(MQObject):
             hdl = self.__handle if self.__handle else CMQC.MQHC_UNUSABLE_HCONN
             rv = ibmmqc.MQOPEN(hdl, qmod.pack(), CMQC.MQOO_INQUIRE)
             if rv[-2]:
+                mqlog.trace_exit("qmgr:inquire", ep=1, rc=rv[-1])
                 raise MQMIError(rv[-2], rv[-1])
             self.__qmobj = rv[0]
         # mqinq.inq will throw the exception if necessary
         rv = mqinq.common_inq(self.__handle, self.__qmobj, selectors)
+        mqlog.trace_exit("qmgr:inquire")
+
         return rv
 
     # Create an alias that is closer to the real MQI function name
@@ -493,10 +546,14 @@ class QueueManager(MQObject):
 
     def stat(self, status_type: int) -> STS:
         """Implementation of MQSTAT"""
+        mqlog.trace_entry("qmgr:stat")
+
         stat = STS()
         rv = ibmmqc.MQSTAT(self.__handle, status_type, stat.pack())
         if rv[1]:
+            mqlog.trace_exit("qmgr:stat", ep=1, rc=rv[-1])
             raise MQMIError(rv[-2], rv[-1])
+        mqlog.trace_exit("qmgr:stat")
         return stat.unpack(rv[0])
 
     def _is_connected(self) -> bool:
@@ -532,7 +589,9 @@ class QueueManager(MQObject):
         entries for queue_manager,queue(unless it's a qmgr-wide event),
         md,gmo,cbc,msg.
         """
+        mqlog.trace_entry("qmgr:cb")
         mqcallback.real_cb(self, kwargs)
+        mqlog.trace_exit("qmgr:cb")
 
     def ctl(self, operation: int, ctlo: CTLO) -> None:
         """Start or stop registered callbacks with the MQCTL operation.
@@ -540,8 +599,10 @@ class QueueManager(MQObject):
         function. That area is not removed until MQDISC but it might be
         overwritten by subsequent calls to this function.
         """
+        mqlog.trace_entry("qmgr:ctl")
 
         if not isinstance(ctlo, CTLO):
+            mqlog.trace_exit("qmgr:ctl", ep=1)
             raise TypeError("ctlo must be an instance of CTLO")
 
         mqcallback._save_connection_area(self.__handle, ctlo)
@@ -553,7 +614,9 @@ class QueueManager(MQObject):
         # But restore it immediately so the app doesn't notice the swap
         ctlo.ConnectionArea = original_cna
         if rv[1]:
+            mqlog.trace_exit("qmgr:ctl", ep=2, rc=rv[-1])
             raise MQMIError(rv[-2], rv[-1])
+        mqlog.trace_exit("qmgr:ctl")
 
 # ################################################################################################################################
 
@@ -568,6 +631,8 @@ def connect(queue_manager, channel=None, conn_info=None, user=None, password=Non
 
     A QueueManager() is returned after successfully establishing a connection.
     """
+
+    mqlog.trace_entry(":connect")
     qmgr = QueueManager(None, disconnect_on_exit, bytes_encoding=bytes_encoding, default_ccsid=default_ccsid)
 
     if channel and conn_info:
@@ -577,6 +642,8 @@ def connect(queue_manager, channel=None, conn_info=None, user=None, password=Non
         qmgr.connect_with_options(queue_manager, user=user, password=password, cno=cno, csp=csp, sco=sco, bno=bno, cd=cd)
 
     else:
+        mqlog.trace_exit(":connect", ep=1)
         raise TypeError('Invalid arguments: %s' % repr([queue_manager, channel, conn_info, user, password]))
 
+    mqlog.trace_exit(":connect")
     return qmgr
