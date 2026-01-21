@@ -254,13 +254,20 @@ class _Method:
         else:
             command_queue = self.__pcf._command_queue
 
+        if self.__pcf.command_timeout == 0:
+            # If command timout was not specified,
+            # multiply the wait time to give a reasonable expiry time
+            # Convert to tenths and then x3 (for out, back and delay).
+            expiry = (self.__pcf.response_wait_interval // 100) * 3
+        else:
+            # Use explicitly specified value, converted to tenths of seconds
+            expiry = self.__pcf.command_timeout // 100
+
         put_md = MD(Format=CMQC.MQFMT_ADMIN,
                     MsgType=CMQC.MQMT_REQUEST,
                     ReplyToQ=self.__pcf.reply_queue_name,
                     Feedback=CMQC.MQFB_NONE,
-                    # Multiply the wait time to give a reasonable expiry time
-                    # Convert to tenths and then x3 (for out, back and delay)
-                    Expiry=(self.__pcf.response_wait_interval // 100) * 3,
+                    Expiry=expiry,
                     Report=CMQC.MQRO_PASS_DISCARD_AND_EXPIRY | CMQC.MQRO_DISCARD_MSG)
         put_opts = PMO(Options=CMQC.MQPMO_NO_SYNCPOINT)
 
@@ -380,6 +387,7 @@ class PCFExecute(QueueManager):
                  command_queue_name=b'SYSTEM.ADMIN.COMMAND.QUEUE',
                  command_queue=None,
                  response_wait_interval=5000,  # 5 seconds
+                 command_timeout=0,            # 0 - calculate based of wait interval
                  convert=True):
         # type: (Any, Union[str,bytes], Union[None,bytes,str], Union[str,bytes], Union[str,bytes], Union[None,Queue], int, bool) -> None
         """PCFExecute(name = '')
@@ -406,6 +414,7 @@ class PCFExecute(QueueManager):
         if response_wait_interval < 0:
             response_wait_interval = 60 * 60 * 1000
         self.__response_wait_interval = response_wait_interval
+        self.__command_timeout = command_timeout
 
         if model_queue_name and reply_queue_name:
             mqlog.trace_exit("admin:pcfexecute:__init__", ep=1)
@@ -455,6 +464,11 @@ class PCFExecute(QueueManager):
     def response_wait_interval(self):
         """Return the wait interval for this object"""
         return self.__response_wait_interval
+
+    @property
+    def command_timeout(self):
+        """Return the command timeout for this object"""
+        return self.__command_timeout
 
     def __getattr__(self, name):
         """MQCMD_*(attrDict)
