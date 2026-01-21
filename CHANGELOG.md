@@ -2,8 +2,19 @@
 # Changelog
 Newest updates are at the top of this file.
 
+## 2026 Feb 06 - V2.1.0
+* Add OTel propagation support for instrumented applications
+  * Existing span/trace information set/read as message properties
+  * Automatically enabled if OTel packages are found by the application unless
+    MQIPY_NOOTEL environment variable is set
+* Add a trace/debug log implementation
+  * Enabled with `MQIPY_TRACE=true` or `MQIPY_DEBUG=true`.
+  * Output configured with `MQIPY_LOG_FILENAME` (_stderr_ if not set)
+* MQRFH2: add get_folders() function
+* MQSUB: add get_handle() function
+
 ## 2025 Nov 06 - V2.0.1
-* MQXQH 
+* MQXQH
   - get_header() function to extract structure (#4)
   - get_embedded_md() function
 * Added MQMDE class for if you want to parse MQXQH messages

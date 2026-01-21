@@ -423,7 +423,8 @@ class QueueManager(MQObject):
         """ Get the queue manager name that was used during MQCONN(X).
         """
         if self.__name:
-            return self.__name.decode(EncodingDefault.bytes_encoding).strip()
+            v = self.__name
+            return self.to_string(v)
         raise PYIFError('not connected')
 
     # Backward compatibility

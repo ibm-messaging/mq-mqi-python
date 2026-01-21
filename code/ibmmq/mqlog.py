@@ -70,8 +70,10 @@ def trace_exit(s: str, **kwargs):
     trace("< " + s + expt + mqrc)
 
 
-# Create a logger for Python. Also configure the C layer
-# if we've asked for trace/debug output.
+# Create a logger for Python.
+# Also configure the C layer if we've asked for trace/debug output and
+# once there's actually some debug/trace points in there. For now, this
+# is disabled.
 enable_native_logging = False
 
 # TRACE takes precedence over DEBUG
@@ -79,24 +81,28 @@ if os.environ.get('MQIPY_TRACE'):
     # There's no separate "TRACE" level in the Python logging API so we separate
     # it from DEBUG with a local flag.
     level = logging.DEBUG
-    enable_native_logging = True
+    # enable_native_logging = True
     trace_level = True
 elif os.environ.get('MQIPY_DEBUG'):
     level = logging.DEBUG
-    enable_native_logging = True
+    # enable_native_logging = True
 else:
     level = logging.WARN  # We only use WARN/ERROR in normal use, so no point in enabling INFO
 
 logger.setLevel(level)
 
-# If you've asked for a specfic filename, then override the default
+# If you've asked for a specfic filename, then override any default
 # logging propagation and only allow that file to be used. If the
 # file cannot be created/written, then there is an exception generated.
 filename = os.environ.get('MQIPY_LOG_FILENAME')
 if filename:
     for h in logger.handlers:
         logger.removeHandler(h)
-    h = logging.FileHandler(filename)  # Default constructor has mode=append
+    if filename == "stderr":
+        h = logging.StreamHandler()
+    else:
+        h = logging.FileHandler(filename)  # Default constructor has mode=append
+
     # consider adding: "%(threadName)s %(thread)d"
     h.setFormatter(logging.Formatter('%(asctime)s %(levelname)-8s %(name)-8s %(message)s', datefmt='%H:%M:%S'))
     logger.addHandler(h)
@@ -108,15 +114,19 @@ else:
     p = logger
     found_handler = False
     while p.parent:
-        p = logger.parent
+        p = p.parent
         if len(p.handlers) != 0:
+            # print(f"Found a handler in logger {p}. List={p.handlers}")
             found_handler = True
-    # print(f"Using default log output stream. Current={logger} Parent={logger.parent} Effective={logger.getEffectiveLevel()} p.handlers={p.handlers}")
+            break
+        # else:
+        #    print(f"No handlers found for {p}")
 
-    # If there is no available handler, then attach a stderr stream to the root
+    # If there is no available handler, then attach a stderr stream to our logger
     if not found_handler:
-        # print(f"Adding stream handler to {p}")
-        p.addHandler(logging.StreamHandler())
+        # print(f"Adding stream handler to {logger}")
+        logger.propagate = False
+        logger.addHandler(logging.StreamHandler())
 
     if enable_native_logging:
         ibmmqc.MQLOGCF(level)

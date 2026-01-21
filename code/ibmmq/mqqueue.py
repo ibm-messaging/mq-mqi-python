@@ -432,8 +432,9 @@ class Queue(MQObject):
         return self.__q_handle
 
     def get_name(self) -> str:
-        """Return the name of the queue as a string"""
-        return self.__q_desc.ObjectName.decode(EncodingDefault.bytes_encoding).strip()
+        """Return the name of the queue as a stripped string"""
+        v = self.__q_desc.ObjectName
+        return self.to_string(v)
 
     def get_queue_manager(self) -> QueueManager:
         """ Get the queue manager object.

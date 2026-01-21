@@ -5,6 +5,7 @@ object handle from subclasses, and functions such as open(), close() or inq() la
 
 # Copyright (c) 2025 IBM Corporation and other Contributors. All Rights Reserved.
 # Copyright (c) 2009-2024 Dariusz Suchojad. All Rights Reserved.
+from mqcommon import *
 
 class MQObject:
     """
@@ -15,3 +16,17 @@ class MQObject:
     def __init__(self, name):
         # print(f"In MQObject constructor for class {type(self)} with value {name}")
         self._name = name
+
+    def to_string(self, v, encoding=EncodingDefault.bytes_encoding):
+        """Use the specified encoding to convert MQCHAR[] to a Python3 string, stripping trailing NULs/spaces.
+        If there's an error, return the input unchanged.
+        """
+        if isinstance(v, bytes):
+            try:
+                null_index = v.find(0)
+                if null_index != -1:
+                    v = v[:null_index]
+                return v.decode(encoding).strip()
+            except UnicodeError:
+                pass
+        return v

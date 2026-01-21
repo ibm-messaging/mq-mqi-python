@@ -90,6 +90,7 @@ def _get_msg_handle(hc, ho) -> MessageHandle:
         if object_handle.get(key) is None:
             try:
                 mh = MessageHandle(qmgr=hc)
+                mqlog.debug(f"Adding handle for key {key}")
                 object_handle[key] = mh
             except MQMIError as e:
                 mqlog.error(e)
@@ -167,6 +168,7 @@ def otel_disc(hc):
                 except MQMIError as e:
                     mqlog.error(f"MessageHandle delete error: {e}")
                     # pass
+                mqlog.debug(f"Deleting handle for key {k}")
                 del object_handle[k]
 
     # And delete information about any OPENed object too
@@ -176,6 +178,7 @@ def otel_disc(hc):
                 mho = object_options[k].managed_ho
                 if mho:
                     otel_close_nolock(mho)
+                mqlog.debug(f"Deleting options for key {k}")
                 del object_options[k]
     mqlog.trace_exit("otel:disc")
 
@@ -286,6 +289,7 @@ def otel_close(ho):
             mho = object_options[key].managed_ho
             if mho:
                 otel_close_nolock(mho)
+            mqlog.debug(f"Deleting options for key {key}")
             del object_options[key]
     mqlog.trace_exit("otel:close")
 
@@ -297,6 +301,7 @@ def otel_close_nolock(ho):
 
     key = _make_key(ho.get_queue_manager(), ho)
     if object_options.get(key):
+        mqlog.debug(f"Deleting options for key {key}")
         del object_options[key]
     mqlog.trace_exit("otel:close_nolock")
 

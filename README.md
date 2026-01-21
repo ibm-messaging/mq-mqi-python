@@ -149,6 +149,21 @@ helpful to see use of the functions.
 
 Additional example programs can be found [here](https://github.com/ibm-messaging/mq-dev-patterns/tree/master/Python).
 
+## OpenTelemetry Trace/Span propagation
+If you are running an OpenTelemetry-instrumented Python application, then any active span/trace information is propagated
+into MQ messages that are put, or linked to other spans when a message is retrieved. The OTel correlators are handled as
+message properties. If you have the MQ tracing service exit, then these correlators can cause further spans to be created,
+showing the passage of messages through the MQ network, but that exit is not a requirement for the propagation to occur.
+
+The OTel capability is automatically inserted when the `opentelemetry` package is available for this MQ package to use.
+If you don't want the MQ instrumentation, then it can be disabled by setting the environment variable
+`MQIPY_NOOTEL=true`.
+
+## Package trace/log output
+Setting the environment variable `MQIPY_TRACE=true` or `MQIPY_DEBUG=true` enables trace/debug output from this package.
+You can also set `MQIPY_LOG_FILENAME` to the name of a file where the output is directed; otherwise it is sent to
+_stderr_.
+
 ## Contributions and Pull requests
 
 Contributions to this package can be accepted under the terms of the Developer's Certificate of Origin, found in the
