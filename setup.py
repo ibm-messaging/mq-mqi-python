@@ -19,6 +19,15 @@ from setuptools import setup, Extension
 # to indicate alpha/beta/release-candidate versions.
 VERSION = '2.0.1'
 
+_ABI_LIMITS = {
+    # Minimum Python version that this package supports.
+    'python_requires': ">=3.9",
+    # Used as a macro.
+    'Py_LIMITED_API': 0x03090000,
+    # Used for bdist_wheel option.
+    "py_limited_api": "cp39",
+}
+
 # If the MQ SDK is in a non-default location, set MQ_FILE_PATH environment variable.
 custom_path = os.environ.get('MQ_FILE_PATH', None)
 
@@ -138,12 +147,14 @@ else:
 
 # Can we find the MQ C header files? If not, there's no point in continuing, and we can
 # give a reasonable error message immediately instead of trying to decode C compiler errors.
+# If we are in the CI environment, we still build the package as we want
+# to be able to build the source package without the MQ C headers.
 found_headers = False  # pylint: disable=invalid-name
 for d in include_dirs:
     p = os.path.join(d, "cmqc.h")
     if os.path.isfile(p):
         found_headers = True
-if not found_headers:
+if not found_headers and not os.environ.get('CI', ''):
     msg = "Cannot find MQ C header files.\n"
     msg += "Ensure you have already installed the MQ Client and SDK.\n"
     msg += "Use the MQ_FILE_PATH environment variable to identify a non-default location."
@@ -195,7 +206,7 @@ and in the `dev-patterns repository
 # Limited API which should make the binary extension forwards compatible.
 mqi_extension = Extension('ibmmq.ibmmqc', c_source,
                           define_macros=[('PYVERSION', '"' + VERSION + '"'),
-                                         ('Py_LIMITED_API', 0x03090000)
+                                         ('Py_LIMITED_API', _ABI_LIMITS['Py_LIMITED_API'])
                                          ],
                           py_limited_api=True,
                           library_dirs=library_dirs,
@@ -214,7 +225,7 @@ setup(name='ibmmq',
       platforms='OS Independent',
       package_dir={'': 'code'},
       packages=['ibmmq'],
-      python_requires=">=3.9",
+      python_requires=_ABI_LIMITS['python_requires'],
       license_files=['LICENSE*'],
       license='Python-2.0',
       keywords=('pymqi IBMMQ MQ WebSphere WMQ MQSeries IBM middleware messaging queueing asynchronous SOA EAI ESB integration'),
@@ -225,4 +236,6 @@ setup(name='ibmmq',
                    'Programming Language :: C',
                    'Programming Language :: Python',
                    'Topic :: Software Development :: Libraries :: Python Modules'],
-      ext_modules=[mqi_extension])
+      ext_modules=[mqi_extension],
+      options={"bdist_wheel": {"py_limited_api": _ABI_LIMITS["py_limited_api"]}},
+)
