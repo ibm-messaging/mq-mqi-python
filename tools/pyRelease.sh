@@ -33,6 +33,7 @@ function printSyntax {
 cat << EOF
 Usage: pyRelease.sh [-k keyfile] [-p packageName] [-l Y|N] [-r] [ -e venvLocation] [-v]
 Options:
+    -a Use GitHub Actions to execute build
     -k File containing API Key (default depends on repository)
     -l Use empty(Y)/untouched(N) local server at $localRepository
     -p package name (default $defaultPkg)
@@ -55,6 +56,7 @@ repositoryFlag="--repository"
 
 useTestServer=true
 useLocalServer=false
+useActions=false
 verbose=false
 
 keyFileProd="$HOME/.creds/pythonPyPi"
@@ -68,9 +70,12 @@ pkg=$defaultPkg
 
 venv=$root/../venv_build
 
-while getopts :e:k:l:p:rv o
+while getopts :ae:k:l:p:rv o
 do
   case $o in
+  a)
+    useActions=true
+    ;;
   e)
     venv=$OPTARG
     ;;
@@ -185,27 +190,43 @@ cd $root
 rm -rf dist
 rm -rf code/$pkg.egg-info
 
-# Even though we're not going to upload the binary wheel, we do
-# want the build process to create it as a "final" check on the contents
-python -m build | grep -Ev "^copying|^adding"
-if [ $? -ne 0 ]
+# We want the build process to create it as a "final" check on the contents
+if $useActions
 then
-  echo "ERROR: Failed to build."
-  exit 1
+  cd $curdir
+  $curdir/runActions.sh
+  if [ $? -ne 0 ]
+  then
+    echo "ERROR: Failed to build using GitHub Action."
+    exit 1
+  fi
+else
+  python -m build | grep -Ev "^copying|^adding"
+  if [ $? -ne 0 ]
+  then
+    echo "ERROR: Failed to build."
+    exit 1
+  fi
 fi
 
 # Does the tar file contain what we expect?
 if $verbose
 then
-cd $root/dist
-echo "----------------------------"
-echo "     CONTENTS OF TAR        "
-echo "----------------------------"
-cat *tar* | tar -tvzf -
-echo
+  cd $root/dist
+  echo "----------------------------"
+  echo "     CONTENTS OF TAR        "
+  echo "----------------------------"
+  cat *tar* | tar -tvzf -
+  echo
 
-# Don't care about the wheel's contents as it's not normally uploaded
-# unzip -l *whl
+  # Also check the wheels
+  if $useActions
+  then
+    for f in *whl
+    do
+      unzip -l $f
+    done
+  fi
 fi
 
 cd $root
@@ -228,25 +249,27 @@ fi
 export TWINE_USERNAME="__token__"
 export TWINE_PASSWORD="$tok"
 
-# Only upload the source distribution, not the wheel which will fail.
 # PyPI does not accept binary packages tagged with a simple "linux_x86_64" or similar.
 # See  https://discuss.python.org/t/pypi-org-unsupported-platform-tag-openbsd-7-0-amd64/16302 for one discussion.
-# And using the "manylinux" prebuilder environments is getting way too complicated.
+# So if we want to create an appropriate binary wheel, based off the Redistributable client packages, then
+# we can use a GitHub Action to drive the process - including running it on suitable base images.
 
 # verboseUpload="--verbose"
 
 # If using the local repository, then first make sure the pypi-server is running
-# And uncomment the upload line if you want to try uploading binary wheels to the local server.
-if $useLocalServer
-then
+#if $useLocalServer
+#then
   echo
-  # python -m twine upload $repositoryFlag $repository $verboseUpload dist/$pkg*whl*
-  if [ $? -ne 0 ]
+  if $useActions
   then
-    echo "ERROR: Upload of binary wheel failed"
-    exit 1
+    python -m twine upload $repositoryFlag $repository $verboseUpload dist/$pkg*whl*
+    if [ $? -ne 0 ]
+    then
+      echo "ERROR: Upload of binary wheel failed"
+      exit 1
+    fi
   fi
-fi
+#fi
 
 python -m twine upload $repositoryFlag $repository $verboseUpload dist/$pkg*.tar.gz
 if [ $? -ne 0 ]

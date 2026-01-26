@@ -387,7 +387,7 @@ class PCFExecute(QueueManager):
                  command_queue_name=b'SYSTEM.ADMIN.COMMAND.QUEUE',
                  command_queue=None,
                  response_wait_interval=5000,  # 5 seconds
-                 command_timeout=0,            # 0 - calculate based of wait interval
+                 command_timeout=0,            # If 0, calculate based on wait interval
                  convert=True):
         # type: (Any, Union[str,bytes], Union[None,bytes,str], Union[str,bytes], Union[str,bytes], Union[None,Queue], int, bool) -> None
         """PCFExecute(name = '')

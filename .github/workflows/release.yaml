@@ -1,27 +1,36 @@
 name: Release
 on:
-  push:
+  # This lets us trigger using the "gh" command line
+  workflow_dispatch:
     branches:
       - default
+
+  # These blocks can be uncommented to increase the automation - building
+  # on PRs and attempting to release when a suitable tag is created
+
+  # push:
+  #  branches:
+  #    - default
     # To simplify the release process, the publishing is triggered on tag.
     # We should make sure to only push tags for new releases.
     # If we start using tags for non-release purposes,
     # this needs to be updated.
     #
     # We need to explicitly configure an expression that matches anything.
-    tags: [ "**" ]
-  pull_request:
+  #  tags: [ "**" ]
+  # pull_request:
 
 
 env:
-  LINUX_URL: "https://bin.chevah.com:20443/third-party-stuff/ibm-mqc-redist/9.4.3.1-IBM-MQC-Redist-LinuxX64.tar.gz"
-  WINDOWS_URL: "https://bin.chevah.com:20443/third-party-stuff/ibm-mqc-redist/9.4.3.1-IBM-MQC-Redist-Win64.zip"
+  REDIST_ROOT: "https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist/"
+  LINUX_FILE: "IBM-MQC-Redist-LinuxX64.tar.gz"
+  WINDOWS_FILE: "IBM-MQC-Redist-Win64.zip"
+  VRMF: "9.4.4.0"
 
 defaults:
   run:
     # Use bash on Windows for consistency.
     shell: bash
-
 
 jobs:
   build_wheels:
@@ -47,12 +56,12 @@ jobs:
       - name: Get IBM MQ C Linux Redistributables
         if: matrix.runs-on == 'ubuntu-latest'
         run: |
-          python tools/getRedistributables.py "$LINUX_URL" ibm-mq-c
+          python tools/getRedistributables.py "$REDIST_ROOT/$VRMF-$LINUX_FILE" ibm-mq-c
 
       - name: Get IBM MQ C Windows Redistributables
         if: matrix.runs-on == 'windows-latest'
         run: |
-          python tools/getRedistributables.py "$WINDOWS_URL" ibm-mq-c
+          python tools/getRedistributables.py "$REDIST_ROOT/$VRMF-$WINDOWS_FILE" ibm-mq-c
 
       - name: Build wheels
         run: |
@@ -96,7 +105,7 @@ jobs:
           path: dist/*.tar.gz
 
 
-  upload_pypi:
+  complete_artifacts:
     needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
     permissions:
@@ -112,7 +121,8 @@ jobs:
       - name: Check files
         run: ls -al dist/
 
-      - name: Publish to PyPI - on tag
+      # Uncomments this block to add auto-upload to PyPI when a new tag is created
+      #- name: Publish to PyPI - on tag
         # Skip upload to PyPI if we don't have a tag
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: pypa/gh-action-pypi-publish@release/v1
+      #  if: startsWith(github.ref, 'refs/tags/')
+      #  uses: pypa/gh-action-pypi-publish@release/v1
