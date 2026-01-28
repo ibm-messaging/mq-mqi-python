@@ -383,13 +383,14 @@ class PCFExecute(QueueManager):
     def __init__(self, name=None,
                  model_queue_name=b'SYSTEM.DEFAULT.MODEL.QUEUE',
                  reply_queue_name=None,
+                 reply_queue_open_options=CMQC.MQOO_INPUT_EXCLUSIVE,  # Allows you to override and set, say, MQOO_READ_AHEAD
                  dynamic_queue_name=b'PYMQPCF.*',
                  command_queue_name=b'SYSTEM.ADMIN.COMMAND.QUEUE',
                  command_queue=None,
                  response_wait_interval=5000,  # 5 seconds
                  command_timeout=0,            # If 0, calculate based on wait interval
                  convert=True):
-        # type: (Any, Union[str,bytes], Union[None,bytes,str], Union[str,bytes], Union[str,bytes], Union[None,Queue], int, bool) -> None
+        # type: (Any, Union[str,bytes], Union[None,bytes,str], int, Union[str,bytes], Union[str,bytes], Union[None,Queue], int, int, bool) -> None
         """PCFExecute(name = '')
 
         Connect to the Queue Manager 'name' (default value '') ready
@@ -436,7 +437,12 @@ class PCFExecute(QueueManager):
         od = OD(ObjectName=model_queue_name,
                 DynamicQName=dynamic_queue_name)
 
-        self.__reply_queue = Queue(self.qm, od, CMQC.MQOO_INPUT_EXCLUSIVE)
+        # Do the open options include any of the INPUT options? If not, then add in one of them.
+        open_input_mask = CMQC.MQOO_INPUT_EXCLUSIVE | CMQC.MQOO_INPUT_AS_Q_DEF | CMQC.MQOO_INPUT_SHARED
+        if reply_queue_open_options & open_input_mask == 0:
+            reply_queue_open_options |= CMQC.MQOO_INPUT_EXCLUSIVE
+
+        self.__reply_queue = Queue(self.qm, od, reply_queue_open_options)
         self.__reply_queue_name = od.ObjectName.strip()
         mqlog.trace_exit("admin:pcfexecute:__init__")
 
