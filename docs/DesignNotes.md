@@ -194,14 +194,4 @@ places (maybe into the new `MQObject` class), but this arrangement works for now
 maintainability, being able to more easily find what was where.
 
 ## Distributions, binary files, wheels and PyPI
-A GitHub Action is used to build release files but not to actually upload them to PyPI, to allow local checks to be done
-and to fit better with my own workflows, including use of other PyPI-equivalent servers. The build is triggered manually
-with the gh `workflow_dispatch` operation. The workflow does have some automatic steps (for example to run on PR
-creation), but they are commented out. The Redistributable Client packages are used to build binary wheels for Linux/x64
-and Windows.
-
-The `tools` subdirectory also includes scripts to let you run your own PyPI-equivalent local server, and to upload
-binary wheels to that location. See the `testInstServer.sh` and `testInstClient.sh` scripts. They will almost certainly
-require modifications for your own systems, but the basic framework is there. This local PyPI server does not have all
-the same constraints that the real PyPI has. For example, it doesn't stop you uploading a Linux binary wheel that has
-been built outside the "multilinux" framework. Again, that may help with internal distribution of your applications.
+See the [Release](Release.md) file for more information about releases, wheels etc.

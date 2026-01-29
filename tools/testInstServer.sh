@@ -24,10 +24,12 @@ then
   cd $venv
   # Clean out any existing packages
   rm -rf ./packages/*
-  echo "Running a local pypi server"
+  echo "Running a local pypi server with a clean packages directory."
   # This server is unprotected - no TLS, no authentication, no authorisation controls
   # But it's only listening on localhost, so should not be remotely accessible
-  pypi-server run --verbose  -i 127.0.0.1 -p 8080  -a . -P . $* ./packages >pypi-server.log 2>&1 &
+  interface=127.0.0.1
+  # interface=0.0.0.0
+  pypi-server run --verbose  -i $interface -p 8080  -a . -P . $* ./packages >pypi-server.log 2>&1 &
 else
-  echo "Any running pypi server was stopped"
+  echo "Any running pypi server was stopped."
 fi

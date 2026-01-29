@@ -19,6 +19,7 @@ do
 
   cd $curdir
   . $venv/bin/activate
+  python -m pip install -q --upgrade pip
   pip uninstall -y ibmmq >/dev/null 2>&1
   cd ..
 

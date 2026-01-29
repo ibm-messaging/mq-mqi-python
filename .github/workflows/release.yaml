@@ -39,12 +39,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ubuntu-latest, windows-latest]
+        runs-on: [ubuntu-22.04, windows-2022]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         name: Install Python
         with:
           python-version: '3.9'
@@ -54,12 +54,12 @@ jobs:
           python -m pip install -r tools/requirements-dev.txt
 
       - name: Get IBM MQ C Linux Redistributables
-        if: matrix.runs-on == 'ubuntu-latest'
+        if: matrix.runs-on == 'ubuntu-22.04'
         run: |
           python tools/getRedistributables.py "$REDIST_ROOT/$VRMF-$LINUX_FILE" ibm-mq-c
 
       - name: Get IBM MQ C Windows Redistributables
-        if: matrix.runs-on == 'windows-latest'
+        if: matrix.runs-on == 'windows-2022'
         run: |
           python tools/getRedistributables.py "$REDIST_ROOT/$VRMF-$WINDOWS_FILE" ibm-mq-c
 
@@ -83,11 +83,11 @@ jobs:
 
   build_sdist:
     name: Build source distribution
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         name: Install Python
         with:
           python-version: '3.9'
@@ -107,7 +107,7 @@ jobs:
 
   complete_artifacts:
     needs: [build_wheels, build_sdist]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write

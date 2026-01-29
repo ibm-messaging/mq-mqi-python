@@ -130,10 +130,26 @@ echo "  Command level in repo = $cmdlevel"
 # a warning if the VRM does not match, not an error, to allow earlier test attempts to pass.
 # Though we can point the container to download from a local server instead of public instead.
 #
-# No other files currently seem to have a VRMF dependency.
-for f in code/examples/Dockerfile
+# But the release.yaml file really should match the latest level as that's how we build the wheels.
+
+for f in code/examples/Dockerfile .github/workflows/release.yaml
 do
-  vrmf=`grep "VRMF=" $f | cut -f2 -d" " | cut -f2 -d=`
+  fatal=false
+  b=`basename $f`
+  case $b in
+  Dockerfile)
+    vrmf=`grep "VRMF=" $f | cut -f2 -d" " | cut -f2 -d=`
+    ;;
+  release.yaml)
+    vrmf=`grep "VRMF:" $f | awk '{print $2}' | sed "s/\"//g" `
+    fatal=true
+    ;;
+  *)
+    echo "Looking for VRMF in unknown file $f"
+    exit 1
+    ;;
+  esac
+
   if [ -z "$vrmf" ]
   then
     echo "  ERROR: Cannot find VRMF in $f"
@@ -148,9 +164,16 @@ do
 
   if [ "$vrm" != "$cmdlevel" ]
   then
-    echo "  WARN : VRMF $vrmf [$vrm] does not match CMDLEVEL $cmdlevel in $f"
+    msg="VRMF $vrmf [$vrm] does not match CMDLEVEL $cmdlevel in $f"
+    if [ $fatal ]
+    then
+      echo "  ERROR : $msg"
+      exit 1
+    else
+      echo "  WARN  : $msg"
+    fi
   else
-    echo "  OK   : Example $f building on MQ $vrmf"
+    echo "  OK   : File $f building on MQ $vrmf"
   fi
 done
 
