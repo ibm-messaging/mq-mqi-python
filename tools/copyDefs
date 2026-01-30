@@ -143,7 +143,7 @@ case $FORMAT in
   ;;
 5|GOLD)
   gold=true
-  BUILD="gold/$RELEASE-$LEVEL"
+  BUILD="gold/$RELEASE-$LEVEL"_P
   ;;
 *)
   printSyntax

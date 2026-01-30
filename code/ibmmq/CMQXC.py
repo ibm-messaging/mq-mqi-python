@@ -8,44 +8,40 @@
    DESCRIPTION:    Declarations for Exits and MQCD           
 
 ----------------------------------------------------------------
-                                                               
-   <copyright                                                  
-   notice="lm-source-program"                                  
-   pids="5724-H72"                                             
-   years="1993,2025"
-   crc="0" >    
-                                        
-   Licensed Materials - Property of IBM                        
-                                                               
-   5724-H72                                                    
-                                                               
-   (C) Copyright IBM Corp. 1993, 2025 All Rights Reserved. 
-                                                               
-   US Government Users Restricted Rights - Use, duplication or 
-   disclosure restricted by GSA ADP Schedule Contract with     
-   IBM Corp.                                                   
-   </copyright>                                                
-                                                              
+
+   <copyright
+   notice="lm-source-program"
+   pids="5724-H72"
+   years="1993,2026"
+   crc="0" >
+
+   Licensed Materials - Property of IBM
+
+   5724-H72
+
+   (C) Copyright IBM Corp. 1993, 2026 All Rights Reserved.
+
+   US Government Users Restricted Rights - Use, duplication or
+   disclosure restricted by GSA ADP Schedule Contract with
+   IBM Corp.
+   </copyright>
 ----------------------------------------------------------------
 
    FUNCTION:       This file declares the functions,           
-                   structures and named constants for exits     
-                   and MQCD.                                    
+                   structures and named constants for exits    
+                   and MQCD.                                   
 
    PROCESSOR:      Python
 
 ----------------------------------------------------------------
 <BEGIN_BUILDINFO>
-   Generated on:  10/3/25, 11:37 AM                           
-   Build Level:   p944-L251003                                
-   Build Type:    Production                                  
-   Pointer Size:  64 Bit                                      
-   Source File:
-   @(#) MQMBID sn=p944-L251003                                
+   Generated on:  1/20/26, 9:18 AM                              
+   Build Level:   p945-L260120                                  
+   Build Type:    Production                                    
+   Pointer Size:  64 Bit                                        
 <END_BUILDINFO>
 ----------------------------------------------------------------
 """
-
 
 #----------------------------------------------------------------#
 # Values Related to MQCD Structure                               #
@@ -724,18 +720,6 @@ MQXWD_CURRENT_LENGTH                     = 24
 # Channel exit
 
 #----------------------------------------------------------------#
-# Values Related to MQ_TRANSPORT_EXIT Function                   #
-#----------------------------------------------------------------#
-# Channel exit
-
-#----------------------------------------------------------------#
-# Values Related to MQXCNVC Function                             #
-#----------------------------------------------------------------#
-# Conversion Options
-
-# Conversion Options Masks and Factors
-
-#----------------------------------------------------------------#
 # General Values Related to Exits                                #
 #----------------------------------------------------------------#
 # Exit Identifiers
@@ -839,18 +823,6 @@ MQMCEV_PORT_INTERFACE_FAILOVER           = 123
 # Values Related to MQ_CLUSTER_WORKLOAD_EXIT Function            #
 #----------------------------------------------------------------#
 # Channel exit
-
-#----------------------------------------------------------------#
-# Values Related to MQ_TRANSPORT_EXIT Function                   #
-#----------------------------------------------------------------#
-# Channel exit
-
-#----------------------------------------------------------------#
-# Values Related to MQXCNVC Function                             #
-#----------------------------------------------------------------#
-# Conversion Options
-
-# Conversion Options Masks and Factors
 
 
 #- end of CMQXC -#

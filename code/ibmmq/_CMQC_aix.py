@@ -8,45 +8,40 @@
    DESCRIPTION:    Declarations for Main MQI                 
 
 ----------------------------------------------------------------
-                                                               
-   <copyright                                                  
-   notice="lm-source-program"                                  
-   pids="5724-H72"                                             
-   years="1993,2025"
-   crc="0" >    
-                                        
-   Licensed Materials - Property of IBM                        
-                                                               
-   5724-H72                                                    
-                                                               
-   (C) Copyright IBM Corp. 1993, 2025 All Rights Reserved. 
-                                                               
-   US Government Users Restricted Rights - Use, duplication or 
-   disclosure restricted by GSA ADP Schedule Contract with     
-   IBM Corp.                                                   
-   </copyright>                                                
-                                                              
+
+   <copyright
+   notice="lm-source-program"
+   pids="5724-H72"
+   years="1993,2026"
+   crc="0" >
+
+   Licensed Materials - Property of IBM
+
+   5724-H72
+
+   (C) Copyright IBM Corp. 1993, 2026 All Rights Reserved.
+
+   US Government Users Restricted Rights - Use, duplication or
+   disclosure restricted by GSA ADP Schedule Contract with
+   IBM Corp.
+   </copyright>
 ----------------------------------------------------------------
 
    FUNCTION:       This file declares the functions,           
-                   structures and named constants for the       
-                   main MQI.                                    
+                   structures and named constants for the      
+                   main MQI.                                   
 
    PROCESSOR:      Python
 
 ----------------------------------------------------------------
 <BEGIN_BUILDINFO>
-   Generated on:  10/3/25, 11:37 AM                           
-   Build Level:   p944-L251003                                
-   Build Type:    Production                                  
-   Pointer Size:  64 Bit                                      
-   Source File:
-   @(#) famfiles/xml/approved/cmqc.xml, mqmake, p000 1.125    
-   12/02/10 10:34:59                          
+   Generated on:  1/20/26, 9:18 AM                              
+   Build Level:   p945-L260120                                  
+   Build Type:    Production                                    
+   Pointer Size:  64 Bit                                        
 <END_BUILDINFO>
 ----------------------------------------------------------------
 """
-
 
 #----------------------------------------------------------------#
 # Values Related to MQAIR Structure                              #
@@ -2332,7 +2327,6 @@ MQ_FUNCTION_LENGTH                       = 4
 MQ_GROUP_ID_LENGTH                       = 24
 MQ_APPL_FUNCTION_NAME_LENGTH             = 10
 MQ_INITIAL_KEY_LENGTH                    = 256
-MQ_ENCRYPTION_KEY_LENGTH                 = 256
 MQ_INSTALLATION_DESC_LENGTH              = 64
 MQ_INSTALLATION_NAME_LENGTH              = 16
 MQ_INSTALLATION_PATH_LENGTH              = 256
@@ -3279,7 +3273,8 @@ MQCMDL_LEVEL_941                         = 941
 MQCMDL_LEVEL_942                         = 942
 MQCMDL_LEVEL_943                         = 943
 MQCMDL_LEVEL_944                         = 944
-MQCMDL_CURRENT_LEVEL                     = 944
+MQCMDL_LEVEL_945                         = 945
+MQCMDL_CURRENT_LEVEL                     = 945
 
 # Command Server Options
 MQCSRV_CONVERT_NO                        = 0

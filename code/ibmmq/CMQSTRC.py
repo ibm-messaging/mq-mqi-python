@@ -9,7 +9,7 @@
   <copyright
    notice="lm-source-program"
    pids="5724-H72"
-   years="1993,2025"
+   years="1993,2026"
    crc="0" >
 
 
@@ -17,7 +17,7 @@
 
    5724-H72
 
-   (C) Copyright IBM Corp. 1993, 2025 All Rights Reserved.
+   (C) Copyright IBM Corp. 1993, 2026 All Rights Reserved.
 
    US Government Users Restricted Rights - Use, duplication or
    disclosure restricted by GSA ADP Schedule Contract with
@@ -38,8 +38,8 @@
 """
   -----------------------------------------------------------------
   <BEGIN_BUILDINFO>
-  Generated on:  10/3/25, 11:37 AM
-  Build Level:   p944-L251003
+  Generated on:  1/20/26, 9:18 AM
+  Build Level:   p945-L260120
   Build Type:    Production
   <END_BUILDINFO>
   -----------------------------------------------------------------
@@ -548,6 +548,10 @@ MQCACF_DICT = {
     3230: "MQCACF_NHA_GROUP_RECOV_ISOTIME",
     3231: "MQCACF_NHA_SYNC_ISOTIME",
     3232: "MQCACF_EVENT_DUPLICATE_FROM",
+    3233: "MQCACF_ERROR_LOG_AFTER_ISOTIME",
+    3234: "MQCACF_ERROR_LOG_NAME",
+    3235: "MQCACF_ERROR_LOG_RECORD",
+    3236: "MQCACF_ERROR_LOG_ISOTIME",
 }
 
 MQCACH_DICT = {
@@ -1217,6 +1221,7 @@ MQCMDL_DICT = {
     942: "MQCMDL_LEVEL_942",
     943: "MQCMDL_LEVEL_943",
     944: "MQCMDL_LEVEL_944",
+    945: "MQCMDL_LEVEL_945",
 }
 
 MQCMD_DICT = {
@@ -1415,6 +1420,7 @@ MQCMD_DICT = {
     218: "MQCMD_INTER_Q_MGR_STATUS",
     219: "MQCMD_INTER_Q_MGR_BALANCE",
     220: "MQCMD_INQUIRE_APPL_STATUS",
+    221: "MQCMD_INQUIRE_ERROR_LOG",
 }
 
 MQCMHO_DICT = {
@@ -1671,6 +1677,10 @@ MQENC_DICT = {
 MQEPH_DICT = {
     0: "MQEPH_NONE",
     1: "MQEPH_CCSID_EMBEDDED",
+}
+
+MQERO_DICT = {
+    0: "MQERO_NONE",
 }
 
 MQET_DICT = {
@@ -2294,6 +2304,7 @@ MQIACF_DICT = {
     1476: "MQIACF_NHA_INSTANCE_STATUS",
     1477: "MQIACF_NHA_TYPE",
     1478: "MQIACF_EVENT_DUPLICATE_COUNT",
+    1479: "MQIACF_ERROR_LOG_OPTIONS",
 }
 
 MQIACH_DICT = {
@@ -2578,6 +2589,7 @@ MQIAMO_MONITOR_DATATYPE_DICT = {
     1: "MQIAMO_MONITOR_UNIT",
     2: "MQIAMO_MONITOR_DELTA",
     3: "MQIAMO_MONITOR_LSN",
+    4: "MQIAMO_MONITOR_TIMESTAMP",
     100: "MQIAMO_MONITOR_HUNDREDTHS",
     1024: "MQIAMO_MONITOR_KB",
     10000: "MQIAMO_MONITOR_PERCENT",
@@ -5770,6 +5782,7 @@ MQI_VALUE_NAME_LIST = [
     {  "value":          0, "name": "MQENC_FLOAT_UNDEFINED" },
     {  "value":          0, "name": "MQENC_INTEGER_UNDEFINED" },
     {  "value":          0, "name": "MQEPH_NONE" },
+    {  "value":          0, "name": "MQERO_NONE" },
     {  "value":          0, "name": "MQEVO_OTHER" },
     {  "value":          0, "name": "MQEVR_DISABLED" },
     {  "value":          0, "name": "MQEXPI_OFF" },
@@ -6774,6 +6787,7 @@ MQI_VALUE_NAME_LIST = [
     {  "value":          4, "name": "MQGMO_CURRENT_VERSION" },
     {  "value":          4, "name": "MQGMO_NO_SYNCPOINT" },
     {  "value":          4, "name": "MQGMO_VERSION_4" },
+    {  "value":          4, "name": "MQIAMO_MONITOR_TIMESTAMP" },
     {  "value":          4, "name": "MQIA_DEF_INPUT_OPEN_OPTION" },
     {  "value":          4, "name": "MQIGQPA_ALTERNATE_OR_IGQ" },
     {  "value":          4, "name": "MQIMMREASON_APPLNAME_CHANGED" },
@@ -8134,6 +8148,7 @@ MQI_VALUE_NAME_LIST = [
     {  "value":        220, "name": "MQWXP4_LENGTH_3 (4 byte)" },
     {  "value":        220, "name": "MQWXP_LENGTH_3 (4 byte)" },
     {  "value":        221, "name": "MQCMDL_LEVEL_221" },
+    {  "value":        221, "name": "MQCMD_INQUIRE_ERROR_LOG" },
     {  "value":        221, "name": "MQIA_GROUP_UR" },
     {  "value":        222, "name": "MQIA_UR_DISP" },
     {  "value":        223, "name": "MQIA_COMM_INFO_TYPE" },
@@ -8235,7 +8250,6 @@ MQI_VALUE_NAME_LIST = [
     {  "value":        256, "name": "MQ_AMQP_CLIENT_ID_LENGTH" },
     {  "value":        256, "name": "MQ_AUTH_INFO_OCSP_URL_LENGTH" },
     {  "value":        256, "name": "MQ_CSP_PASSWORD_LENGTH" },
-    {  "value":        256, "name": "MQ_ENCRYPTION_KEY_LENGTH" },
     {  "value":        256, "name": "MQ_HOST_NAME_LENGTH" },
     {  "value":        256, "name": "MQ_INITIAL_KEY_LENGTH" },
     {  "value":        256, "name": "MQ_INSTALLATION_PATH_LENGTH" },
@@ -8614,8 +8628,9 @@ MQI_VALUE_NAME_LIST = [
     {  "value":        941, "name": "MQCMDL_LEVEL_941" },
     {  "value":        942, "name": "MQCMDL_LEVEL_942" },
     {  "value":        943, "name": "MQCMDL_LEVEL_943" },
-    {  "value":        944, "name": "MQCMDL_CURRENT_LEVEL" },
     {  "value":        944, "name": "MQCMDL_LEVEL_944" },
+    {  "value":        945, "name": "MQCMDL_CURRENT_LEVEL" },
+    {  "value":        945, "name": "MQCMDL_LEVEL_945" },
     {  "value":        984, "name": "MQCDC_LENGTH_1" },
     {  "value":        984, "name": "MQCD_LENGTH_1" },
     {  "value":        999, "name": "MQOT_RESERVED_1" },
@@ -9091,7 +9106,8 @@ MQI_VALUE_NAME_LIST = [
     {  "value":       1476, "name": "MQIACF_NHA_INSTANCE_STATUS" },
     {  "value":       1477, "name": "MQIACF_NHA_TYPE" },
     {  "value":       1478, "name": "MQIACF_EVENT_DUPLICATE_COUNT" },
-    {  "value":       1478, "name": "MQIACF_LAST_USED" },
+    {  "value":       1479, "name": "MQIACF_ERROR_LOG_OPTIONS" },
+    {  "value":       1479, "name": "MQIACF_LAST_USED" },
     {  "value":       1480, "name": "MQCDC_LENGTH_3" },
     {  "value":       1480, "name": "MQCD_LENGTH_3" },
     {  "value":       1500, "name": "MQCHSSTATE_IN_MQPUT" },
@@ -10333,11 +10349,15 @@ MQI_VALUE_NAME_LIST = [
     {  "value":       3231, "name": "MQCACF_NHA_SYNC_ISOTIME" },
     {  "value":       3231, "name": "MQRCCF_COMMAND_ORIGIN_ERROR" },
     {  "value":       3232, "name": "MQCACF_EVENT_DUPLICATE_FROM" },
-    {  "value":       3232, "name": "MQCACF_LAST_USED" },
     {  "value":       3232, "name": "MQRCCF_LISTENER_CONFLICT" },
+    {  "value":       3233, "name": "MQCACF_ERROR_LOG_AFTER_ISOTIME" },
     {  "value":       3233, "name": "MQRCCF_LISTENER_STARTED" },
+    {  "value":       3234, "name": "MQCACF_ERROR_LOG_NAME" },
     {  "value":       3234, "name": "MQRCCF_LISTENER_STOPPED" },
+    {  "value":       3235, "name": "MQCACF_ERROR_LOG_RECORD" },
     {  "value":       3235, "name": "MQRCCF_CHANNEL_ERROR" },
+    {  "value":       3236, "name": "MQCACF_ERROR_LOG_ISOTIME" },
+    {  "value":       3236, "name": "MQCACF_LAST_USED" },
     {  "value":       3236, "name": "MQRCCF_CF_STRUC_ERROR" },
     {  "value":       3237, "name": "MQRCCF_UNKNOWN_USER_ID" },
     {  "value":       3238, "name": "MQRCCF_UNEXPECTED_ERROR" },

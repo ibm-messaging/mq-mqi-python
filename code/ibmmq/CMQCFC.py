@@ -8,44 +8,40 @@
    DESCRIPTION:    Declarations for PCF and Events           
 
 ----------------------------------------------------------------
-                                                               
-   <copyright                                                  
-   notice="lm-source-program"                                  
-   pids="5724-H72"                                             
-   years="1993,2025"
-   crc="0" >    
-                                        
-   Licensed Materials - Property of IBM                        
-                                                               
-   5724-H72                                                    
-                                                               
-   (C) Copyright IBM Corp. 1993, 2025 All Rights Reserved. 
-                                                               
-   US Government Users Restricted Rights - Use, duplication or 
-   disclosure restricted by GSA ADP Schedule Contract with     
-   IBM Corp.                                                   
-   </copyright>                                                
-                                                              
+
+   <copyright
+   notice="lm-source-program"
+   pids="5724-H72"
+   years="1993,2026"
+   crc="0" >
+
+   Licensed Materials - Property of IBM
+
+   5724-H72
+
+   (C) Copyright IBM Corp. 1993, 2026 All Rights Reserved.
+
+   US Government Users Restricted Rights - Use, duplication or
+   disclosure restricted by GSA ADP Schedule Contract with
+   IBM Corp.
+   </copyright>
 ----------------------------------------------------------------
 
    FUNCTION:       This file declares the functions,           
-                   structures and named constants for PCF       
-                   and event messages.                          
+                   structures and named constants for PCF      
+                   and event messages.                         
 
    PROCESSOR:      Python
 
 ----------------------------------------------------------------
 <BEGIN_BUILDINFO>
-   Generated on:  10/3/25, 11:37 AM                           
-   Build Level:   p944-L251003                                
-   Build Type:    Production                                  
-   Pointer Size:  64 Bit                                      
-   Source File:
-   @(#) MQMBID sn=p944-L251003                                
+   Generated on:  1/20/26, 9:18 AM                              
+   Build Level:   p945-L260120                                  
+   Build Type:    Production                                    
+   Pointer Size:  64 Bit                                        
 <END_BUILDINFO>
 ----------------------------------------------------------------
 """
-
 
 #----------------------------------------------------------------#
 # Values Related to MQCFH Structure                              #
@@ -257,6 +253,7 @@ MQCMD_AMQP_DIAGNOSTICS                   = 217
 MQCMD_INTER_Q_MGR_STATUS                 = 218
 MQCMD_INTER_Q_MGR_BALANCE                = 219
 MQCMD_INQUIRE_APPL_STATUS                = 220
+MQCMD_INQUIRE_ERROR_LOG                  = 221
 
 # Control Options
 MQCFC_LAST                               = 1
@@ -1025,6 +1022,7 @@ MQIAMO_MONITOR_FLAGS_OBJNAME             = 1
 MQIAMO_MONITOR_UNIT                      = 1
 MQIAMO_MONITOR_DELTA                     = 2
 MQIAMO_MONITOR_LSN                       = 3
+MQIAMO_MONITOR_TIMESTAMP                 = 4
 MQIAMO_MONITOR_HUNDREDTHS                = 100
 MQIAMO_MONITOR_KB                        = 1024
 MQIAMO_MONITOR_PERCENT                   = 10000
@@ -1445,7 +1443,11 @@ MQIACF_NHA_GROUP_STATUS                  = 1475
 MQIACF_NHA_INSTANCE_STATUS               = 1476
 MQIACF_NHA_TYPE                          = 1477
 MQIACF_EVENT_DUPLICATE_COUNT             = 1478
-MQIACF_LAST_USED                         = 1478
+MQIACF_ERROR_LOG_OPTIONS                 = 1479
+MQIACF_LAST_USED                         = 1479
+
+# Error Log Option Values
+MQERO_NONE                               = 0x00000000
 
 # Access Options
 MQCFACCESS_ENABLED                       = 0
@@ -1876,7 +1878,11 @@ MQCACF_NHA_GROUP_RECOV_LSN               = 3229
 MQCACF_NHA_GROUP_RECOV_ISOTIME           = 3230
 MQCACF_NHA_SYNC_ISOTIME                  = 3231
 MQCACF_EVENT_DUPLICATE_FROM              = 3232
-MQCACF_LAST_USED                         = 3232
+MQCACF_ERROR_LOG_AFTER_ISOTIME           = 3233
+MQCACF_ERROR_LOG_NAME                    = 3234
+MQCACF_ERROR_LOG_RECORD                  = 3235
+MQCACF_ERROR_LOG_ISOTIME                 = 3236
+MQCACF_LAST_USED                         = 3236
 
 # Character Channel Parameter Types
 MQCACH_FIRST                             = 3501
