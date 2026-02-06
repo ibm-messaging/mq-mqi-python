@@ -25,7 +25,7 @@ env:
   REDIST_ROOT: "https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist/"
   LINUX_FILE: "IBM-MQC-Redist-LinuxX64.tar.gz"
   WINDOWS_FILE: "IBM-MQC-Redist-Win64.zip"
-  VRMF: "9.4.4.0"
+  VRMF: "9.4.5.0"
 
 defaults:
   run:

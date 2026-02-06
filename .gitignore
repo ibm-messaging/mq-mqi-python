@@ -5,7 +5,7 @@
 .idea/*
 .tox
 .vscode
-dist/
+dist*/
 
 # Where there might be some intermediate files
 code/dist

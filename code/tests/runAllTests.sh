@@ -18,6 +18,12 @@ fi
 
 cd $curdir
 
+defargs="-- code/tests"
+if [ ! -z "$1" ]
+then
+  defargs="-- "
+fi
+
 # Make sure we've got the main test tool
 which tox >/dev/null 2>&1
 if [ $? -ne 0 ]
@@ -27,5 +33,5 @@ fi
 
 # And now run them
 # Tests are run in the alphabetic order of test*.py
-tox -e container $* 2>&1
+tox -e container $defargs $* 2>&1
 

@@ -17,7 +17,7 @@ from setuptools import setup, Extension
 # The version should correspond to PEP440 and gets normalised if
 # not in the right format. VRM can be followed with a|b|rc with a further numeric
 # to indicate alpha/beta/release-candidate versions.
-VERSION = '2.0.1'
+VERSION = '2.0.2'
 
 _ABI_LIMITS = {
     # Minimum Python version that this package supports.
@@ -237,5 +237,4 @@ setup(name='ibmmq',
                    'Programming Language :: Python',
                    'Topic :: Software Development :: Libraries :: Python Modules'],
       ext_modules=[mqi_extension],
-      options={"bdist_wheel": {"py_limited_api": _ABI_LIMITS["py_limited_api"]}},
-)
+      options={"bdist_wheel": {"py_limited_api": _ABI_LIMITS["py_limited_api"]}})

@@ -10,13 +10,13 @@ def common_q_args(*opts):
     """ Process args common to put/get/put1. Module Private.
     """
     ln = len(opts)
-    if ln > 2:
+    if ln > 3:  # The 3rd parm might be passed in from a kwargs but it's not needed here
         raise TypeError('Too many args')
     m_desc = None
     pg_opts = None
     if ln > 0:
         m_desc = opts[0]
-    if ln == 2:
+    if ln >= 2:
         pg_opts = opts[1]
     if m_desc is None:
         m_desc = MD()

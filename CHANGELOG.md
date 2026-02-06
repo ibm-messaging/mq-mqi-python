@@ -2,16 +2,21 @@
 # Changelog
 Newest updates are at the top of this file.
 
-## 2026 Feb 06 - V2.1.0
+## 2026 Feb 06 - V2.0.2
+* Update to MQ 9.4.5
 * Add OTel propagation support for instrumented applications
   * Existing span/trace information set/read as message properties
   * Automatically enabled if OTel packages are found by the application unless
     MQIPY_NOOTEL environment variable is set
 * Add a trace/debug log implementation
-  * Enabled with `MQIPY_TRACE=true` or `MQIPY_DEBUG=true`.
+  * Enabled with env var `MQIPY_TRACE=true` or `MQIPY_DEBUG=true`.
   * Output configured with `MQIPY_LOG_FILENAME` (_stderr_ if not set)
 * MQRFH2: add get_folders() function
 * MQSUB: add get_handle() function
+* Add `reply_queue_open_options` to `PCFExecute` (#16)
+* Merge a GitHub Action submission PoC for creating wheels ready for upload (#8)
+  * Rework it so it's not automatic
+  * Document how to use it, and how/why it's not being used yet
 
 ## 2025 Nov 06 - V2.0.1
 * MQXQH

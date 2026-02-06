@@ -107,10 +107,10 @@ do
     esac
     ;;
   r)
-    # If we're going to do a formal release, then also build the wheels
     useTestServer=false
     repository=$prodRepository
-    useActions=true
+    # Not going to build wheels for release at the moment
+    # useActions=true
     ;;
   v)
     verbose=true
