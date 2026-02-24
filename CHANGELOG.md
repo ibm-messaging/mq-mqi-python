@@ -2,6 +2,9 @@
 # Changelog
 Newest updates are at the top of this file.
 
+## 2026 Feb 26 - V2.0.3
+* Extended PCF responses. See (here)[docs/PCF.md]
+
 ## 2026 Feb 06 - V2.0.2
 * Update to MQ 9.4.5
 * Add OTel propagation support for instrumented applications

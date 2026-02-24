@@ -144,8 +144,8 @@ class _Method:
         # type: (str) -> _Method
         return _Method(self.__pcf, '%s.%s' % (self.__name, name))
 
-    def __call__(self, *args):
-        # type: (Union[dict, list, _Filter]) -> list
+    def __call__(self, *args, **kwargs):
+        # type: (Union[dict, list, _Filter], Union[None, list]) -> list
         mqlog.trace_entry("admin:method:__call__")
 
         if self.__name[0:7] == 'CMQCFC.':
@@ -167,6 +167,31 @@ class _Method:
 
         else:
             args_dict, filters = {}, []
+
+        # Initialise the list of response elements. The caller might have provided a place to
+        # put the list via a "responses" keyword parameter. If so, then we will not fail immediately
+        # when one element has a non-zero CompCode. We will continue through the list, and only
+        # generate an exception at the end.
+        #
+        # In this model, the returned data is a list of tuples. The first element of the tuple is
+        # the PCF response body; the second element is the corresponding MQCFH structure.
+        #
+        # Having a user-supplied list parameter, lets us both return data and throw an exception.
+        #
+        # But for compatibility, the default behaviour is to EITHER return a newly-created
+        # list OR throw the exception.
+        if 'responses' in kwargs:
+            ress = kwargs['responses']
+            if not isinstance(ress, list):
+                raise TypeError("responses must be a list")
+            # Make sure the list is empty
+            del ress[:]
+            ignore_errors = True
+        else:
+            ress = []
+            ignore_errors = False
+
+        mqlog.trace(f"__call__ ignore_errors: {ignore_errors}")
 
         # MQCFH_VERSION_3 means we have a minimum of MQ V6 as the
         # target qmgr.
@@ -292,16 +317,20 @@ class _Method:
             WaitInterval=self.__pcf.response_wait_interval)
         get_md = MD(CorrelId=put_md.MsgId)
 
-        # Initialise the list of responses
-        ress = []
-
         got_all_replies = False
         in_cmdscope = False
+        first_e = None
 
         while True:
             try:
                 message = self.__pcf.reply_queue.get(None, get_md, get_opts)
-                res, mqcfh_response = self.__pcf.unpack(message)
+
+                # The "ignore_errors" parameter here will ignore CFH Reason code errors, but not
+                # any other errors that might be caused by an inability to parse the PCF response.
+                res, mqcfh_response = self.__pcf._unpack_option(message, ignore_errors)
+                if mqcfh_response.CompCode != CMQC.MQCC_OK:
+                    if ignore_errors and first_e is None:
+                        first_e = MQMIError(mqcfh_response.CompCode, mqcfh_response.Reason)
 
                 t = mqcfh_response.Type
 
@@ -336,24 +365,39 @@ class _Method:
                     res = None
 
                 if res:
-                    ress.append(res)
+                    if ignore_errors:
+                        # The response list contains tuples holding the regular response, and the corresponding CFH
+                        ress.append((res, mqcfh_response))
+                    else:
+                        ress.append(res)
 
                 # print(f"Flag: {flag} incmd: {in_cmdscope} gotall: {got_all_replies}")
                 if got_all_replies:
                     break
 
+            # These MQI errors take precedence over any PCF errors
             except MQMIError as e:
                 # There might be something special we want to do with 2033s.
                 # But for now, just report it in the same way as any other failure.
-                mqlog.trace_exit("admin:method:__call__", ep=1, rc=e.reason)
-
+                # print(f"Caught MQMIError {e}")
                 if e.reason == CMQC.MQRC_NO_MSG_AVAILABLE:
                     # print("Timed out...")
+                    mqlog.trace_exit("admin:method:__call__", ep=1, rc=e.reason)
                     raise e
                     # return ress
-                raise e
-        mqlog.trace_exit("admin:method:__call__")
 
+                # The default behaviour throws the error immediately
+                if not ignore_errors:
+                    mqlog.trace_exit("admin:method:__call__", ep=2, rc=e.reason)
+                    raise e
+
+        # If the user has provided somewhere to stash the responses and we've had a PCF error, then
+        # throw that now.
+        if first_e:
+            mqlog.trace_exit("admin:method:__call__", ep=3, rc=first_e.reason)
+            raise first_e
+
+        mqlog.trace_exit("admin:method:__call__")
         return ress
 
 # ################################################################################################################################
@@ -539,9 +583,11 @@ class PCFExecute(QueueManager):
         mqlog.trace_exit("admin:pcfexecute:disconnect")
 
     @staticmethod
-    def unpack(message: bytes) -> tuple[dict, CFH]:
-        """Unpack PCF message to dictionary
+    def _unpack_option(message: bytes, ignore_errors: bool) -> tuple[dict, CFH]:
+        """Unpack PCF message to dictionary with an option to ignore CFH.Reason errors
         """
+
+        mqlog.trace(f"unpack ignore_errors: {ignore_errors}")
 
         mqcfh = CFH(Version=CMQCFC.MQCFH_VERSION_1)
         mqcfh.unpack(message[:CMQCFC.MQCFH_STRUC_LENGTH])
@@ -551,7 +597,8 @@ class PCFExecute(QueueManager):
             mqcfh.unpack(message[:CMQCFC.MQCFH_STRUC_LENGTH])
 
         if mqcfh.CompCode != CMQC.MQCC_OK:
-            raise MQMIError(mqcfh.CompCode, mqcfh.Reason)
+            if not ignore_errors:
+                raise MQMIError(mqcfh.CompCode, mqcfh.Reason)
 
         res = {}  # type: Dict[str, Union[int, str, bool, Dict]]
         index = mqcfh.ParameterCount
@@ -660,3 +707,11 @@ class PCFExecute(QueueManager):
                 res[parameter.Parameter] = value
 
         return res, mqcfh
+
+    @staticmethod
+    def unpack(message: bytes) -> tuple[dict, CFH]:
+        """Unpack PCF message to dictionary. This simply passes through to the
+        more detailed function for test compatibility.
+        """
+        return PCFExecute._unpack_option(message, False)
+
