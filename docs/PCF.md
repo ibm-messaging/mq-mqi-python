@@ -1,16 +1,18 @@
 # Extended PCF response model
 
-This document describes extensions to the original PCF admin interface to allow applications to deal with a partial error
-response. The original model throws an exception and does not provide any extra information on the failure.
+This document describes extensions to the original Python PCF admin interface to allow applications to deal with a
+partial error response. The original model throws an immediate exception and does not provide any extra information on
+the failure.
 
 For example, consider a qmgr with queues X0, X1 and X2 The qfile for X0 has been overwritten with some garbage, and
 the qmgr restarted. We expect to see "Object Damaged" errors with some admin commands.
 
 ## MQSC examples
 
-Note that MQSC may not actually tell you WHICH queue is damaged. It depends on the command, as these MQSC examples show.
+Note that MQSC may not actually tell you **WHICH** queue is damaged. It depends on the command, as these MQSC examples show.
 
 ```
+dis q(X*)
     1 : dis q(X*)
 AMQ8149S: IBM MQ object damaged.
 AMQ8409I: Display Queue details.
@@ -18,8 +20,7 @@ AMQ8409I: Display Queue details.
 AMQ8409I: Display Queue details.
    QUEUE(X2)                               TYPE(QLOCAL)
 
-
-dis ql(x*)
+dis ql(X*)
      2 : dis ql(X*)
 AMQ8409I: Display Queue details.
    QUEUE(X0)                               TYPE(QLOCAL)
@@ -28,7 +29,7 @@ AMQ8409I: Display Queue details.
 AMQ8409I: Display Queue details.
    QUEUE(X2)                               TYPE(QLOCAL)
 
-dis qs(x*)
+dis qs(X*)
      3 : dis qs(X*)
 AMQ8450I: Display queue status details.
    QUEUE(X2)                               TYPE(QUEUE)
@@ -37,10 +38,9 @@ AMQ8450I: Display queue status details.
    QUEUE(X1)                               TYPE(QUEUE)
    CURDEPTH(0)
 
-dis qs(x0)
+dis qs(X0)
      4 : dis qs(X0)
 AMQ8149S: IBM MQ object damaged.
-
 
 ```
 
@@ -60,16 +60,17 @@ The original behaviour of the Python PCF classes throws an exception instead of 
 
 ## Python extended responses
 
-To replicate the MQSC behaviour in the Python code, the caller of the operation has to provide somewhere for the partial
+To replicate the MQSC behaviour in the Python code, the caller of the operation has to provide somewhere for partial
 responses to be stashed rather than having them simply returned. This is done via the `responses` list parameter passed
 via a keyword.
 
-Because there is an error, we still should throw an exception. Apart from anything else, this is needed to maintain
-compatibility.
+When there is an error, we still should throw an exception. Apart from anything else, this is needed to maintain
+compatibility. Just as with MQSC, references to a particular damaged queue may or not appear, and may or may not show up
+as errors.
 
 But we also return the corresponding CFH structures in the same list element so you can dive deeper into which response
-had the particular error. Each element in this format is a tuple of (index 0) the "normal" PCF response and (index 1)
-the CFH.
+had the particular error. Each response element in this format is a tuple of (index 0) the "normal" PCF response and
+(index 1) the CFH.
 
 ```
   resp_list=[]
@@ -85,4 +86,4 @@ the CFH.
 
 Note that other MQ errors (eg 2033) will take precedence over specific CFH-returned errors.
 
-
+Example `dis_queues_extended.py` shows how this approach can be used.
