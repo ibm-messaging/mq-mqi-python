@@ -69,7 +69,7 @@ compatibility.
 
 But we also return the corresponding CFH structures in the same list element so you can dive deeper into which response
 had the particular error. Each element in this format is a tuple of (index 0) the "normal" PCF response and (index 1)
-the corresponding CFH.
+the CFH.
 
 ```
   resp_list=[]
@@ -78,7 +78,7 @@ the corresponding CFH.
   except mq.MQMIError as e:
     print(f"Caught error {e}")
 
-  # Even though there's been an exception, we might have some returned data.
+  # Even if there's been an exception, we might have some returned data.
   for q in resp_list:
     print(f"QName: {q[0][mq.CMQC.MQCA_Q_NAME]} rc:{q[1].Reason}")
 ```
