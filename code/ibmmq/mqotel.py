@@ -600,11 +600,11 @@ def otel_get_trace_after(ho, gmo, md, otel_options, buffer, asynchronous):
 
     span_context = None
     current_span = oteltrace.get_current_span()
-    mqlog.debug(f"Span: {current_span}")
+    mqlog.debug(f"Current Span: {current_span}")
 
     if current_span != oteltrace.INVALID_SPAN:
         span_context = current_span.get_span_context()
-        mqlog.debug(f"Span/Context: {span_context}")
+        mqlog.debug(f"Current Span/Context: {span_context}")
 
     if span_context is not None and span_context.is_valid:
 
@@ -636,13 +636,13 @@ def otel_get_trace_after(ho, gmo, md, otel_options, buffer, asynchronous):
         # If there is a current span, and we have at least one of the
         # parent/state properties, then create a link referencing these values
         if have_new_context:
-            msg_context = oteltrace.SpanContext(trace_id=trace_id, span_id=span_id, is_remote=False, trace_flags=trace_flags, trace_state=trace_state)
+            msg_context = oteltrace.SpanContext(trace_id=trace_id, span_id=span_id, is_remote=True, trace_flags=trace_flags, trace_state=trace_state)
 
             # mqlog.debug(f"Created new context: {msg_context}")
             if msg_context is not None:
                 current_span.add_link(msg_context)
                 mqlog.debug("Added link to current span")
-                # mqlog.debug(f"Updated span: {currentSpan}")
+                # mqlog.debug(f"Updated span: {current_span}")
             else:
                 mqlog.debug("Unable to create a usable msg_context")
 
