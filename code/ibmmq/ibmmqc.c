@@ -65,6 +65,10 @@ elements of a tuple. Any other returned elements precede those in the tuple.\
  \
 ";
 
+
+// For Windows, we won't want warnings about functions like ctime that we know are OK in the way we use them
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <time.h>
 
 #include <cmqc.h>
@@ -244,7 +248,6 @@ that is empty/not supplied.\
 static PyObject * ibmmqc_MQLOGCF(PyObject *self, PyObject *args) {
   char *filename = NULL;
   long lOpts;
-  PyObject *nameObj;
 
   if (!PyArg_ParseTuple(args, "l|s", &lOpts,&filename)) {
     return NULL;
@@ -873,7 +876,7 @@ static PyObject *ibmmqc_MQINQ(PyObject *self, PyObject *args) {
     return NULL;
   }
 
-  selectorCount = PyList_Size(lSelectors);
+  selectorCount = (MQLONG)PyList_Size(lSelectors);
 
   selectors = myAlloc(sizeof(MQLONG) * selectorCount, "MQINQ");
   if (selectors) {
@@ -994,6 +997,7 @@ static PyObject *ibmmqc_MQSET(PyObject *self, PyObject *args) {
 
   if (intAttrs) {
     myFree(intAttrs);
+
   }
 
   if (selectors) {
@@ -1439,7 +1443,7 @@ static PyObject* ibmmqc_MQSETMP(PyObject *self, PyObject *args) {
       }
       value_length = sizeof(MQINT16);
       property_value_free = 1;
-      *(PMQINT16)value = PyLong_AsLong(property_value_object);
+      *(PMQINT16)value = (MQINT16)PyLong_AsLong(property_value_object);
       break;
 
     /* 32-bit integer value */
@@ -1512,10 +1516,10 @@ static PyObject* ibmmqc_MQSETMP(PyObject *self, PyObject *args) {
   pd = (MQPD *)pd_buffer;
 
   name.VSPtr = property_name;
-  name.VSLength = property_name_length;
+  name.VSLength = (MQLONG)property_name_length;
 
   Py_BEGIN_ALLOW_THREADS
-  MQSETMP((MQHCONN)lQmgrHandle, msg_handle, smpo, &name, pd, property_type, value_length,
+  MQSETMP((MQHCONN)lQmgrHandle, msg_handle, smpo, &name, pd, property_type, (MQLONG)value_length,
             value, &compCode, &reasonCode);
   Py_END_ALLOW_THREADS
 
@@ -1571,7 +1575,7 @@ static PyObject* ibmmqc_MQINQMP(PyObject *self, PyObject *args) {
 
   property_type = (MQLONG)lPropertyType;
   name.VSPtr = property_name;
-  name.VSLength = property_name_length;
+  name.VSLength = (MQLONG)property_name_length;
 
   // We know that the property_name is null-terminated because of
   // how Python passes the value. Only ask for the name if a wildcard
@@ -1583,7 +1587,7 @@ static PyObject* ibmmqc_MQINQMP(PyObject *self, PyObject *args) {
     }
     impo->ReturnedName.VSCCSID = MQCCSI_APPL;
     impo->ReturnedName.VSLength = 0;
-    impo->ReturnedName.VSBufSize = vsbufsize;
+    impo->ReturnedName.VSBufSize = (MQLONG)vsbufsize;
   }
 
   void *value = NULL;
@@ -1748,7 +1752,7 @@ static PyObject* ibmmqc_MQDLTMP(PyObject *self, PyObject *args) {
   }
 
   name.VSPtr = property_name;
-  name.VSLength = property_name_length;
+  name.VSLength = (MQLONG)property_name_length;
 
   MQDLTMP((MQHCONN)lQmgrHandle, msg_handle, dmpo, &name, &compCode, &reasonCode);
 
@@ -1915,7 +1919,9 @@ PyMODINIT_FUNC PyInit_ibmmqc(void) {
   PyDict_SetItemString(v,"sts", PyLong_FromLong((long)MQSTS_CURRENT_VERSION));
 #endif
 #if defined(MQTMC_CURRENT_VERSION)
-  PyDict_SetItemString(v,"tmc", PyLong_FromLong((long)MQTMC_CURRENT_VERSION));
+  // This constant is defined as a string in the MQI headers. So we hardcode the equivalent int, as it's
+  // unlikely to change.
+  PyDict_SetItemString(v,"tmc", PyLong_FromLong((long)2));
 #endif
 #if defined(MQTM_CURRENT_VERSION)
   PyDict_SetItemString(v,"tm", PyLong_FromLong((long)MQTM_CURRENT_VERSION));

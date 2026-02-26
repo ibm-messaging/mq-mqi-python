@@ -50,7 +50,7 @@ print()
 print("Listing queues...")
 
 # Create an empty list to hold the responses, instead of having it as a returned value
-response=[]
+response = []
 try:
     pcf.MQCMD_INQUIRE_Q(name_attrs, responses=response)
 except mq.MQMIError as e:
@@ -82,7 +82,7 @@ for queue_info in response:
 if not no_queues:
     print()
     print("Listing queue status...")
-    response=[]
+    response = []
     try:
         pcf.MQCMD_INQUIRE_Q_STATUS(status_attrs, responses=response)
     except mq.MQMIError as e:

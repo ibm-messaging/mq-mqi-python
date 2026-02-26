@@ -10,6 +10,9 @@ curdir=`pwd`
 # Location of old header files
 export MQ_FILE_PATH=/opt/mqm.91
 
+printf "Building against MQ: "
+$MQ_FILE_PATH/bin/dspmqver -f2
+
 # Start with the default installed Python version
 python=python
 

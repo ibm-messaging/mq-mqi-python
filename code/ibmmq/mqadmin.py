@@ -714,4 +714,3 @@ class PCFExecute(QueueManager):
         more detailed function for test compatibility.
         """
         return PCFExecute._unpack_option(message, False)
-
