@@ -30,7 +30,7 @@ def common_q_args(*opts):
 
 
 # Backward compatibility
-commonQArgs = common_q_args
+commonQArgs = common_q_args  # pylint: disable=invalid-name
 
 # Some support functions for Queue ops.
 def _make_q_desc(qdesc_or_string: Union[str, bytes, OD]) -> OD:

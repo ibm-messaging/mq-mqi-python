@@ -1,18 +1,16 @@
 """Test the PubSub verbs"""
 
-import sys
 import unicodedata
 import unittest
 import ibmmq as mq
 import utils
 import config
 
-if sys.version_info[0] >= 3:
-    def unicode(x, encoding):
-        """Turn Python3 strings into bytes"""
-        if isinstance(x, bytes):
-            return x.decode(encoding)
-        return str(x)  # In py 3 every string is unicode.
+def unicode(x, encoding):
+    """Turn Python3 strings into bytes"""
+    if isinstance(x, bytes):
+        return x.decode(encoding)
+    return str(x)  # In py 3 every string is unicode.
 
 # pylint: disable=missing-function-docstring
 

@@ -129,9 +129,9 @@ $cmd run  \
   --env MQ_ENABLE_EMBEDDED_WEB_SERVER=false \
   --env AMQ_IODELAY=5000000 \
   -v $volume:/var/mqm \
+  --detach \
   $secretLines \
   --publish $publicPort:1414 \
-  --detach \
   $c
 
 sleep 5

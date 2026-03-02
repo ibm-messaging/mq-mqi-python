@@ -1932,7 +1932,7 @@ PyMODINIT_FUNC PyInit_ibmmqc(void) {
 
   // And now add this map to the parent object
   PyDict_SetItemString(d,"__strucversions__", v);
-  Py_XDECREF(v);
+  // Py_XDECREF(v);
 
   /*
    * Set the client/server build flag - always "common" now as there is no
