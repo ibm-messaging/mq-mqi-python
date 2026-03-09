@@ -143,9 +143,7 @@ class TestQueueManager(Tests):
         if qmgr.is_connected:
             qmgr.disconnect()
 
-    # This test should be run last
-    # ConnectionName list with unaccessible QM affects on channel name of the next test if MQSERVER used
-    # changing the order of ConnectionName entries does not affect to issue occurrence
+    # ConnectionName list with unaccessible QM on one address
     def test_zzz_connect_tcp_client_conection_list(self):
         # We set this environment variable to avoid FDCs from the attempt to connect to port 22 (ssh)
         os.environ['AMQ_NO_BAD_COMMS_DATA_FDCS'] = 'true'
