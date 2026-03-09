@@ -4,6 +4,7 @@
 # pylint: disable=missing-function-docstring,no-name-in-module
 
 import unittest
+import os
 
 import ibmmq as mq
 
@@ -146,6 +147,9 @@ class TestQueueManager(Tests):
     # ConnectionName list with unaccessible QM affects on channel name of the next test if MQSERVER used
     # changing the order of ConnectionName entries does not affect to issue occurrence
     def test_zzz_connect_tcp_client_conection_list(self):
+        # We set this environment variable to avoid FDCs from the attempt to connect to port 22 (ssh)
+        os.environ['AMQ_NO_BAD_COMMS_DATA_FDCS'] = 'true'
+
         qmgr = mq.QueueManager(None)
         conn_info = '127.0.0.1(22),{0}'.format(self.conn_info)
         qmgr.connect_tcp_client(
@@ -154,6 +158,8 @@ class TestQueueManager(Tests):
         self.assertTrue(qmgr.is_connected)
         if qmgr.is_connected:
             qmgr.disconnect()
+
+        del os.environ['AMQ_NO_BAD_COMMS_DATA_FDCS']
 
     # This test overlaps with test_mq80.test_successful_connect_without_optional_credentials,
     # but hey, why not

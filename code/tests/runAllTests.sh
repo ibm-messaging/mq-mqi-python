@@ -18,10 +18,14 @@ fi
 
 cd $curdir
 
-defargs="-- code/tests"
+# Show more output from running the tests, including which tests have been run and 
+# which were skipped. [Disable for now.]
+# reportFlags="-rA"
+
+defargs="-- $reportFlags code/tests"
 if [ ! -z "$1" ]
 then
-  defargs="-- "
+  defargs="-- $reportFlags  "
 fi
 
 # Make sure we've got the main test tool

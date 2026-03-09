@@ -7,7 +7,8 @@ import inspect
 import unittest
 from struct import calcsize
 
-from ibmmq import CMQC, CMQXC, CMQCFC
+# Have to be explicit about the platform variant of the definitions that we are going to inspect
+from ibmmq import _CMQC_linux_x64, CMQXC, CMQCFC
 
 ignore_dups = []
 
@@ -22,12 +23,12 @@ class Testh2py(unittest.TestCase):
         errors = []
         test_passed = False
 
-        for mod in CMQC, CMQXC, CMQCFC:
+        for mod in _CMQC_linux_x64, CMQXC, CMQCFC:
             mq_attrs = []
             mq_attrs_count = {}
 
             source_lines = inspect.getsourcelines(mod)
-            if mod == CMQC:
+            if mod == _CMQC_linux_x64:
                 source_lines[0].append('MQ_DUMMY_1 = 1')
                 source_lines[0].append('MQ_DUMMY_1 = 1')
                 source_lines[0].append('if calcsize("P") == 8:')
@@ -81,7 +82,7 @@ class Testh2py(unittest.TestCase):
             msg = "\n" + "\n".join(errors)
             self.fail(msg)
 
-        self.assertTrue(test_passed, 'Test does not found DUMMY duplicate entries!')
+        self.assertTrue(test_passed, 'Test has not found duplicate entries!')
 
 
 if __name__ == "__main__":
