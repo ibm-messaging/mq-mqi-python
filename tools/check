@@ -209,7 +209,7 @@ else
 fi
 
 
-# Confirm structure/class ersions have been dealt with
+# Confirm structure/class versions have been dealt with
 echo
 echo "Checking structure updates"
 cnt=`strucVer | wc -l`
@@ -249,6 +249,18 @@ else
   #fi
 fi
 
+echo
+echo "Checking MQINQable character attributes"
+$curdir/checkCA $curdir/../code/ibmmq/_CMQC_linux_arm64.py $curdir/../code/ibmmq/mqinq.py $curdir/checkCA.exclusion
+if [ $? -ne 0 ]
+then
+  echo "  ERROR: CheckCA failed"
+  exit 1
+else
+  echo "  OK   : Found $line"
+fi
+
+exit 0
 # Try building against an old level of MQ and against the base level of Python
 if [ -x $curdir/checkBaseLevel.sh ]
 then

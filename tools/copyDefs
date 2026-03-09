@@ -79,6 +79,7 @@ LEVEL=$defaultLevel
 FORMAT=$defaultFormat
 localBuild=false
 gold=false
+mqbase="mqbase.hursley.ibm.com"
 
 # My ID on mqbase - SSH keys are in the usual places
 u=`whoami`
@@ -171,12 +172,12 @@ else
   ls $srcDir/CMQ*.py | grep -v CMQC.py | xargs rm -f
   (
   # Copy the main definition files
-  scp -r $u@mqbase:$FAMFILES/py* $jsdHdrs
+  scp -r $u@$mqbase:$FAMFILES/py* $jsdHdrs
   rc=$?
   if [ $rc -eq 0 ]
   then
     # And then copy the cmqstrc files
-    scp -r $u@mqbase:$FAMFILES/lookup_allmap_py* $jsdHdrs
+    scp -r $u@$mqbase:$FAMFILES/lookup_allmap_py* $jsdHdrs
     rc=$?
   fi
   echo $rc > /tmp/rc
@@ -185,7 +186,7 @@ else
   rc=`cat /tmp/rc`
   if [ $rc -ne 0 ]
   then
-    echo "ERROR: Cannot copy files from mqbase"
+    echo "ERROR: Cannot copy files from $mqbase"
     d=`dirname $TREE`
     p="$d/$RELEASE-$STREAM"
     if $gold
@@ -195,7 +196,7 @@ else
     else
       echo "Available $RELEASE-$STREAM levels include:"
     fi
-    ssh $u@mqbase ls $p* 2>&1|\
+    ssh $u@$mqbase ls $p* 2>&1|\
       grep ":" |\
       sed "s/://g" |\
       sed "s!$p!!g" |\
@@ -299,6 +300,10 @@ git diff origin/main -- $srcDir/*C*.py |\
   grep "^+" |\
   sort -u
 echo "End of structure check"
+
+echo
+echo "Looking for MQCA updates"
+checkCA
 
 echo
 echo "Done."
