@@ -2,6 +2,13 @@
 # Changelog
 Newest updates are at the top of this file.
 
+## 2026 Mar 10 - No new version
+* Update unit test to not generate client-side FDC
+* Improve release process checks
+
+## 2026 Mar 02 - V2.0.4
+* Fix SEGV discovered on some Python 3.14 platforms
+
 ## 2026 Feb 26 - V2.0.3
 * Extended PCF responses. See (here)[docs/PCF.md]
 
