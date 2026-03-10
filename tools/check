@@ -257,10 +257,9 @@ then
   echo "  ERROR: CheckCA failed"
   exit 1
 else
-  echo "  OK   : Found $line"
+  echo "  OK   "
 fi
 
-exit 0
 # Try building against an old level of MQ and against the base level of Python
 if [ -x $curdir/checkBaseLevel.sh ]
 then

@@ -18,7 +18,7 @@ fi
 
 cd $curdir
 
-# Show more output from running the tests, including which tests have been run and 
+# Show more output from running the tests, including which tests have been run and
 # which were skipped. [Disable for now.]
 # reportFlags="-rA"
 
@@ -35,7 +35,22 @@ then
   pip install tox
 fi
 
+# Cleanup any FDCs that might be in either the standard directory or under $HOME
+# if you're using the Redist client.
+rm -f /var/mqm/errors/*FDC ~/IBM/MQ/data/errors/*FDC
+
 # And now run them
 # Tests are run in the alphabetic order of test*.py
 tox -e container $defargs $* 2>&1
+rc=$?
+
+# Check for FDCs.
+fdcCnt=`ls /var/mqm/errors/*FDC ~/IBM/MQ/data/errors/*FDC 2>/dev/null | wc -w`
+if [ $fdcCnt -ne 0 ]
+then
+  echo "FDCs found. Need to investigate"
+  exit 1
+fi
+
+exit $rc
 
