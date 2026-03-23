@@ -19,8 +19,11 @@ fi
 cd $curdir
 
 # Show more output from running the tests, including which tests have been run and
-# which were skipped. [Disable for now.]
-# reportFlags="-rA"
+# which were skipped.
+if [ ! -z "$FORCEREPORT" ]
+then
+  reportFlags="-rA"
+fi
 
 defargs="-- $reportFlags code/tests"
 if [ ! -z "$1" ]

@@ -4,6 +4,8 @@ Created on 15 Nov 2010
 @author: hannes
 """
 
+from datetime import datetime
+
 import unittest
 import os.path
 import ibmmq as mq
@@ -20,7 +22,7 @@ class TestRFH2PutGet(test_setup.Tests):
     messages_dir = os.path.join(os.path.dirname(__file__), "messages")
 
     def setUp(self):
-        """ Create a new queue manager (TESTPMQI).
+        """ Create a new queue and open it for put/get
         Must be run as a user that has 'mqm' access.
 
         """
@@ -43,8 +45,7 @@ class TestRFH2PutGet(test_setup.Tests):
         self.clear_queue(self.get_queue)
 
     def tearDown(self):
-        """ Delete queue manager (TESTPMQI).
-
+        """ Delete queue
         """
         self.put_queue.close()
         self.get_queue.close()
@@ -422,6 +423,58 @@ class TestRFH2PutGet(test_setup.Tests):
             self.assertEqual(get_rfh2_list[0].get(), put_rfh2_list[0].get(), "Put and Get RFH2 Lists do not match.")
             self.assertEqual(get_rfh2_list[1].get(), put_rfh2_list[1].get(), "Put and Get RFH2 Lists do not match.")
             self.assertEqual(get_msg, put_msg, "Put and Get messages do not match.")
+
+        except Exception as e:
+            self.fail(e)
+
+    def test_put_get_javastyle(self):
+        """Create some folders which are valid for MQ but have various additions like spaces or qualifiers
+        """
+        folder_list = []
+
+        folder_list.append(b"<myfolder1 content='properties'><colour xsi:nil='true'></colour></myfolder1>")
+        folder_list.append(b"<myfolder2 ><colour xsi:nil='true' >green</colour></myfolder2>")
+        folder_list.append(b"<myfolder3><colour>yellow</colour></myfolder3>")
+        # folder_list.append(b"<usr><colour xsi:nil='true'></colour></usr>") # Adding in this line causes an error during MQPUT with duplicate folders
+        folder_list.append(b"<usr><Property_0>MyStringPropVal</Property_0><Property_1 dt='i4'>42</Property_1><Property_2 dt='r8'>3.12999999999999989</Property_2></usr>")
+
+        now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        put_message = bytes("Hello from Python unittest at " + now, 'utf8')
+
+        try:
+            pmo = mq.PMO()
+            put_mqmd = mq.md()
+            put_mqmd["Format"] = CMQC.MQFMT_RF_HEADER_2
+
+            put_rfh2 = mq.RFH2()
+            put_rfh2["Format"] = CMQC.MQFMT_STRING
+            put_rfh2["CodedCharSetId"] = CMQC.MQCCSI_INHERIT
+
+            put_rfh2["NameValueCCSID"] = 1208
+
+            for folder in folder_list:
+                put_rfh2.add_folder(folder)
+
+            put_rfh2_list = [put_rfh2]
+
+            self.put_queue.put_rfh2(put_message, put_mqmd, pmo, put_rfh2_list)
+
+            get_mqmd = mq.md()
+            get_opts = mq.gmo()
+
+            get_msg = self.get_queue.get(None, get_mqmd, get_opts)
+
+            self.assertEqual(get_mqmd.Format, CMQC.MQFMT_RF_HEADER_2, "Message is not an RFH2 format")
+
+            rfh2 = mq.RFH2()
+            rfh2.unpack(get_msg[0:], 'utf8')
+            # fmt = rfh2['Format']
+            offset = rfh2['StrucLength']
+
+            # Extract the separate folders ...
+            folders = rfh2.get_folders()
+            self.assertEqual(len(folder_list), len(folders), f"Message has incorrect number of folders. Expected {len(folder_list)}. Got {len(folders)}")
+            self.assertEqual(get_msg[offset:], put_message, "Message has incorrect contents")
 
         except Exception as e:
             self.fail(e)
