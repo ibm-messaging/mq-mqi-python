@@ -84,7 +84,7 @@ while ok:
 
             elif fmt == CMQC.MQFMT_RF_HEADER_2:
                 rfh2 = mq.RFH2()
-                rfh2.unpack(msg[offset:], 'utf8')
+                rfh2.unpack(msg[offset:], md.Encoding)
                 fmt = rfh2['Format']
                 offset += rfh2['StrucLength']
 
