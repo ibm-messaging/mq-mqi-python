@@ -26,10 +26,11 @@ enhancements and removed features, see the [CHANGELOG](CHANGELOG.md) file.
 * Python 3.9+
 
 ## Installation
-The package is available from PyPI for easy installation.
+The package is available from PyPI for easy installation. Binary wheels are available for some platforms; otherwise
+the installation process builds the necessary C extension.
 
-See the section on "Distributions and wheels" in the [DesignNotes](docs/DesignNotes.md) file for some other ways you
-might like to build and locally deploy this package with your applications.
+See the [Release Process](docs/Release.md) file for some other ways you might like to build and locally deploy this
+package with your applications.
 
 ### Prerequisites
 
@@ -38,7 +39,7 @@ might like to build and locally deploy this package with your applications.
   * The MQ
     [Redistributable Client](https://www.ibm.com/docs/en/ibm-mq/latest?topic=overview-redistributable-mq-clients)
     package is sufficient, on platforms where that exists
-* A C compiler
+* A C compiler if the binary wheels are not available/appropriate for your platform
   * For Windows, you need a suitable C++ compiler. You need to install the compiler version that corresponds to your
     Python version. See [here](https://wiki.python.org/moin/WindowsCompilers) for more information.
 

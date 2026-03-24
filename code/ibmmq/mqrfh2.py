@@ -4,6 +4,8 @@
 # Copyright (c) 2009-2024 Dariusz Suchojad. All Rights Reserved.
 
 import xml.etree.ElementTree as ET
+# from xml.dom.minidom import parseString
+import re
 
 from mqcommon import *
 from mqopts import MQOpts
@@ -57,6 +59,49 @@ class RFH2(MQOpts):
         self.opts = [list(x) for x in self.initial_opts]
         super().__init__(tuple(self.opts), **kw)
 
+    @staticmethod
+    def _folder_to_string(v, encoding=EncodingDefault.bytes_encoding):
+        """This is another copy of the "to_string" method, but not overriding the superclass which applies it to
+        structures. (Should look to merge them using types as discriminator.)
+        And we can't use the version defined in __init__.py because of looped imports etc.
+
+        Use the specified encoding to convert MQCHAR[] to a Python3 string, stripping trailing NULs/spaces.
+        If there's an error, return the input unchanged.
+        """
+        if isinstance(v, bytes):
+            try:
+                null_index = v.find(0)
+                if null_index != -1:
+                    v = v[:null_index]
+                return v.decode(encoding).strip()
+            except UnicodeError:
+                pass
+        return v
+
+    @staticmethod
+    def get_folder_name(folder_data):
+        """Try to get the folder name by parsing the folder_data string.
+        But if it fails - which is quite likely if the XML is not "complete" - then
+        drop through to using a regexp and direct string manipulation. The exception
+        also happened with the previous implementation's minidom-based approach. See
+        the unittests which now includes folders as created by Java programs to expand
+        the range of what an RFH2 might include.
+        """
+        try:
+            folder_name = ET.fromstring(folder_data).tag
+
+        except ET.ParseError as e:
+            # Look for the largest blob of data up to some whitespace. Assuming that matches, then
+            # we may have something longer than the actual field, so we then split it at the first ">"
+            matched = re.match(b"^<(\\S+)", folder_data)
+            if matched:
+                folder_name = RFH2._folder_to_string(matched[1])
+                folder_name = folder_name.split(">")[0]
+            else:
+                raise PYIFError(f'RFH2 - XML Folder not well formed. Data {folder_data} Exception: {str(e)}') from e
+
+        return folder_name
+
     def add_folder(self, folder_data):
         """ Adds a new XML folder to the RFH2 header.
         Checks if the XML is well formed and updates self.StrucLength.
@@ -65,10 +110,7 @@ class RFH2(MQOpts):
         ensure_not_unicode(folder_data)  # Python 3 bytes check
 
         # Check that the folder is valid xml and get the root tag name.
-        try:
-            folder_name = ET.fromstring(folder_data).tag
-        except Exception as e:
-            raise PYIFError('RFH2 - XML Folder not well formed. Exception: %s' % str(e)) from e
+        folder_name = RFH2.get_folder_name(folder_data)
 
         # Make sure folder length divides by 4 - else add spaces
         folder_length = len(folder_data)
@@ -165,12 +207,12 @@ class RFH2(MQOpts):
 
             # Extract the folder string
             folder_data = s[:folder_length]
+            null_index = folder_data.find(0)
+            if null_index != -1:
+                folder_data = folder_data[:null_index]
 
             # Check that the folder is valid xml and get the root tag name.
-            try:
-                folder_name = ET.fromstring(folder_data).tag
-            except Exception as e:
-                raise PYIFError('RFH2 - XML Folder not well formed. Exception: %s' % str(e)) from e
+            folder_name = RFH2.get_folder_name(folder_data)
 
             # Append folder length and folder string to self.opts types
             self.opts.append([folder_name + 'Length', (folder_length), MQLONG_TYPE])

@@ -184,6 +184,7 @@ class Queue(MQObject):
         ensure_not_unicode(msg)  # Python 3 bytes check
 
         rfh2_buff = b''
+
         if len(opts) >= 3:
             if opts[2] is not None:
                 if not isinstance(opts[2], list):
@@ -200,6 +201,7 @@ class Queue(MQObject):
                         encoding = rfh2_header['Encoding']
 
                 msg = rfh2_buff + msg
+
             self.put(msg, *opts[0:2])
         else:
             self.put(msg, *opts)
