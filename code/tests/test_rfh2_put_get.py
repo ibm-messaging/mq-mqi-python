@@ -467,7 +467,7 @@ class TestRFH2PutGet(test_setup.Tests):
             self.assertEqual(get_mqmd.Format, CMQC.MQFMT_RF_HEADER_2, "Message is not an RFH2 format")
 
             rfh2 = mq.RFH2()
-            rfh2.unpack(get_msg[0:], 'utf8')
+            rfh2.unpack(get_msg[0:], get_mqmd.Encoding)
             # fmt = rfh2['Format']
             offset = rfh2['StrucLength']
 
