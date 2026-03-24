@@ -2,6 +2,9 @@
 # Changelog
 Newest updates are at the top of this file.
 
+## 2026 Mar 24 - V2.0.5
+* Improve parsing of RFH2 folder content (#19)
+
 ## 2026 Mar 10 - No new version
 * Update unit test to not generate client-side FDC
 * Improve release process checks

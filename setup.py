@@ -17,7 +17,7 @@ from setuptools import setup, Extension
 # The version should correspond to PEP440 and gets normalised if
 # not in the right format. VRM can be followed with a|b|rc with a further numeric
 # to indicate alpha/beta/release-candidate versions.
-VERSION = '2.0.4'
+VERSION = '2.0.5'
 
 _ABI_LIMITS = {
     # Minimum Python version that this package supports.
@@ -30,6 +30,13 @@ _ABI_LIMITS = {
 
 # If the MQ SDK is in a non-default location, set MQ_FILE_PATH environment variable.
 custom_path = os.environ.get('MQ_FILE_PATH', None)
+if custom_path:
+    if not os.path.isdir(custom_path) and not os.path.islink(custom_path):
+        # Try a path that might have been used for a GitHub Action run
+        print(f"Custom path: {custom_path} does not exist. Trying another path")
+        custom_path = "ibm-mq-redist"
+    else:
+        print(f"Custom path: {custom_path} is directory/link.")
 
 # Always build in 64-bit mode. And use libmqm regardless of whether the package
 # will be used in client or local bindings mode. Since V7 the one library can handle
