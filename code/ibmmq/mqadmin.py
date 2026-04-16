@@ -323,7 +323,7 @@ class _Method:
 
         while True:
             try:
-                message = self.__pcf.reply_queue.get(None, get_md, get_opts)
+                message = self.__pcf.reply_queue.get(self.__pcf._max_length, get_md, get_opts)
 
                 # The "ignore_errors" parameter here will ignore CFH Reason code errors, but not
                 # any other errors that might be caused by an inability to parse the PCF response.
@@ -433,6 +433,7 @@ class PCFExecute(QueueManager):
                  command_queue=None,
                  response_wait_interval=5000,  # 5 seconds
                  command_timeout=0,            # If 0, calculate based on wait interval
+                 max_length=None,
                  convert=True):
         # type: (Any, Union[str,bytes], Union[None,bytes,str], int, Union[str,bytes], Union[str,bytes], Union[None,Queue], int, int, bool) -> None
         """PCFExecute(name = '')
@@ -460,6 +461,7 @@ class PCFExecute(QueueManager):
             response_wait_interval = 60 * 60 * 1000
         self.__response_wait_interval = response_wait_interval
         self.__command_timeout = command_timeout
+        self._max_length = max_length
 
         if model_queue_name and reply_queue_name:
             mqlog.trace_exit("admin:pcfexecute:__init__", ep=1)
@@ -519,6 +521,11 @@ class PCFExecute(QueueManager):
     def command_timeout(self):
         """Return the command timeout for this object"""
         return self.__command_timeout
+
+    @property
+    def max_length(self):
+        """Return the max length for PCF replies. Defaults to None (size managed by get() method)"""
+        return self._max_length
 
     def __getattr__(self, name):
         """MQCMD_*(attrDict)

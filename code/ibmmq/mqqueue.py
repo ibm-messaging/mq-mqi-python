@@ -268,7 +268,6 @@ class Queue(MQObject):
             OTelFunctions.get_trace_before(self.__q_mgr, self, get_opts, False)
 
         rv = ibmmqc.MQGET(self.__q_mgr.get_handle(), self.__q_handle, m_desc.pack(), get_opts.pack(), length)
-
         if not rv[-2]:
             # Everything is OK
             _ = m_desc.unpack(rv[1])
@@ -280,7 +279,7 @@ class Queue(MQObject):
             mqlog.trace_exit("queue:get")
             return rv[0][removed:]
 
-        # Accept truncated message
+        # Accept truncated message or fail because a specific max length has been asked for
         if ((rv[-1] == CMQC.MQRC_TRUNCATED_MSG_ACCEPTED) or
                 # Do not reread message with original length
                 (rv[-1] == CMQC.MQRC_TRUNCATED_MSG_FAILED and max_length is not None) or
@@ -292,9 +291,24 @@ class Queue(MQObject):
             mqlog.trace_exit("queue:get", ep=3, rc=rv[-1])
             raise MQMIError(rv[-2], rv[-1], message=rv[0], original_length=rv[-3])
 
-        # Message truncated, but we know its size. Do another MQGET
-        # to retrieve it from the queue.
-        rv = ibmmqc.MQGET(self.__q_mgr.get_handle(), self.__q_handle, m_desc.pack(), get_opts.pack(), rv[-3])
+        # We get here when MQCC_FAILED and MQRC_TRUNCATED_MSG_FAILED, but we know its original size.
+        # Do another MQGET to retrieve it from the queue. But the original size may still not be enough
+        # when conversion is involved, so we do the simplest option of doubling it. We do need to unpack
+        # the returned MQMD so the MsgId/Correlid are filled in.
+        original_length = rv[-3]
+        _ = m_desc.unpack(rv[1])
+
+        if get_opts.Options & CMQC.MQGMO_CONVERT:
+            mqlog.trace(f"Retrying MQGET with original_length doubled from: {original_length}")
+            original_length = original_length * 2
+        else:
+            mqlog.trace(f"Retrying MQGET with original_length set to: {original_length}")
+
+        # Without changing the MQMD, we will have the MsgId/CorrelId set, so we ought to refetch the same message.
+        # Though it's not 100% guaranteed. And the default for match options is MsgId+Correlid
+        # Using MsgToken would be nice, but then we have to worry about z/OS (and shared queues in particular)
+        # and its queue index options, some of which will throw errors (programmatic) or report them (to JES log).
+        rv = ibmmqc.MQGET(self.__q_mgr.get_handle(), self.__q_handle, m_desc.pack(), get_opts.pack(), original_length)
         if rv[-2]:
             mqlog.trace_exit("queue:get", ep=4, rc=rv[-1])
             raise MQMIError(rv[-2], rv[-1])
