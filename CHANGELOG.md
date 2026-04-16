@@ -2,6 +2,10 @@
 # Changelog
 Newest updates are at the top of this file.
 
+## 2026 Apr xx - V2.0.6
+* Better handling of message buffer sizes. Particularly for PCF operations (#21)
+* Fix OTel message handle processing (#20)
+
 ## 2026 Mar 24 - V2.0.5
 * Improve parsing of RFH2 folder content (#19)
 

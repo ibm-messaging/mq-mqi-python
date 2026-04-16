@@ -113,17 +113,24 @@ def _compare_msg_handle(hc, ho, mh_value) -> bool:
 
     return rc
 
-def _props_contain(mh: MessageHandle, prop: str) -> bool:
-    """ Is there a property of the given name?"""
+def _props_contain(hc, mh, prop: str) -> bool:
+    """ Is there a property of the given name?
+
+    The supplied mh is the integer value, not a MessageHandle,
+    so we construct a temporary object from the int. The temp object
+    will get cleaned up automatically at some point. It does not need to
+    be explicitly deleted as that would remove the underlying MQHMSG from the qmgr.
+    """
     rc = False
 
+    temp_msg_handle = MessageHandle(qmgr=hc, dup_handle=mh)
     pd = PD()
     impo = IMPO()
     impo.Options = CMQC.MQIMPO_CONVERT_VALUE | CMQC.MQIMPO_INQ_FIRST
 
     # Don't care about the actual value of the property, just that it exists.
     try:
-        mh.get(prop, impo=impo, pd=pd)
+        temp_msg_handle.properties.get(prop, impo=impo, pd=pd)
         rc = True
     except MQMIError:
         pass
@@ -327,17 +334,17 @@ def otel_put_trace_before(hc, md, pmo, buffer):
     # leave them alone as we are not trying to create a new span in this layer.
     if _is_usable_handle(pmo.NewMsgHandle):
         mh = pmo.NewMsgHandle
-        if _props_contain(mh, traceparent):
+        if _props_contain(hc, mh, traceparent):
             skip_parent = True
-        if _props_contain(mh, tracestate):
+        if _props_contain(hc, mh, tracestate):
             skip_state = True
 
     elif _is_usable_handle(pmo.OriginalMsgHandle):
         mho = pmo.OriginalMsgHandle
-        if _props_contain(mho, traceparent):
+        if _props_contain(hc, mho, traceparent):
             skip_parent = True
 
-        if _props_contain(mho, tracestate):
+        if _props_contain(hc, mho, tracestate):
             skip_state = True
 
     else:
@@ -408,10 +415,12 @@ def otel_put_trace_before(hc, md, pmo, buffer):
                     pass
 
             if not skip_state:
-                # Need to convert any TraceState map to a single serialised string
+                # Need to convert any TraceState map to a single serialised string. The
+                # tracestate may be empty, in which case we don't need to carry it forward. It appears
+                # (from looking at public issues) that some systems don't like empty strings.
                 ts = span_context.trace_state
                 value = ts.to_header()
-                if value is not None:  # and value != "":
+                if value is not None and value != "":
                     mqlog.debug(f"Setting {tracestate} to \"{value}\"")
                     try:
                         temp_msg_handle.properties.set(tracestate, value, smpo=smpo, pd=pd)
@@ -517,6 +526,7 @@ def otel_get_trace_after(ho, gmo, md, otel_options, buffer, asynchronous):
     removed = 0
     mh = gmo.MsgHandle
     if _is_usable_handle(mh):
+        hc = ho.get_queue_manager()
         temp_msg_handle = MessageHandle(qmgr=hc, dup_handle=mh)
 
         pd = PD()
@@ -524,7 +534,7 @@ def otel_get_trace_after(ho, gmo, md, otel_options, buffer, asynchronous):
         impo.Options = CMQC.MQIMPO_CONVERT_VALUE | CMQC.MQIMPO_INQ_FIRST
 
         try:
-            val = temp_msg_handle.inq(impo, pd, traceparent)
+            val = temp_msg_handle.properties.get(traceparent, impo=impo, pd=pd)
             mqlog.debug(f"Found traceparent property: {val}")
             traceparent_val = val
         except MQMIError as e:
@@ -533,7 +543,7 @@ def otel_get_trace_after(ho, gmo, md, otel_options, buffer, asynchronous):
                 mqlog.error(e)
 
         try:
-            val = temp_msg_handle.inq(impo, pd, tracestate)
+            val = temp_msg_handle.properties.get(tracestate, impo=impo, pd=pd)
             mqlog.debug(f"Found tracestate property: {val}")
             tracestate_val = val
         except MQMIError as e:
@@ -544,7 +554,7 @@ def otel_get_trace_after(ho, gmo, md, otel_options, buffer, asynchronous):
         # If we added our own handle in the GMO, then reset
         # but don't do it for async callbacks.
         tmp_ho = ho
-        hc = ho.get_queue_manager()
+
         if not asynchronous:
             tmp_ho = None
 
@@ -568,14 +578,13 @@ def otel_get_trace_after(ho, gmo, md, otel_options, buffer, asynchronous):
         rfh2 = RFH2()
         rfh2.unpack(buffer)
         try:
-            folders = rfh2.get_folders()
-            for folder in folders:
-                props = rfh2[folder]
+            # The OTel properties will always be in the 'usr' folder if it exists
+            props = rfh2['usr']
+            if props:
                 traceparent_val = _extract_rfh2_prop_val(props, traceparent)
                 tracestate_val = _extract_rfh2_prop_val(props, tracestate)
-                if traceparent_val != "" or tracestate_val != "":
-                    break
-        except KeyError:
+
+        except (KeyError, AttributeError):
             pass
 
         # If the only properties in the RFH2 are the OTEL ones, then perhaps
@@ -638,7 +647,7 @@ def otel_get_trace_after(ho, gmo, md, otel_options, buffer, asynchronous):
         if have_new_context:
             msg_context = oteltrace.SpanContext(trace_id=trace_id, span_id=span_id, is_remote=True, trace_flags=trace_flags, trace_state=trace_state)
 
-            # mqlog.debug(f"Created new context: {msg_context}")
+            # mqlog.debug(f"Created new context: {msg_context} from trace_state={trace_state}")
             if msg_context is not None:
                 current_span.add_link(msg_context)
                 mqlog.debug("Added link to current span")
@@ -656,7 +665,7 @@ def otel_get_trace_after(ho, gmo, md, otel_options, buffer, asynchronous):
         # it wants to work with them itself.
         mqlog.debug("No current active span to update")
 
-    mqlog.debug(f"removed:{removed}")
+    mqlog.debug(f"removed bytes: {removed}")
     mqlog.trace_exit("otel:get_trace_after")
     return removed
 

@@ -161,11 +161,13 @@ class MessageHandle:
         set to the integers, not objects). So we can't use those directly
         to set/inquire additional properties. The dup_handle field lets us
         set the properties using this new object that is still the same
-        thing in the underlying C code.
+        thing in the underlying C code. We must not delete the duplicated MH.
         """
-        mqlog.trace_entry("msghdl:__init__")
+        mqlog.trace_entry(f"msghdl:__init__ Dup:{dup_handle}")
 
         self.conn_handle = qmgr.get_handle() if qmgr else CMQC.MQHO_NONE
+        self.duplicated = False  # Set to true when this object is a temporary "clone"
+
         cmho = cmho if cmho else CMHO()
 
         if dup_handle is None:
@@ -176,6 +178,7 @@ class MessageHandle:
                 raise MQMIError(comp_code, comp_reason)
         else:
             self.msg_handle = dup_handle
+            self.duplicated = True
 
         self.properties = self._Properties(self.conn_handle, self.msg_handle)
         mqlog.trace_exit("msghdl:__init__")
@@ -192,6 +195,13 @@ class MessageHandle:
     def dlt(self, dmho=None):
         """Delete a message handle"""
         mqlog.trace_entry("msghdl:dlthdl")
+
+        # Don't allow one of the internal "cloned" handles to be deleted
+        if self.duplicated:
+            comp_reason = CMQC.MQRC_HMSG_ERROR
+            mqlog.trace_exit("msghdl:dlthdl", ep=2, rc=comp_reason)
+            raise MQMIError(CMQC.MQCC_FAILED, comp_reason)
+
         dmho = dmho if dmho else DMHO()
 
         comp_code, comp_reason = ibmmqc.MQDLTMH(self.conn_handle, self.msg_handle, dmho.pack())
