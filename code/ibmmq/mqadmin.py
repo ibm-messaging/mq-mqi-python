@@ -630,9 +630,10 @@ class PCFExecute(QueueManager):
                     parameter = CFST(StringLength=parameter.StringLength)
                     parameter.unpack(message[cursor:cursor + parameter.StrucLength])
                 # The parameter.String contents might include padding bytes that round up the length.
-                # Ideally we'd truncate, but this was behaviour in the original library so I'm reluctant
-                # to fix it.
-                value = parameter.String   # [:parameter.StringLength] - would truncate
+                # The original behaviour in the original library was to include the padding in the returned
+                # string but that's wrong, so I'm fixing it. And the corresponding tests that check it.
+                #       value = parameter.String
+                value = parameter.String[:parameter.StringLength]  # Do the truncation
             elif parameter_type == CMQCFC.MQCFT_STRING_LIST:
                 parameter = CFSL()
                 parameter.unpack(message[cursor:cursor + CMQCFC.MQCFSL_STRUC_LENGTH_FIXED])

@@ -251,16 +251,16 @@ class TestPCF(Tests):
         message, _ = mq.PCFExecute.unpack(message)
 
         self.assertEqual({
-            mq.CMQC.MQCA_Q_MGR_NAME: b'QM1\x00',
+            mq.CMQC.MQCA_Q_MGR_NAME: b'QM1',
             mq.CMQCFC.MQCAMO_START_TIME: b'10.41.58',
             mq.CMQCFC.MQGACF_Q_STATISTICS_DATA: [
                 {
-                    mq.CMQC.MQCA_Q_NAME: b'SYSTEM.ADMIN.COMMAND.QUEUE\x00\x00',
+                    mq.CMQC.MQCA_Q_NAME: b'SYSTEM.ADMIN.COMMAND.QUEUE',
                     mq.CMQCFC.MQIAMO_Q_MIN_DEPTH: 10,
                     mq.CMQCFC.MQIAMO64_AVG_Q_TIME: [1, 2, 3],
                 },
                 {
-                    mq.CMQC.MQCA_Q_NAME: b'SYSTEM.ADMIN.COMMAND.QUEUE2\x00',
+                    mq.CMQC.MQCA_Q_NAME: b'SYSTEM.ADMIN.COMMAND.QUEUE2',
                     mq.CMQCFC.MQIAMO_Q_MIN_DEPTH: 20,
                     mq.CMQCFC.MQIAMO64_AVG_Q_TIME: [111, 222],
                 },
@@ -295,7 +295,7 @@ class TestPCF(Tests):
         self.assertEqual(header.Type, mq.CMQCFC.MQCFT_STATISTICS)  # pylint: disable=no-member
 
         self.assertEqual({
-            mq.CMQC.MQCA_Q_MGR_NAME: b'QM1\x00',
+            mq.CMQC.MQCA_Q_MGR_NAME: b'QM1',
         }, message)
 
     def test_unpack_group(self):
@@ -308,7 +308,7 @@ class TestPCF(Tests):
             self.assertEqual(header.Type, mq.CMQCFC.MQCFT_STATISTICS)  # pylint: disable=no-member
 
             self.assertEqual(message[mq.CMQC.MQCA_Q_MGR_NAME].strip(), b'mq_mgr1')
-            self.assertEqual(message[mq.CMQCFC.MQCAMO_START_DATE], b'2020-06-15\x00\x00')
+            self.assertEqual(message[mq.CMQCFC.MQCAMO_START_DATE], b'2020-06-15')
             self.assertEqual(len(message[mq.CMQCFC.MQGACF_Q_STATISTICS_DATA]), 16)
 
             item = message[mq.CMQCFC.MQGACF_Q_STATISTICS_DATA][0]
