@@ -52,6 +52,11 @@ class MQMIError(Error):
                 return pfx + d[self.reason]
         return pfx + 'Error code ' + str(self.reason) + ' not defined'
 
+    def get(self, k):
+        """Return any additional attributes that have been put into the error
+        """
+        return getattr(self, k)
+
     errorAsString = error_as_string
 
 # ################################################################################################################################

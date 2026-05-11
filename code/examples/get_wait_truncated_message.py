@@ -33,15 +33,15 @@ qmgr = mq.connect(queue_manager, channel, conn_info, user, password)
 queue = mq.Queue(qmgr, queue_name)
 print("Waiting for message ...")
 try:
-  max_length = 2  # Something tiny to demonstrate that truncated messages can be handled
-  message = queue.get(max_length, md, gmo)
+    max_length = 2  # Something tiny to demonstrate that truncated messages can be handled
+    message = queue.get(max_length, md, gmo)
 except mq.MQMIError as e:
-  if e.comp == mq.CMQC.MQCC_WARNING and e.reason == mq.CMQC.MQRC_TRUNCATED_MSG_ACCEPTED:
-      print(e)
-      print(f'Original length: {e.original_length}')
-      message=e.message
-  else:
-      raise e
+    if e.comp == mq.CMQC.MQCC_WARNING and e.reason == mq.CMQC.MQRC_TRUNCATED_MSG_ACCEPTED:
+        print(e)
+        print(f'Original length: {e.get('original_length')}')
+        message = e.get('message')
+    else:
+        raise e
 
 print("Message: ", message)
 queue.close()

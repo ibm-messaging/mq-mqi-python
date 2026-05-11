@@ -40,6 +40,7 @@ def lookup(k):
         s = f"<UNKNOWN> [{str(k)}]"
     return s
 
+
 queue_manager = 'QM1'
 channel = 'DEV.ADMIN.SVRCONN'
 host = '127.0.0.1'
@@ -54,12 +55,14 @@ ok = True
 
 od = mq.OD()
 
+
 try:
     # If the qname is given as the only parm on command line, accept that
     od.ObjectName = sys.argv[1]
-except:
+except IndexError:
     # This is an XMITQ associated with a STOPPED channel, because we want to look at XQH processing
     od.ObjectName = 'QM2.STOPPED'
+
 print("Opening queue: ", od.ObjectName)
 
 q = mq.Queue(qmgr, od, CMQC.MQOO_BROWSE)
@@ -145,7 +148,7 @@ while ok:
 
                 print(dlh.to_string())
 
-            elif fmt == CMQC.MQFMT_ADMIN or fmt == CMQC.MQFMT_EVENT:
+            elif fmt in [CMQC.MQFMT_ADMIN, CMQC.MQFMT_EVENT]:
                 # This is not suitable for handling PCF commands and their responses. But it does work for reading other
                 # PCF-formatted messages such as events. There are no message body contents or additional headers after
                 # events, so set the offset to the end.
@@ -154,10 +157,10 @@ while ok:
                 # an int or string. This method returns a tuple with the MQCFH as the second element
                 evt = mq.PCFExecute.unpack(msg)
 
-                parms=evt[0]
+                parms = evt[0]
                 cfh = evt[1]
 
-                print(f"Command: {mq.CMQSTRC.MQCMD_DICT.get(cfh.Command)}")
+                print(f"Command: {mq.CMQSTRC.MQCMD_DICT.get(cfh['Command'])}")
 
                 # Print out the contents. There's no attempt to make this look pretty, unlike amqsevt. But it shows how
                 # to walk through the elements.
@@ -167,14 +170,13 @@ while ok:
                     # So we can walk through the group contents without needing to worry about recursion.
                     if mq.CMQC.MQGA_FIRST <= k <= mq.CMQC.MQGA_LAST:
                         group = parms[k]
-                        for i in range(0,len(group)):
-                            gkeys = group[i].keys()
+                        for _, g in enumerate(group):
+                            gkeys = g.keys()
 
                             print(f"  Group: {mq.CMQSTRC.MQGACF_DICT.get(k)}")
-
                             for gk in gkeys:
                                 s = lookup(gk)
-                                v = group[i][gk]
+                                v = g[gk]
                                 if s.startswith("MQCA"):
                                     v = mq.to_string(v)
                                 print(f"    {s:<32s} : {v}")
