@@ -207,7 +207,7 @@ class TestPubSub(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
         # publish (put)
         self.pub(msg, topic_string)
         get_opts = self.create_get_opts()
-        data = sub.get(None, mq.md(), get_opts)
+        data = sub.get(None, mq.MD(), get_opts)
         sub.close(sub_close_options=0, close_sub_queue=True)
         self.assertTrue(utils.strcmp(data, msg))
 
@@ -235,7 +235,7 @@ class TestPubSub(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
 
         get_opts = self.create_get_opts()
         for n in range(nsub):
-            data = subscriptions[n].get(None, mq.md(), get_opts)
+            data = subscriptions[n].get(None, mq.MD(), get_opts)
             subscriptions[n].close(sub_close_options=0, close_sub_queue=True)
             self.assertTrue(utils.strcmp(data, msg))
 
@@ -252,7 +252,7 @@ class TestPubSub(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
         # publish (put)
         self.pub(msg, topic_string)
         get_opts = self.create_get_opts()
-        data = sub.get(None, mq.md(), get_opts)
+        data = sub.get(None, mq.MD(), get_opts)
         sub.close(sub_close_options=0, close_sub_queue=True)
         self.assertTrue(utils.strcmp(data, msg))
 
@@ -268,11 +268,11 @@ class TestPubSub(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
         sub.sub(sub_desc=sub_desc)
 
         # publish (put)
-        put_mqmd = mq.md(Format=mq.CMQC.MQFMT_RF_HEADER_2,
+        put_mqmd = mq.MD(Format=mq.CMQC.MQFMT_RF_HEADER_2,
                          Encoding=273,
                          CodedCharSetId=1208)
 
-        put_opts = mq.pmo()
+        put_opts = mq.PMO()
 
         put_rfh2 = mq.RFH2(_StrucId=mq.CMQC.MQRFH_STRUC_ID,
                               Version=mq.CMQC.MQRFH_VERSION_2,
@@ -294,7 +294,7 @@ class TestPubSub(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
                                     mq.CMQC.MQGMO_FAIL_IF_QUIESCING |
                                     mq.CMQC.MQGMO_WAIT)
         get_rfh2_list = []
-        data = sub.get_rfh2(None, mq.md(Version=mq.CMQC.MQMD_VERSION_2), get_opts, get_rfh2_list)
+        data = sub.get_rfh2(None, mq.MD(Version=mq.CMQC.MQMD_VERSION_2), get_opts, get_rfh2_list)
         sub.close(sub_close_options=0, close_sub_queue=True)
         self.assertTrue(utils.strcmp(data, msg))
 
@@ -314,7 +314,7 @@ class TestPubSub(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
         self.pub(msg, topic_string)
 
         get_opts = self.create_get_opts()
-        data = sub.get(None, mq.md(), get_opts)
+        data = sub.get(None, mq.MD(), get_opts)
 
         sub.close(sub_close_options=0, close_sub_queue=True)
         self.assertTrue(utils.strcmp(data, msg))
@@ -339,7 +339,7 @@ class TestPubSub(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
         self.pub(msg, topic_string)
 
         get_opts = self.create_get_opts()
-        data = sub.get(None, mq.md(), get_opts)
+        data = sub.get(None, mq.MD(), get_opts)
 
         sub.close(sub_close_options=0, close_sub_queue=True)
         self.assertTrue(utils.strcmp(data, msg))
@@ -362,7 +362,7 @@ class TestPubSub(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
         # publish (put)
         self.pub(msg, topic_string)
         get_opts = self.create_get_opts()
-        data = sub.get(None, mq.md(), get_opts)
+        data = sub.get(None, mq.MD(), get_opts)
         sub.close(sub_close_options=0, close_sub_queue=True)
         self.assertTrue(utils.strcmp(data, msg))
 
@@ -387,7 +387,7 @@ class TestPubSub(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
         self.pub(msg, topic_string)
 
         get_opts = self.create_get_opts()
-        data = sub.get(None, mq.md(), get_opts)
+        data = sub.get(None, mq.MD(), get_opts)
 
         sub.close(sub_close_options=0, close_sub_queue=True)
         self.assertTrue(utils.strcmp(data, msg))
@@ -428,7 +428,7 @@ class TestPubSub(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
         subname = self.subname_template.format(type="Api", destination="Managed", durable="Non Durable")
         messages = ["ascii", unicode("Euro sign: �", "iso-8859-15"), unicode("Uml�ut", "iso-8859-15"), unicodedata.lookup("INFINITY")]
 
-        md = mq.md()
+        md = mq.MD()
         # setting this means the message is entirely character data
         # md.Format = mq.CMQC.MQFMT_STRING
         # default

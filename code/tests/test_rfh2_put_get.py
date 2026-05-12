@@ -68,14 +68,14 @@ class TestRFH2PutGet(test_setup.Tests):
         """
         try:
 
-            put_mqmd = mq.md()
+            put_mqmd = mq.MD()
             put_mqmd["Format"] = CMQC.MQFMT_RF_HEADER_2
             put_mqmd["Encoding"] = 273
             put_mqmd["CodedCharSetId"] = 1208
             self.put_queue.put(self.single_rfh2_message, put_mqmd)
 
-            get_mqmd = mq.md()
-            get_opts = mq.gmo()
+            get_mqmd = mq.MD()
+            get_opts = mq.GMO()
             rfh2_list = []
             msg = self.get_queue.get_rfh2(None, get_mqmd, get_opts, rfh2_list)
 
@@ -139,14 +139,14 @@ class TestRFH2PutGet(test_setup.Tests):
 
         try:
 
-            put_mqmd = mq.md()
+            put_mqmd = mq.MD()
             put_mqmd["Format"] = CMQC.MQFMT_RF_HEADER_2
             put_mqmd["Encoding"] = 273
             put_mqmd["CodedCharSetId"] = 1208
             self.put_queue.put(self.multiple_rfh2_message, put_mqmd)
 
-            get_mqmd = mq.md()
-            get_opts = mq.gmo()
+            get_mqmd = mq.MD()
+            get_opts = mq.GMO()
             rfh2_list = []
             msg = self.get_queue.get_rfh2(None, get_mqmd, get_opts, rfh2_list)
 
@@ -252,12 +252,12 @@ class TestRFH2PutGet(test_setup.Tests):
         """
         try:
 
-            put_mqmd = mq.md()
+            put_mqmd = mq.MD()
             put_mqmd["Format"] = CMQC.MQFMT_RF_HEADER_2
             put_mqmd["Encoding"] = 273
             put_mqmd["CodedCharSetId"] = 1208
 
-            put_opts = mq.pmo()
+            put_opts = mq.PMO()
 
             put_rfh2 = mq.RFH2()
             put_rfh2["_StrucId"] = CMQC.MQRFH_STRUC_ID
@@ -274,8 +274,8 @@ class TestRFH2PutGet(test_setup.Tests):
             put_msg = b"<testData><testVar>testValue</testVar></testData>"
             self.put_queue.put_rfh2(put_msg, put_mqmd, put_opts, [put_rfh2])
 
-            get_mqmd = mq.md()
-            get_opts = mq.gmo()
+            get_mqmd = mq.MD()
+            get_opts = mq.GMO()
             get_msg = self.get_queue.get(None, get_mqmd, get_opts)
 
             self.assertEqual(get_msg, self.single_rfh2_message, "Message got from Queue does not match known correct RFH2 message.")
@@ -287,12 +287,12 @@ class TestRFH2PutGet(test_setup.Tests):
         """
         try:
 
-            put_mqmd = mq.md()
+            put_mqmd = mq.MD()
             put_mqmd["Format"] = CMQC.MQFMT_RF_HEADER_2
             put_mqmd["Encoding"] = 273
             put_mqmd["CodedCharSetId"] = 1208
 
-            put_opts = mq.pmo()
+            put_opts = mq.PMO()
 
             put_rfh2_1 = mq.RFH2()
             put_rfh2_1["_StrucId"] = CMQC.MQRFH_STRUC_ID
@@ -322,8 +322,8 @@ class TestRFH2PutGet(test_setup.Tests):
             put_msg = b"<testData><testVar>testValue</testVar></testData>"
             self.put_queue.put_rfh2(put_msg, put_mqmd, put_opts, [put_rfh2_1, put_rfh2_2])
 
-            get_mqmd = mq.md()
-            get_opts = mq.gmo()
+            get_mqmd = mq.MD()
+            get_opts = mq.GMO()
 
             get_msg = self.get_queue.get(None, get_mqmd, get_opts)
 
@@ -337,12 +337,12 @@ class TestRFH2PutGet(test_setup.Tests):
         """
         try:
 
-            put_mqmd = mq.md()
+            put_mqmd = mq.MD()
             put_mqmd["Format"] = CMQC.MQFMT_RF_HEADER_2
             put_mqmd["Encoding"] = 273
             put_mqmd["CodedCharSetId"] = 1208
 
-            put_opts = mq.pmo()
+            put_opts = mq.PMO()
 
             put_rfh2 = mq.RFH2()
             put_rfh2["_StrucId"] = CMQC.MQRFH_STRUC_ID
@@ -361,8 +361,8 @@ class TestRFH2PutGet(test_setup.Tests):
             put_rfh2_list = [put_rfh2]
             self.put_queue.put_rfh2(put_msg, put_mqmd, put_opts, put_rfh2_list)
 
-            get_mqmd = mq.md()
-            get_opts = mq.gmo()
+            get_mqmd = mq.MD()
+            get_opts = mq.GMO()
             get_rfh2_list = []
             get_msg = self.get_queue.get_rfh2(None, get_mqmd, get_opts, get_rfh2_list)
 
@@ -378,12 +378,12 @@ class TestRFH2PutGet(test_setup.Tests):
         """
 
         try:
-            put_mqmd = mq.md()
+            put_mqmd = mq.MD()
             put_mqmd["Format"] = CMQC.MQFMT_RF_HEADER_2
             put_mqmd["Encoding"] = 273
             put_mqmd["CodedCharSetId"] = 1208
 
-            put_opts = mq.pmo()
+            put_opts = mq.PMO()
 
             put_rfh2_1 = mq.RFH2()
             put_rfh2_1["_StrucId"] = CMQC.MQRFH_STRUC_ID
@@ -414,8 +414,8 @@ class TestRFH2PutGet(test_setup.Tests):
 
             self.put_queue.put_rfh2(put_msg, put_mqmd, put_opts, put_rfh2_list)
 
-            get_mqmd = mq.md()
-            get_opts = mq.gmo()
+            get_mqmd = mq.MD()
+            get_opts = mq.GMO()
             get_rfh2_list = []
             get_msg = self.get_queue.get_rfh2(None, get_mqmd, get_opts, get_rfh2_list)
 
@@ -443,7 +443,7 @@ class TestRFH2PutGet(test_setup.Tests):
 
         try:
             pmo = mq.PMO()
-            put_mqmd = mq.md()
+            put_mqmd = mq.MD()
             put_mqmd["Format"] = CMQC.MQFMT_RF_HEADER_2
 
             put_rfh2 = mq.RFH2()
@@ -459,8 +459,8 @@ class TestRFH2PutGet(test_setup.Tests):
 
             self.put_queue.put_rfh2(put_message, put_mqmd, pmo, put_rfh2_list)
 
-            get_mqmd = mq.md()
-            get_opts = mq.gmo()
+            get_mqmd = mq.MD()
+            get_opts = mq.GMO()
 
             get_msg = self.get_queue.get(None, get_mqmd, get_opts)
 
