@@ -113,7 +113,7 @@ def get_locations_by_command_path(command_path):
 
 # Define the C part(s) here. So we can potentially modify it
 # for different platforms. For example: c_source.append('windows-specific.c')
-c_source = ['code/ibmmq/ibmmqc.c']
+c_source = ['code/ibmmq/ibmmqc.cc']
 
 ld_flags = []
 
