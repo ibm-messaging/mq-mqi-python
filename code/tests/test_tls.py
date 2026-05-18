@@ -47,7 +47,7 @@ class TestTLS(Tests):
     """Test Queue.get() method."""
 
     tls_channel_name = 'SSL.SVRCONN'
-    cypher_spec = 'TLS_RSA_WITH_AES_256_CBC_SHA256'
+    cipher_spec = 'ANY_TLS12_OR_HIGHER'
     client_dn = 'CN=client'
     certificate_label_qmgr = 'mqtest'
     certificate_label_client = 'client'
@@ -67,9 +67,9 @@ class TestTLS(Tests):
         cls.tls_channel_name = os.environ.get(
             'PY_IBMMQ_TEST_TLS_CHL_NAME',
             cls.prefix + cls.tls_channel_name).encode()
-        cls.cypher_spec = os.environ.get(
-            'PY_IBMMQ_TEST_TLS_CYPHER_SPEC',
-            cls.cypher_spec).encode()
+        cls.cipher_spec = os.environ.get(
+            'PY_IBMMQ_TEST_TLS_cipher_spec',
+            cls.cipher_spec).encode()
         cls.client_dn = os.environ.get(
             'PY_IBMMQ_TEST_TLS_CLIENT_DN',
             cls.client_dn).encode()
@@ -127,7 +127,7 @@ class TestTLS(Tests):
         attrs.append(mq.CFIN(Parameter=mq.CMQCFC.MQIACH_CHANNEL_TYPE,
                                 Value=mq.CMQXC.MQCHT_SVRCONN))
         attrs.append(mq.CFST(Parameter=mq.CMQCFC.MQCACH_SSL_CIPHER_SPEC,
-                                String=self.cypher_spec))
+                                String=self.cipher_spec))
         attrs.append(mq.CFST(Parameter=mq.CMQCFC.MQCACH_SSL_PEER_NAME,
                                 String=self.client_dn))
         attrs.append(mq.CFIN(Parameter=mq.CMQCFC.MQIACH_SSL_CLIENT_AUTH,
@@ -207,7 +207,8 @@ class TestTLS(Tests):
         cd = mq.CD(Version=mq.CMQXC.MQCD_VERSION_7,  # pylint: disable=C0103
                    ChannelName=self.tls_channel_name,
                    ConnectionName=conn_info,
-                   SSLCipherSpec=self.cypher_spec)
+                   QuantumSafeAlgorithm=1,
+                   SSLCipherSpec=self.cipher_spec)
 
         sco = mq.SCO(Version=mq.CMQC.MQSCO_VERSION_5,
                      KeyRepository=os.path.join(self.key_repo_location_client,
@@ -216,8 +217,8 @@ class TestTLS(Tests):
 
         opts = mq.CMQC.MQCNO_HANDLE_SHARE_NO_BLOCK
 
-        qmgr.connectWithOptions(self.queue_manager, cd, sco, opts=opts,
-                                user=self.user, password=self.password)
+        qmgr.connect_with_options(self.queue_manager, cd, sco, opts=opts,
+                                  user=self.user, password=self.password)
         is_connected = qmgr.is_connected
         if is_connected:
             qmgr.disconnect()

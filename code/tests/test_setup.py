@@ -97,7 +97,7 @@ class Tests(TestCase):
         self.pcf.MQCMD_DELETE_Q(attrs)
 
     def create_channel(self, channel_name, attrs=None):
-        """Create channle."""
+        """Create channel."""
         if not attrs:
             attrs = []
             attrs.append(mq.CFST(Parameter=mq.CMQCFC.MQCACH_CHANNEL_NAME, String=utils.py3str2bytes(channel_name)))
