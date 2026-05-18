@@ -37,7 +37,9 @@ try:
     message = queue.get(max_length, md, gmo)
 except mq.MQMIError as e:
     if e.comp == mq.CMQC.MQCC_WARNING and e.reason == mq.CMQC.MQRC_TRUNCATED_MSG_ACCEPTED:
-        print(e)
+        print('Message has been sucessfully truncated.')
+        # Additional elements have been added to the exception so we know how long the message
+        # should have been, and what has been successfully returned.
         print(f'Original length: {e.get('original_length')}')
         message = e.get('message')
     else:
