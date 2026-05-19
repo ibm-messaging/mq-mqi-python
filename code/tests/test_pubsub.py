@@ -89,7 +89,7 @@ class TestPubSub(unittest.TestCase):  # pylint: disable=too-many-instance-attrib
         self.conn_info = "{0}({1})".format(self.host, self.port)
 
         self.qmgr = mq.QueueManager(None)
-        self.qmgr.connectTCPClient(self.queue_manager, mq.CD(), self.channel, self.conn_info, self.user, self.password)
+        self.qmgr.connect_tcp_client(self.queue_manager, mq.CD(), self.channel, self.conn_info, self.user, self.password)
 
         # list of tuples (subscription, subscription descriptions) for tearDown() to delete after the test
         self.sub_desc_list = []

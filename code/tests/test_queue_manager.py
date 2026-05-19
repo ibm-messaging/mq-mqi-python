@@ -124,7 +124,7 @@ class TestQueueManager(Tests):
     def test_connect_tcp_client(self):
         qmgr = mq.QueueManager(None)
         qmgr.connect_tcp_client(
-            self.queue_manager, mq.cd(), self.channel, self.conn_info, user=self.user,
+            self.queue_manager, mq.CD(), self.channel, self.conn_info, user=self.user,
             password=self.password)
         self.assertTrue(qmgr.is_connected)
         if qmgr.is_connected:
@@ -138,7 +138,7 @@ class TestQueueManager(Tests):
         qmgr = mq.QueueManager(None)
         with self.assertRaises(mq.MQMIError) as ex_ctx:
             qmgr.connect_tcp_client(
-                self.queue_manager, mq.cd(), self.channel, self.conn_info)
+                self.queue_manager, mq.CD(), self.channel, self.conn_info)
             self.assertEqual(ex_ctx.exception.reason, mq.CMQC.MQRC_NOT_AUTHORIZED)
         if qmgr.is_connected:
             qmgr.disconnect()
@@ -151,7 +151,7 @@ class TestQueueManager(Tests):
         qmgr = mq.QueueManager(None)
         conn_info = '127.0.0.1(22),{0}'.format(self.conn_info)
         qmgr.connect_tcp_client(
-            self.queue_manager, mq.cd(), self.channel, conn_info, user=self.user,
+            self.queue_manager, mq.CD(), self.channel, conn_info, user=self.user,
             password=self.password)
         self.assertTrue(qmgr.is_connected)
         if qmgr.is_connected:
@@ -168,7 +168,7 @@ class TestQueueManager(Tests):
 
         qmgr = mq.QueueManager(None)
         qmgr.connect_tcp_client(
-            self.queue_manager, mq.cd(), self.app_channel, self.conn_info, user=None,
+            self.queue_manager, mq.CD(), self.app_channel, self.conn_info, user=None,
             password=None)
         self.assertTrue(qmgr.is_connected)
         if qmgr.is_connected:
@@ -177,7 +177,7 @@ class TestQueueManager(Tests):
     def test_disconnect(self):
         qmgr = mq.QueueManager(None)
         qmgr.connect_tcp_client(
-            self.queue_manager, mq.cd(), self.channel, self.conn_info, user=self.user,
+            self.queue_manager, mq.CD(), self.channel, self.conn_info, user=self.user,
             password=self.password)
         self.assertTrue(qmgr.is_connected)
         if qmgr.is_connected:
@@ -191,7 +191,7 @@ class TestQueueManager(Tests):
     def test_get_handle_connected(self):
         qmgr = mq.QueueManager(None)
         qmgr.connect_tcp_client(
-            self.queue_manager, mq.cd(), self.channel, self.conn_info, user=self.user,
+            self.queue_manager, mq.CD(), self.channel, self.conn_info, user=self.user,
             password=self.password)
         handle = qmgr.get_handle()
         self.assertTrue(isinstance(handle, int))
@@ -214,7 +214,7 @@ class TestQueueManager(Tests):
     def test_inquire(self):
         qmgr = mq.QueueManager(None)
         qmgr.connect_tcp_client(
-            self.queue_manager, mq.cd(), self.channel, self.conn_info, user=self.user,
+            self.queue_manager, mq.CD(), self.channel, self.conn_info, user=self.user,
             password=self.password)
         attribute = mq.CMQC.MQCA_Q_MGR_NAME
         expected_value = utils.py3str2bytes(self.queue_manager)
