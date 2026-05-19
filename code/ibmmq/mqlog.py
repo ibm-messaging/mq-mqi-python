@@ -73,8 +73,10 @@ def trace_exit(s: str, **kwargs):
 # Create a logger for Python.
 # Also configure the C layer if we've asked for trace/debug output and
 # once there's actually some debug/trace points in there. For now, this
-# is disabled.
+# is disabled by default, but we can turn it on explicitly if really needed.
 enable_native_logging = False
+if os.environ.get('MQIPY_TRACE_NATIVE'):
+    enable_native_logging = True
 
 # TRACE takes precedence over DEBUG
 if os.environ.get('MQIPY_TRACE'):

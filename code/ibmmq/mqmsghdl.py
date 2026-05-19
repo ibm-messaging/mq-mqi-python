@@ -3,6 +3,8 @@
 # Copyright (c) 2025,2026 IBM Corporation and other Contributors. All Rights Reserved.
 # Copyright (c) 2009-2024 Dariusz Suchojad. All Rights Reserved.
 
+from typing import Any, Optional, Union, Tuple
+
 from mqcommon import *
 from mqerrors import *
 from ibmmq import CMQC, ibmmqc
@@ -21,7 +23,7 @@ class MessageHandle:
         """ Encapsulates access to message properties.
         """
 
-        def __init__(self, conn_handle, msg_handle):
+        def __init__(self, conn_handle: int, msg_handle: int) -> None:
             self.conn_handle = conn_handle
             self.msg_handle = msg_handle
 
@@ -32,7 +34,7 @@ class MessageHandle:
             # so that an application may re-issue the call.
             self.default_value_length = 64
 
-        def __getitem__(self, name):
+        def __getitem__(self, name: Union[str, bytes]) -> Any:
             """ Allows for a dict-like access to properties,
             handle.properties[name]
             """
@@ -42,14 +44,14 @@ class MessageHandle:
 
             return value
 
-        def __setitem__(self, name, value):
+        def __setitem__(self, name: Union[str, bytes], value: Any) -> None:
             """ Implements 'handle.properties[name] = value'.
             """
             return self.set(name, value)
 
-        def get(self, name, default=None, max_value_length=None,
-                impo_options=CMQC.MQIMPO_INQ_FIRST, impo=None, pd=None,
-                property_type=CMQC.MQTYPE_AS_SET):
+        def get(self, name: Union[str, bytes], default: Optional[Any] = None, max_value_length: Optional[int] = None,
+                impo_options: int = CMQC.MQIMPO_INQ_FIRST, impo: Optional[IMPO] = None, pd: Optional[Union[int, PD]] = None,
+                property_type: int = CMQC.MQTYPE_AS_SET) -> Union[Any, Tuple[Any, bytes]]:
             """ Returns the value of message property 'name'. If a wildcard
             is used in the property name, then the real name is also returned.
 
@@ -108,8 +110,8 @@ class MessageHandle:
             mqlog.trace_exit("msghdl:get")
             return value
 
-        def set(self, name, value, property_type=CMQC.MQTYPE_STRING,
-                value_length=CMQC.MQVL_NULL_TERMINATED, pd=None, smpo=None):
+        def set(self, name: Union[str, bytes], value: Any, property_type: int = CMQC.MQTYPE_STRING,
+                value_length: int = CMQC.MQVL_NULL_TERMINATED, pd: Optional[PD] = None, smpo: Optional[SMPO] = None) -> None:
             """ Allows for setting arbitrary properties of a message. 'name'
             and 'value' are mandatory. All other parameters are OK to use as-is
             if 'value' is a string. If it isn't a string, the 'property_type'
@@ -136,7 +138,7 @@ class MessageHandle:
                 raise MQMIError(comp_code, comp_reason)
             mqlog.trace_exit("msghdl:set")
 
-        def dlt(self, name, dmpo=None):
+        def dlt(self, name: Union[str, bytes], dmpo: Optional[DMPO] = None) -> None:
             """ Deletes a message property. Only the name is required. For further
             customization, you can also use the 'dmpo' parameters for
             passing in the MQDMPO structure.
@@ -155,7 +157,7 @@ class MessageHandle:
                 raise MQMIError(comp_code, comp_reason)
             mqlog.trace_exit("msghdl:dltproperty")
 
-    def __init__(self, qmgr=None, cmho=None, dup_handle=None):
+    def __init__(self, qmgr: Optional[QueueManager] = None, cmho: Optional[CMHO] = None, dup_handle: Optional[int] = None) -> None:
         """There may be times when we need to create a message handle object
         when all we have is the integer handle value (the PMO/GMO fields are
         set to the integers, not objects). So we can't use those directly
@@ -183,16 +185,16 @@ class MessageHandle:
         self.properties = self._Properties(self.conn_handle, self.msg_handle)
         mqlog.trace_exit("msghdl:__init__")
 
-    def get_handle(self):
+    def get_handle(self) -> int:
         """Get the actual integer value"""
         return self.msg_handle
 
-    def get_queue_manager(self):
+    def get_queue_manager(self) -> int:
         """Get the associated hConn"""
         return self.conn_handle
 
     # Note that this deletes a MsgHandle at the MQI level and is not __del__ (the object destructor)
-    def dlt(self, dmho=None):
+    def dlt(self, dmho: Optional[DMHO] = None) -> None:
         """Delete a message handle"""
         mqlog.trace_entry("msghdl:dlthdl")
 

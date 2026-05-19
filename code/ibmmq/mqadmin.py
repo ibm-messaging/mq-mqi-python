@@ -1,7 +1,7 @@
 """Classes for executing PCF commands
 """
 
-# Copyright (c) 2025 IBM Corporation and other Contributors. All Rights Reserved.
+# Copyright (c) 2025,2026 IBM Corporation and other Contributors. All Rights Reserved.
 # Copyright (c) 2009-2024 Dariusz Suchojad. All Rights Reserved.
 
 from mqcommon import *
@@ -15,7 +15,7 @@ from mqqmgr import *
 # pylint: disable=no-member
 
 try:
-    from typing import Any, Union, Dict
+    from typing import Any, Union, Dict, Optional, List, Tuple
 except ImportError:
     pass
 
@@ -37,12 +37,12 @@ class _Filter:
     """
     _filter_type = None  # type: Union[str, None]
 
-    def __init__(self, selector, value, operator):
+    def __init__(self, selector: int, value: Union[str, bytes, int], operator: int) -> None:
         self.selector = selector  # this is int
         self.value = ensure_strings_are_bytes(value)
         self.operator = operator  # this is int
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         msg = '<%s at %s %s:%s:%s>'
         return msg % (self.__class__.__name__, hex(id(self)), self.selector, self.value, self.operator)
 
@@ -140,12 +140,10 @@ class _Method:
         self.__pcf = pcf
         self.__name = name
 
-    def __getattr__(self, name):
-        # type: (str) -> _Method
+    def __getattr__(self, name: str) -> '_Method':
         return _Method(self.__pcf, '%s.%s' % (self.__name, name))
 
-    def __call__(self, *args, **kwargs):
-        # type: (Union[dict, list, _Filter], Union[None, list]) -> list
+    def __call__(self, *args: Any, **kwargs: Any) -> List[Union[Dict[int, Any], Tuple[Dict[int, Any], CFH]]]:
         mqlog.trace_entry("admin:method:__call__")
 
         if self.__name[0:7] == 'CMQCFC.':
@@ -402,8 +400,8 @@ class _Method:
 
 # ################################################################################################################################
 
-def _merge_dicts(*dict_args):
-    result = {}
+def _merge_dicts(*dict_args: Dict[Any, Any]) -> Dict[Any, Any]:
+    result = {}  # type: Dict[Any, Any]
     for d in dict_args:
         result.update(d)
     return result
@@ -493,41 +491,41 @@ class PCFExecute(QueueManager):
         mqlog.trace_exit("admin:pcfexecute:__init__")
 
     @property
-    def command_queue_name(self):
+    def command_queue_name(self) -> Union[str, bytes]:
         """Return the command queue name"""
         return self.__command_queue_name
 
     @property
-    def convert(self):
+    def convert(self) -> bool:
         """Return whether data conversion is active"""
         return self.__convert
 
     @property
-    def reply_queue(self):
+    def reply_queue(self) -> Queue:
         """Return the reply queue object"""
         return self.__reply_queue
 
     @property
-    def reply_queue_name(self):
+    def reply_queue_name(self) -> bytes:
         """Return the reply queue name"""
         return self.__reply_queue_name
 
     @property
-    def response_wait_interval(self):
+    def response_wait_interval(self) -> int:
         """Return the wait interval for this object"""
         return self.__response_wait_interval
 
     @property
-    def command_timeout(self):
+    def command_timeout(self) -> int:
         """Return the command timeout for this object"""
         return self.__command_timeout
 
     @property
-    def max_length(self):
+    def max_length(self) -> Optional[int]:
         """Return the max length for PCF replies. Defaults to None (size managed by get() method)"""
         return self._max_length
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> _Method:
         """MQCMD_*(attrDict)
 
         Execute the PCF command or inquiry, passing an an optional
@@ -550,13 +548,13 @@ class PCFExecute(QueueManager):
         return _Method(self, name)
 
     @staticmethod
-    def stringify_keys(raw_dict):
+    def stringify_keys(raw_dict: Dict[int, Any]) -> Dict[str, Any]:
         """stringifyKeys(raw_dict)
 
         Return raw_dict with its keys converted to string
         mnemonics, as defined in CMQC. """
 
-        rv = {}
+        rv: Dict[str, Any] = {}
         for k in raw_dict.keys():
             if isinstance(raw_dict[k], bytes):
                 d = PCFExecute.caStringDict
@@ -573,7 +571,7 @@ class PCFExecute(QueueManager):
     # Backward compatibility
     stringifyKeys = stringify_keys
 
-    def disconnect(self):
+    def disconnect(self) -> None:
         """ Disconnect from reply_queue
         """
         mqlog.trace_entry("admin:pcfexecute:disconnect")

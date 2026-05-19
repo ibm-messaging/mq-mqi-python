@@ -4,6 +4,8 @@
 # Copyright (c) 2025,2026 IBM Corporation and other Contributors. All Rights Reserved.
 # Copyright (c) 2009-2024 Dariusz Suchojad. All Rights Reserved.
 
+from typing import Any, Optional, Union
+
 from mqcommon import *
 from mqerrors import *
 from ibmmq import CMQC, OD, PMO, ibmmqc, MQObject
@@ -31,7 +33,7 @@ class Topic(MQObject):
     to identify a particular topic.
     """
 
-    def __real_open(self):
+    def __real_open(self) -> None:
         """ Really open the topic.  Only do this in pub()?
         """
         mqlog.trace_entry("topic:__real_open")
@@ -49,7 +51,9 @@ class Topic(MQObject):
         _ = self.__topic_desc.unpack(rv[1])
         mqlog.trace_exit("topic:__real_open")
 
-    def __init__(self, queue_manager, topic_name=None, topic_string=None, topic_desc=None, open_opts=None):
+    def __init__(self, queue_manager: QueueManager, topic_name: Optional[Union[str, bytes]] = None,
+                 topic_string: Optional[Union[str, bytes]] = None, topic_desc: Optional[OD] = None,
+                 open_opts: Optional[int] = None) -> None:
         """ Associate a Topic instance with the QueueManager object 'queue_manager'
         and optionally open the Topic.
 
@@ -105,7 +109,7 @@ class Topic(MQObject):
         mqlog.trace_exit("topic:__init__")
 
     @staticmethod
-    def __create_topic_desc(topic_name, topic_string):
+    def __create_topic_desc(topic_name: Optional[bytes], topic_string: Optional[bytes]) -> OD:
         """ Creates a topic object descriptor from a given topic_name/topic_string.
         """
         topic_name = ensure_strings_are_bytes(topic_name)
@@ -123,7 +127,7 @@ class Topic(MQObject):
 
         return topic_desc
 
-    def __del__(self):
+    def __del__(self) -> None:
         """ Close the Topic, if it has been opened.
         """
         mqlog.trace_entry("topic:__del__")
@@ -135,7 +139,8 @@ class Topic(MQObject):
             pass
         mqlog.trace_exit("topic:__del__")
 
-    def open(self, topic_name=None, topic_string=None, topic_desc=None, open_opts=None):
+    def open(self, topic_name: Optional[Union[str, bytes]] = None, topic_string: Optional[Union[str, bytes]] = None,
+             topic_desc: Optional[OD] = None, open_opts: Optional[int] = None) -> None:
         """ Open the Topic specified by topic_desc or create a object descriptor
         from topic_name and topic_string.
         If open_opts is passed, it defines the
@@ -167,7 +172,7 @@ class Topic(MQObject):
             self.__real_open()
         mqlog.trace_exit("topic:open")
 
-    def pub(self, msg, *opts):
+    def pub(self, msg: Union[str, bytes], *opts: Any) -> None:
         """ Publish the string buffer 'msg' to the Topic. If the Topic is not
         already open, it is opened now. with the option 'MQOO_OUTPUT'.
 
@@ -223,7 +228,7 @@ class Topic(MQObject):
     # Create an alias as the underlying MQ verb is MQPUT
     put = pub
 
-    def pub_rfh2(self, msg, *opts):
+    def pub_rfh2(self, msg: Union[str, bytes], *opts: Any) -> None:
         """pub_rfh2(msg[, msgDesc, putOpts, [rfh2_header, ]])
         Put a RFH2 message. opts[2] is a list of RFH2 headers.
         MQMD and RFH2's must be correct.
@@ -255,7 +260,7 @@ class Topic(MQObject):
     # Create an alias as the underlying MQ verb is MQPUT
     put_rfh2 = pub_rfh2
 
-    def sub(self, *opts):
+    def sub(self, *opts: Any) -> Subscription:
         """ Subscribe to the topic and return a Subscription object.
         A subscription to a topic can be made using an existing queue, either
         by pasing a Queue object or a string at which case the queue will
@@ -277,7 +282,7 @@ class Topic(MQObject):
         mqlog.trace_exit("topic:sub")
         return sub
 
-    def close(self, options=CMQC.MQCO_NONE):
+    def close(self, options: int = CMQC.MQCO_NONE) -> None:
         """ Close the topic, using options.
         """
         mqlog.trace_entry("topic:close")
