@@ -1,9 +1,8 @@
 """
 
-                      IBM MQ
+                     IBM MQ
 
    FILE NAME:      CMQSTRC
-
  -----------------------------------------------------------------
 
   <copyright
@@ -23,12 +22,11 @@
    disclosure restricted by GSA ADP Schedule Contract with
    IBM Corp.
    </copyright>
-
   -----------------------------------------------------------------
 
    FUNCTION:       This file provides mappings between MQI
-                   constant values and string versions of
-                   their definitions.
+                   constant values and string versions of their
+                   definitions.
 
    PROCESSOR:      Python
 
@@ -38,13 +36,12 @@
 """
   -----------------------------------------------------------------
   <BEGIN_BUILDINFO>
-  Generated on:  1/20/26, 9:18 AM
-  Build Level:   p945-L260120
+  Generated on:  5/22/26, 1:19 PM
+  Build Level:   p1000-L260522
   Build Type:    Production
   <END_BUILDINFO>
   -----------------------------------------------------------------
 """
-
 MQACTIVE_DICT = {
     0: "MQACTIVE_NO",
     1: "MQACTIVE_YES",
@@ -1222,6 +1219,7 @@ MQCMDL_DICT = {
     943: "MQCMDL_LEVEL_943",
     944: "MQCMDL_LEVEL_944",
     945: "MQCMDL_LEVEL_945",
+    1000: "MQCMDL_LEVEL_1000",
 }
 
 MQCMD_DICT = {
@@ -2434,6 +2432,8 @@ MQIACH_DICT = {
     1644: "MQIACH_AMQP_KEEP_ALIVE",
     1645: "MQIACH_SECURITY_PROTOCOL",
     1646: "MQIACH_SPL_PROTECTION",
+    1647: "MQIACH_SSL_QS",
+    1648: "MQIACH_SSL_QSR",
 }
 
 MQIAMO64_DICT = {
@@ -3237,6 +3237,7 @@ MQNHASTATUS_DICT = {
     5: "MQNHASTATUS_DISK_FULL",
     6: "MQNHASTATUS_DISCONNECTED",
     7: "MQNHASTATUS_PARTITIONED",
+    8: "MQNHASTATUS_SYNC_FAILED",
 }
 
 MQNHATYPE_DICT = {
@@ -3664,9 +3665,21 @@ MQQSO_DICT = {
     2: "MQQSO_EXCLUSIVE",
 }
 
+MQQSR_DICT = {
+    0: "MQQSR_OPTIONAL",
+    1: "MQQSR_REQUIRED",
+}
+
 MQQSUM_DICT = {
     0: "MQQSUM_NO",
     1: "MQQSUM_YES",
+}
+
+MQQS_DICT = {
+    -1: "MQQS_UNKNOWN",
+    0: "MQQS_UNPROTECTED",
+    1: "MQQS_HYBMLKEM",
+    2: "MQQS_MLKEM",
 }
 
 MQQT_DICT = {
@@ -3955,6 +3968,8 @@ MQRCCF_DICT = {
     3389: "MQRCCF_INCOMPATIBLE_QM_IN_QSG",
     3390: "MQRCCF_ATTR_VALUE_ERROR_QSG_QM",
     3391: "MQRCCF_AUTHORIZED",
+    3392: "MQRCCF_QUANTUM_ATTR_CONFLICT",
+    3393: "MQRCCF_SSL_QS_ALG_DISABLED",
     4001: "MQRCCF_OBJECT_ALREADY_EXISTS",
     4002: "MQRCCF_OBJECT_WRONG_TYPE",
     4003: "MQRCCF_LIKE_OBJECT_WRONG_TYPE",
@@ -5668,6 +5683,7 @@ MQI_VALUE_NAME_LIST = [
     {  "value":         -1, "name": "MQPSCT_NONE" },
     {  "value":         -1, "name": "MQQFS_DEFAULT" },
     {  "value":         -1, "name": "MQQSGD_ALL" },
+    {  "value":         -1, "name": "MQQS_UNKNOWN" },
     {  "value":         -1, "name": "MQRD_NO_RECONNECT" },
     {  "value":         -1, "name": "MQRL_UNDEFINED" },
     {  "value":         -1, "name": "MQSUBTYPE_ALL" },
@@ -5889,7 +5905,9 @@ MQI_VALUE_NAME_LIST = [
     {  "value":          0, "name": "MQQSGS_UNKNOWN" },
     {  "value":          0, "name": "MQQSIE_NONE" },
     {  "value":          0, "name": "MQQSO_NO" },
+    {  "value":          0, "name": "MQQSR_OPTIONAL" },
     {  "value":          0, "name": "MQQSUM_NO" },
+    {  "value":          0, "name": "MQQS_UNPROTECTED" },
     {  "value":          0, "name": "MQRAR_NO" },
     {  "value":          0, "name": "MQRCN_NO" },
     {  "value":          0, "name": "MQRCVTIME_MULTIPLY" },
@@ -6253,7 +6271,9 @@ MQI_VALUE_NAME_LIST = [
     {  "value":          1, "name": "MQQSOT_ALL" },
     {  "value":          1, "name": "MQQSO_SHARED" },
     {  "value":          1, "name": "MQQSO_YES" },
+    {  "value":          1, "name": "MQQSR_REQUIRED" },
     {  "value":          1, "name": "MQQSUM_YES" },
+    {  "value":          1, "name": "MQQS_HYBMLKEM" },
     {  "value":          1, "name": "MQQT_LOCAL" },
     {  "value":          1, "name": "MQRAR_YES" },
     {  "value":          1, "name": "MQRCN_YES" },
@@ -6550,6 +6570,7 @@ MQI_VALUE_NAME_LIST = [
     {  "value":          2, "name": "MQQSIE_OK" },
     {  "value":          2, "name": "MQQSOT_INPUT" },
     {  "value":          2, "name": "MQQSO_EXCLUSIVE" },
+    {  "value":          2, "name": "MQQS_MLKEM" },
     {  "value":          2, "name": "MQQT_MODEL" },
     {  "value":          2, "name": "MQRCN_Q_MGR" },
     {  "value":          2, "name": "MQRCVTIME_EQUAL" },
@@ -7038,6 +7059,7 @@ MQI_VALUE_NAME_LIST = [
     {  "value":          8, "name": "MQMF_MSG_IN_GROUP" },
     {  "value":          8, "name": "MQMO_MATCH_MSG_SEQ_NUMBER" },
     {  "value":          8, "name": "MQMT_DATAGRAM" },
+    {  "value":          8, "name": "MQNHASTATUS_SYNC_FAILED" },
     {  "value":          8, "name": "MQOO_BROWSE" },
     {  "value":          8, "name": "MQOPER_SEND" },
     {  "value":          8, "name": "MQOT_TOPIC" },
@@ -7164,9 +7186,7 @@ MQI_VALUE_NAME_LIST = [
     {  "value":         12, "name": "MQBMHO_LENGTH_1" },
     {  "value":         12, "name": "MQBO_CURRENT_LENGTH" },
     {  "value":         12, "name": "MQBO_LENGTH_1" },
-    {  "value":         12, "name": "MQCDC_CURRENT_VERSION" },
     {  "value":         12, "name": "MQCDC_VERSION_12" },
-    {  "value":         12, "name": "MQCD_CURRENT_VERSION" },
     {  "value":         12, "name": "MQCD_VERSION_12" },
     {  "value":         12, "name": "MQCFT_REPORT" },
     {  "value":         12, "name": "MQCMDI_BACKUP_STARTED" },
@@ -7204,6 +7224,10 @@ MQI_VALUE_NAME_LIST = [
     {  "value":         13, "name": "MQAT_GUARDIAN" },
     {  "value":         13, "name": "MQAT_NSK" },
     {  "value":         13, "name": "MQAUTH_PASS_IDENTITY_CONTEXT" },
+    {  "value":         13, "name": "MQCDC_CURRENT_VERSION" },
+    {  "value":         13, "name": "MQCDC_VERSION_13" },
+    {  "value":         13, "name": "MQCD_CURRENT_VERSION" },
+    {  "value":         13, "name": "MQCD_VERSION_13" },
     {  "value":         13, "name": "MQCFOP_EXCLUDES" },
     {  "value":         13, "name": "MQCFT_INTEGER_FILTER" },
     {  "value":         13, "name": "MQCHS_INITIALIZING" },
@@ -8629,7 +8653,6 @@ MQI_VALUE_NAME_LIST = [
     {  "value":        942, "name": "MQCMDL_LEVEL_942" },
     {  "value":        943, "name": "MQCMDL_LEVEL_943" },
     {  "value":        944, "name": "MQCMDL_LEVEL_944" },
-    {  "value":        945, "name": "MQCMDL_CURRENT_LEVEL" },
     {  "value":        945, "name": "MQCMDL_LEVEL_945" },
     {  "value":        984, "name": "MQCDC_LENGTH_1" },
     {  "value":        984, "name": "MQCD_LENGTH_1" },
@@ -8638,6 +8661,8 @@ MQI_VALUE_NAME_LIST = [
     {  "value":        999, "name": "MQ_TOTAL_EXIT_DATA_LENGTH" },
     {  "value":        999, "name": "MQ_TOTAL_EXIT_NAME_LENGTH" },
     {  "value":       1000, "name": "MQCHSSTATE_IN_MSGEXIT" },
+    {  "value":       1000, "name": "MQCMDL_CURRENT_LEVEL" },
+    {  "value":       1000, "name": "MQCMDL_LEVEL_1000" },
     {  "value":       1001, "name": "MQIACF_FIRST" },
     {  "value":       1001, "name": "MQIACF_Q_MGR_ATTRS" },
     {  "value":       1001, "name": "MQNT_ALL" },
@@ -9252,10 +9277,12 @@ MQI_VALUE_NAME_LIST = [
     {  "value":       1643, "name": "MQIACH_PROTOCOL" },
     {  "value":       1644, "name": "MQIACH_AMQP_KEEP_ALIVE" },
     {  "value":       1645, "name": "MQIACH_SECURITY_PROTOCOL" },
-    {  "value":       1646, "name": "MQIACH_LAST_USED" },
     {  "value":       1646, "name": "MQIACH_SPL_PROTECTION" },
+    {  "value":       1647, "name": "MQIACH_SSL_QS" },
     {  "value":       1648, "name": "MQCDC_LENGTH_6 (4 byte)" },
     {  "value":       1648, "name": "MQCD_LENGTH_6 (4 byte)" },
+    {  "value":       1648, "name": "MQIACH_LAST_USED" },
+    {  "value":       1648, "name": "MQIACH_SSL_QSR" },
     {  "value":       1688, "name": "MQCDC_LENGTH_6 (8 byte)" },
     {  "value":       1688, "name": "MQCD_LENGTH_6 (8 byte)" },
     {  "value":       1700, "name": "MQCHSSTATE_IN_MQI_CALL" },
@@ -9279,16 +9306,20 @@ MQI_VALUE_NAME_LIST = [
     {  "value":       1920, "name": "MQCD_LENGTH_10 (8 byte)" },
     {  "value":       1940, "name": "MQCDC_LENGTH_11 (4 byte)" },
     {  "value":       1940, "name": "MQCD_LENGTH_11 (4 byte)" },
-    {  "value":       1944, "name": "MQCDC_CURRENT_LENGTH (4 byte)" },
     {  "value":       1944, "name": "MQCDC_LENGTH_12 (4 byte)" },
-    {  "value":       1944, "name": "MQCD_CURRENT_LENGTH (4 byte)" },
     {  "value":       1944, "name": "MQCD_LENGTH_12 (4 byte)" },
+    {  "value":       1952, "name": "MQCDC_CURRENT_LENGTH (4 byte)" },
+    {  "value":       1952, "name": "MQCDC_LENGTH_13 (4 byte)" },
+    {  "value":       1952, "name": "MQCD_CURRENT_LENGTH (4 byte)" },
+    {  "value":       1952, "name": "MQCD_LENGTH_13 (4 byte)" },
     {  "value":       1984, "name": "MQCDC_LENGTH_11 (8 byte)" },
     {  "value":       1984, "name": "MQCD_LENGTH_11 (8 byte)" },
-    {  "value":       1992, "name": "MQCDC_CURRENT_LENGTH (8 byte)" },
     {  "value":       1992, "name": "MQCDC_LENGTH_12 (8 byte)" },
-    {  "value":       1992, "name": "MQCD_CURRENT_LENGTH (8 byte)" },
     {  "value":       1992, "name": "MQCD_LENGTH_12 (8 byte)" },
+    {  "value":       2000, "name": "MQCDC_CURRENT_LENGTH (8 byte)" },
+    {  "value":       2000, "name": "MQCDC_LENGTH_13 (8 byte)" },
+    {  "value":       2000, "name": "MQCD_CURRENT_LENGTH (8 byte)" },
+    {  "value":       2000, "name": "MQCD_LENGTH_13 (8 byte)" },
     {  "value":       2000, "name": "MQIA_LAST" },
     {  "value":       2000, "name": "MQIA_USER_LIST" },
     {  "value":       2001, "name": "MQCA_APPL_ID" },
@@ -10482,6 +10513,8 @@ MQI_VALUE_NAME_LIST = [
     {  "value":       3389, "name": "MQRCCF_INCOMPATIBLE_QM_IN_QSG" },
     {  "value":       3390, "name": "MQRCCF_ATTR_VALUE_ERROR_QSG_QM" },
     {  "value":       3391, "name": "MQRCCF_AUTHORIZED" },
+    {  "value":       3392, "name": "MQRCCF_QUANTUM_ATTR_CONFLICT" },
+    {  "value":       3393, "name": "MQRCCF_SSL_QS_ALG_DISABLED" },
     {  "value":       3501, "name": "MQCACH_CHANNEL_NAME" },
     {  "value":       3501, "name": "MQCACH_FIRST" },
     {  "value":       3502, "name": "MQCACH_DESC" },

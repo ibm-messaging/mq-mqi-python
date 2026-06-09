@@ -35,8 +35,8 @@
 
 ----------------------------------------------------------------
 <BEGIN_BUILDINFO>
-   Generated on:  1/20/26, 9:18 AM                              
-   Build Level:   p945-L260120                                  
+   Generated on:  5/22/26, 1:19 PM                              
+   Build Level:   p1000-L260522                                 
    Build Type:    Production                                    
    Pointer Size:  64 Bit                                        
 <END_BUILDINFO>
@@ -533,6 +533,8 @@ MQRCCF_STREAMQ_CONFLICT                  = 3387
 MQRCCF_INCOMPATIBLE_QM_IN_QSG            = 3389
 MQRCCF_ATTR_VALUE_ERROR_QSG_QM           = 3390
 MQRCCF_AUTHORIZED                        = 3391
+MQRCCF_QUANTUM_ATTR_CONFLICT             = 3392
+MQRCCF_SSL_QS_ALG_DISABLED               = 3393
 MQRCCF_OBJECT_ALREADY_EXISTS             = 4001
 MQRCCF_OBJECT_WRONG_TYPE                 = 4002
 MQRCCF_LIKE_OBJECT_WRONG_TYPE            = 4003
@@ -1628,7 +1630,9 @@ MQIACH_PROTOCOL                          = 1643
 MQIACH_AMQP_KEEP_ALIVE                   = 1644
 MQIACH_SECURITY_PROTOCOL                 = 1645
 MQIACH_SPL_PROTECTION                    = 1646
-MQIACH_LAST_USED                         = 1646
+MQIACH_SSL_QS                            = 1647
+MQIACH_SSL_QSR                           = 1648
+MQIACH_LAST_USED                         = 1648
 
 #----------------------------------------------------------------#
 # Values Related to Character Parameter Structures               #
@@ -2696,6 +2700,7 @@ MQNHASTATUS_REBASING                     = 4
 MQNHASTATUS_DISK_FULL                    = 5
 MQNHASTATUS_DISCONNECTED                 = 6
 MQNHASTATUS_PARTITIONED                  = 7
+MQNHASTATUS_SYNC_FAILED                  = 8
 
 # Native HA Types
 MQNHATYPE_INSTANCE                       = 0

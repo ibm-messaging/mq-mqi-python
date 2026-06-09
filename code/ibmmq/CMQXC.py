@@ -35,8 +35,8 @@
 
 ----------------------------------------------------------------
 <BEGIN_BUILDINFO>
-   Generated on:  1/20/26, 9:18 AM                              
-   Build Level:   p945-L260120                                  
+   Generated on:  5/22/26, 1:19 PM                              
+   Build Level:   p1000-L260522                                 
    Build Type:    Production                                    
    Pointer Size:  64 Bit                                        
 <END_BUILDINFO>
@@ -60,7 +60,8 @@ MQCD_VERSION_9                           = 9
 MQCD_VERSION_10                          = 10
 MQCD_VERSION_11                          = 11
 MQCD_VERSION_12                          = 12
-MQCD_CURRENT_VERSION                     = 12
+MQCD_VERSION_13                          = 13
+MQCD_CURRENT_VERSION                     = 13
 
 # Structure Length
 MQCD_LENGTH_1                            = 984
@@ -75,7 +76,8 @@ MQCD_LENGTH_9                            = 1912
 MQCD_LENGTH_10                           = 1920
 MQCD_LENGTH_11                           = 1984
 MQCD_LENGTH_12                           = 1992
-MQCD_CURRENT_LENGTH                      = 1992
+MQCD_LENGTH_13                           = 2000
+MQCD_CURRENT_LENGTH                      = 2000
 
 # Channel Types
 MQCHT_SENDER                             = 1
@@ -164,6 +166,16 @@ MQSECPROT_TLSV13                         = 8
 MQSPL_PASSTHRU                           = 0
 MQSPL_REMOVE                             = 1
 MQSPL_AS_POLICY                          = 2
+
+# PQCR In Use
+MQQS_UNKNOWN                             = (-1)
+MQQS_UNPROTECTED                         = 0
+MQQS_HYBMLKEM                            = 1
+MQQS_MLKEM                               = 2
+
+# PQCR Required
+MQQSR_OPTIONAL                           = 0
+MQQSR_REQUIRED                           = 1
 
 #----------------------------------------------------------------#
 # Values Related to MQACH Structure                              #
@@ -300,7 +312,8 @@ MQCDC_VERSION_9                          = 9
 MQCDC_VERSION_10                         = 10
 MQCDC_VERSION_11                         = 11
 MQCDC_VERSION_12                         = 12
-MQCDC_CURRENT_VERSION                    = 12
+MQCDC_VERSION_13                         = 13
+MQCDC_CURRENT_VERSION                    = 13
 
 # Structure Length
 MQCDC_LENGTH_1                           = 984
@@ -315,7 +328,8 @@ MQCDC_LENGTH_9                           = 1912
 MQCDC_LENGTH_10                          = 1920
 MQCDC_LENGTH_11                          = 1984
 MQCDC_LENGTH_12                          = 1992
-MQCDC_CURRENT_LENGTH                     = 1992
+MQCDC_LENGTH_13                          = 2000
+MQCDC_CURRENT_LENGTH                     = 2000
 
 #----------------------------------------------------------------#
 # Values Related to MQCXP Structure                              #
@@ -713,11 +727,6 @@ MQXWD_VERSION_1                          = 1
 # Structure Length
 MQXWD_LENGTH_1                           = 24
 MQXWD_CURRENT_LENGTH                     = 24
-
-#----------------------------------------------------------------#
-# Values Related to MQ_CLUSTER_WORKLOAD_EXIT Function            #
-#----------------------------------------------------------------#
-# Channel exit
 
 #----------------------------------------------------------------#
 # General Values Related to Exits                                #
