@@ -8,7 +8,7 @@
 # Files are renamed as they are copied, and the primary
 # CMQC.py uses the correct platform-specific variant.
 
-# Copyright (c) 2025 IBM Corporation. All Rights Reserved.
+# Copyright (c) 2025, 2026 IBM Corporation. All Rights Reserved.
 
 function printSyntax {
 cat << EOF
@@ -65,8 +65,8 @@ function classExists {
 curdir=`pwd`
 
 # Default values
-defaultMajor=p940
-defaultRelease=p944
+defaultMajor=p1000
+defaultRelease=p1000
 defaultStream=dfct
 defaultFormat=USER
 defaultLevel="" # No default
@@ -205,7 +205,7 @@ else
       # pr -t -5 -w 100
     exit 1
   else
-    echo "Downloaded files OK"
+    echo "Downloaded files OK from $TREE"
   fi
 fi
 

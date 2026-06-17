@@ -67,7 +67,7 @@ cb)
   ;;
 
 xmp)
-  t=$2
+  t=`basename $2 .py`
   cd $curdir/../code/examples
 
   if [[ "$t" == "get_message" ]] || [[ "$t" == "get_wait_multiple_messages" ]]
@@ -77,7 +77,7 @@ msg1
 msg2
 msg3
 EOF
-  elif [[ "$t" == "get_wait_single_message" ]]
+  elif [[ "$t" == "get_wait_single_message" ]] || [[ "$t" == "get_wait_truncated_message" ]]
   then
 (
     # Wait a little while but less than the WaitInterval in the example
@@ -88,13 +88,14 @@ EOF
 ) &
 
   fi
+  shift;shift
 
   if [ ! -z "$t" -a -r $t  ]
   then
-    python $t
+    python $t $*
   elif [ ! -z "$t" -a -r $t.py  ]
   then
-    python $t.py
+    python $t.py $*
   else
     echo "Example not found. Available are:"
     ls *.py

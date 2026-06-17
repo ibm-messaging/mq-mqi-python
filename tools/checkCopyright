@@ -1,31 +1,31 @@
 #!/bin/sh
 # Check that modified files have got updated copyrights for the current year
-# Copyright (c) 2025 IBM Corporation. All Rights Reserved.
+# Copyright (c) 2026 IBM Corporation. All Rights Reserved.
 
-rc=/tmp/checkCopyright.$$
+rcFile="/tmp/pyCheckCopyright.$$"
 
 cd ..
 currentYear=`date "+%Y"`
-echo 0 > $rc
+echo 0 > $rcFile
+
 # Which files are different from the public repo
-git diff origin -- | grep "+++" | sed "s!+++ b/!!g" |\
+git diff origin -- | grep "^+++" | sed "s!+++ b/!!g" |\
   while read f
 do
-  echo $f
-  grep -qi "copyright" $f
+  grep -qi "copyright" ./$f
   if [ $? -eq 0 ]
   then
-    grep -qi "copyright.*$currentYear" $f
+    grep -qi "copyright.*$currentYear" ./$f
     if [ $? -ne 0 ]
     then
-      echo $f
-      echo 1 > $rc
+      echo "      " ./$f
+      echo 1 > $rcFile
     else
-      : echo NewCR $f
+      : echo NewCR ./$f
     fi
   fi
 done
-rc=`cat $rc`
-rm -f $rc
+rc=`cat $rcFile`
+rm -f $rcFile
 exit $rc
 

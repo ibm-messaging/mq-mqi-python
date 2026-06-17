@@ -3,7 +3,7 @@
 # This script does a bunch of consistency checks and test execution and should be
 # run before a final commit and publish. Run it manually, so you can answer the questions
 
-# Copyright (c) 2025 IBM Corporation. All Rights Reserved.
+# Copyright (c) 2025, 2026 IBM Corporation. All Rights Reserved.
 
 function cleanup {
   # The main $logFile is deliberately not deleted as we may need
@@ -55,7 +55,8 @@ function strucVer {
   # Prints a list (possibly empty) to stdout showing
   # diffs in the structure version numbers compared to the
   # public git repo version.
-  git diff origin/main -- $src/code/ibmmq/*C*.py |\
+  files=`ls $src/code/ibmmq/*C*py | grep -v CMQSTRC`
+  git diff origin/main -- $files |\
     grep CURRENT_VERSION |\
     grep "^+" |\
     sort -u
@@ -203,12 +204,25 @@ cnt=`cat $errFile | wc -l `
 if [ $cnt -ne 0 ]
 then
   echo "  WARN : Debug printing may need removal"
-  # exit 1
+  exit 1
 else
   echo "  OK   : No debug lines found"
 fi
 
+# Make sure all changed public files have been updated with current year copyright
+cd $src/tools
+echo
+echo "Checking copyright for changed files..."
+checkCopyright
+if [ $? -ne 0 ]
+then
+  echo "  ERROR: Incorrect copyrights"
+  exit 1
+else
+  echo "  OK   : No copyright updates needed"
+fi
 
+cd $src/code/ibmmq
 # Confirm structure/class versions have been dealt with
 echo
 echo "Checking structure updates"
@@ -226,11 +240,24 @@ else
     strucC=`echo $line | cut -f1 -d_ `
     strucPy=`echo $strucC| sed "s/MQ//g" | tr '[:upper:]' '[:lower:]' `
     ver=`echo $line | cut -f3 -d" "`
-        ver=3
+
+    case $strucPy in
+    cdc)
+      # We don't use this one, but its value will be similar, if not identical, to the MQCD version
+      continue
+      ;;
+    cd)
+      # This is the only structure in cmqxc.h that we care about
+      prefix="CMQXC"
+      ;;
+    *)
+      prefix="CMQC"
+      ;;
+    esac
 
     echo "  Checking $strucPy "
 
-    srch=`printf "if %s_current_version >= CMQC.%s_VERSION_%d" $strucPy $strucC $ver`
+    srch=`printf "if %s_current_version >= %s.%s_VERSION_%d" $strucPy $prefix $strucC $ver`
     grep -q "$srch" $src/code/ibmmq/mq*py
     if [ $? -ne 0 ]
     then
@@ -239,7 +266,6 @@ else
       echo "  OK   : Found $line"
     fi
   done
-
   #strucVer | sed "s/^\+/  /g"
   #continueYN "Confirm structures have been updated"
   #if [ $? -ne 0 ]
@@ -338,7 +364,10 @@ main 2>&1 |\
 echo
 echo "---------------------"
 # It's ok to get a warning when an uninstall fails because it's not already installed
-cnt=`grep -a -E "WARN|ERR" $logFile | grep -v "Skipping" | wc -l`
+cnt=`grep -a -E "WARN|ERR" $logFile |\
+       grep -v "Skipping" |\
+       grep -v "Cache entry deserialization" |\
+       wc -l`
 if [ $cnt -ne 0 ]
 then
   echo
