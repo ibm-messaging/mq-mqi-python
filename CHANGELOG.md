@@ -2,6 +2,24 @@
 # Changelog
 Newest updates are at the top of this file.
 
+## 2026 Jun 17 - V2.1.0
+* Support for MQ 10
+  * New MQCD fields for QuantumSafe features
+  * Set the CLIENT_CONNECT flag automatically if the MQCD has been set
+* PCF String formatting now correctly removes padding bytes
+  * Update corresponding tests
+* Tidy hconn map even when disconnection fails for "normal" reasons
+* Fixes for #21 and #23
+* Update header formatting sample to process Event messages
+* Add sample to show how to deal with truncated messages
+* Don't do malloc/free during each MQGET
+  * Preserve previous buffer size across MQGETs
+  * C layer has a "map" implementation to keep buffers until MQCLOSE
+  * Add unittest to drive the MQGET buffer handling
+* Add more typing information to function definitions
+* Testcases don't use the deprecated form of objects/functions
+* PyPI release includes binary wheels for some platforms
+
 ## 2026 Apr 21 - V2.0.6
 * Better handling of message buffer sizes. Particularly for PCF operations (#21)
 * Fix OTel message handle processing (#20)

@@ -17,7 +17,7 @@ from setuptools import setup, Extension
 # The version should correspond to PEP440 and gets normalised if
 # not in the right format. VRM can be followed with a|b|rc with a further numeric
 # to indicate alpha/beta/release-candidate versions.
-VERSION = '2.0.6'
+VERSION = '2.1.0'
 
 _ABI_LIMITS = {
     # Minimum Python version that this package supports.
@@ -113,9 +113,11 @@ def get_locations_by_command_path(command_path):
 
 # Define the C part(s) here. So we can potentially modify it
 # for different platforms. For example: c_source.append('windows-specific.c')
-c_source = ['code/ibmmq/ibmmqc.cc']
+c_source = ['code/ibmmq/ibmmqc.c']
 
 ld_flags = []
+cc_flags = []
+# cc_flags = ['-g']
 
 # Get any platform-specific settings
 plat = platform.system()
@@ -219,6 +221,7 @@ mqi_extension = Extension('ibmmq.ibmmqc', c_source,
                           library_dirs=library_dirs,
                           include_dirs=include_dirs,
                           extra_link_args=ld_flags,
+                          extra_compile_args=cc_flags,
                           libraries=libraries)
 
 setup(name='ibmmq',
