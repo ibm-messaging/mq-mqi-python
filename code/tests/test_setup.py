@@ -53,7 +53,7 @@ class Tests(TestCase):
         else:
             cls.qmgr = mq.QueueManager(None)
             cls.qmgr.connect_tcp_client(cls.queue_manager, mq.CD(), cls.channel,
-                                      cls.conn_info, cls.user, cls.password)
+                                        cls.conn_info, cls.user, cls.password)
 
         cls.pcf = mq.PCFExecute(cls.qmgr, response_wait_interval=30000)
 

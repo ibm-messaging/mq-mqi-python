@@ -286,7 +286,17 @@ class QueueManager(MQObject):
 
         cd_pack = None
         cd = kwargs['cd'] if 'cd' in kwargs else None
+
         if cd:
+            # If you've gone to the trouble of creating an MQCD, then
+            # you probably want the client binding.
+            non_client_bindings = (CMQC.MQCNO_STANDARD_BINDING |
+                                   CMQC.MQCNO_ISOLATED_BINDING |
+                                   CMQC.MQCNO_FASTPATH_BINDING |
+                                   CMQC.MQCNO_LOCAL_BINDING |
+                                   CMQC.MQCNO_SHARED_BINDING)
+            if (cno.Options & non_client_bindings) == 0:
+                cno.Options |= CMQC.MQCNO_CLIENT_BINDING
 
             # TLS encryption requires MQCD of version at least 7.
             # Thus, if someone uses TLS and the version is lower than that,
@@ -300,6 +310,16 @@ class QueueManager(MQObject):
                 # name for compatibility
                 cd._set_ptr_field('SSLPeerNamePtr', ssl_peername)
                 restore_cd = True
+
+            # If we've got the QuantumSafe capability, and the MQCD flags are non-zero
+            # then pass it down in the MQCD.
+            try:
+                algo = cd.QuantumSafeAlgorithm
+                reqd = cd.QuantumSafeRequired
+                if algo > 0 or reqd > 0:
+                    cd.Version = max(cd.Version, CMQXC.MQCD_VERSION_13)
+            except AttributeError:
+                pass
 
             cd_pack = cd.pack()
 
@@ -404,8 +424,21 @@ class QueueManager(MQObject):
 
         rv = ibmmqc.MQDISC(self.__handle)
         if rv[0]:
-            mqlog.trace_exit("qmgr:disconnect", ep=2, rc=rv[2])
+            mqrc = rv[1]
+
+            # If the connection has gone, so we will do the cleanups anyway before
+            # propagating the error
+            if mqrc in [CMQC.MQRC_CONNECTION_BROKEN,
+                        CMQC.MQRC_Q_MGR_STOPPING,
+                        CMQC.MQRC_Q_MGR_QUIESCING,
+                        CMQC.MQRC_CONNECTION_STOPPING,
+                        CMQC.MQRC_CONNECTION_QUIESCING]:
+                self.__handle = self.__qmobj = None
+                mqcallback._delete_all_callbacks(saved_handle)
+
+            mqlog.trace_exit("qmgr:disconnect", ep=2, rc=mqrc)
             raise MQMIError(rv[0], rv[1])
+
         self.__handle = self.__qmobj = None
         mqcallback._delete_all_callbacks(saved_handle)
         mqlog.trace_exit("qmgr:disconnect")
@@ -624,7 +657,7 @@ class QueueManager(MQObject):
 def connect(queue_manager, channel=None, conn_info=None, user=None, password=None, disconnect_on_exit=True,
             bytes_encoding=EncodingDefault.bytes_encoding, default_ccsid=EncodingDefault.ccsid,
             cd=None, cno=None, csp=None, sco=None, bno=None
-            ):
+            ) -> QueueManager:
     """ A convenience wrapper for connecting to MQ queue managers without needing to explicitly create a qmgr object first.
     If given both 'channel' and 'conn_info' will connect in client mode. If neither are given
     then a default connection mode is attempted. That might be either local bindings or a client,

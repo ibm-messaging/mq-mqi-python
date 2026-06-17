@@ -4,6 +4,8 @@ MQOPEN, MQPUT, MQGET, MQCLOSE, MQCB, MQINQ, MQSET
 
 # Copyright (c) 2025, 2026 IBM Corporation and other Contributors. All Rights Reserved.
 # Copyright (c) 2009-2024 Dariusz Suchojad. All Rights Reserved.
+from typing import Any, Optional, Union
+
 from mqcommon import *
 from mqerrors import *
 from ibmmq import CMQC, PMO, GMO, RFH2, ibmmqc, MQObject
@@ -27,7 +29,7 @@ class Queue(MQObject):
     string (in which case a default MQOD structure is created using
     that name), or by passing a ready constructed MQOD class.
     """
-    def __real_open(self):
+    def __real_open(self) -> None:
         """Really open the queue."""
         mqlog.trace_entry("queue:__real_open")
         if self.__q_desc is None:
@@ -87,10 +89,14 @@ class Queue(MQObject):
                 q_name = ""
         else:
             q_name = ""
+
+        # Set a default length for MQGET buffer
+        self.__prev_length = 4096
+
         super().__init__(q_name)
         mqlog.trace_exit("queue:__init__")
 
-    def __del__(self):
+    def __del__(self) -> None:
         """ Close the queue, if it has been opened.
         """
         mqlog.trace_entry("queue:__del__")
@@ -101,7 +107,7 @@ class Queue(MQObject):
                 pass
         mqlog.trace_exit("queue:__del__")
 
-    def open(self, q_desc, *opts):
+    def open(self, q_desc: Union[str, bytes, Any], *opts: Any) -> None:
         """ Open the queue specified by q_desc. q_desc identifies the Queue
         either by name (if its a string), or by MQOD (if its a
         OD() instance). If openOpts is passed, it defines the
@@ -124,7 +130,7 @@ class Queue(MQObject):
             self.__real_open()
         mqlog.trace_exit("queue:open")
 
-    def put(self, msg, *opts):
+    def put(self, msg: Union[str, bytes], *opts: Any) -> None:
         """ Put the string buffer 'msg' on the queue. If the queue is not
         already open, it is opened now with the option 'MQOO_OUTPUT'.
 
@@ -176,7 +182,7 @@ class Queue(MQObject):
             OTelFunctions.put_trace_after(self.__q_mgr, put_opts)
         mqlog.trace_exit("queue:put")
 
-    def put_rfh2(self, msg, *opts):
+    def put_rfh2(self, msg: bytes, *opts: Any) -> None:
         """ Put a RFH2 message. opts[2] is a list of RFH2 headers. MQMD and RFH2's must be correct.
         """
         mqlog.trace_entry("queue:put_rfh2")
@@ -209,7 +215,7 @@ class Queue(MQObject):
 
     # pylint complains about a couple of things here which we will ignore in order to maintain
     # backwards compatibility
-    def get(self, maxLength=None, *opts, **kwargs):  # pylint: disable=invalid-name,keyword-arg-before-vararg
+    def get(self, maxLength: Optional[int] = None, *opts: Any, **kwargs: Any) -> bytes:  # pylint: disable=invalid-name,keyword-arg-before-vararg
         """ Return a message from the queue. If the queue is not already
         open, it is opened now with the option 'MQOO_INPUT_AS_Q_DEF'.
 
@@ -260,12 +266,18 @@ class Queue(MQObject):
             if get_opts.Options & CMQC.MQGMO_ACCEPT_TRUNCATED_MSG:
                 length = 0
             else:
-                length = 4096  # Try to read short message in one call
+                # Get a stashed version of the default length to retrieve
+                length = self.__prev_length
+
         else:
             length = max_length
 
         if OTelFunctions.get_trace_before:
             OTelFunctions.get_trace_before(self.__q_mgr, self, get_opts, False)
+
+        # Stash fields that control data conversion in case we need to redrive the MQGET
+        encoding = m_desc.Encoding
+        ccsid = m_desc.CodedCharSetId
 
         rv = ibmmqc.MQGET(self.__q_mgr.get_handle(), self.__q_handle, m_desc.pack(), get_opts.pack(), length)
         if not rv[-2]:
@@ -298,11 +310,19 @@ class Queue(MQObject):
         original_length = rv[-3]
         _ = m_desc.unpack(rv[1])
 
+        # Reset these fields to the original values in case there's been conversion
+        m_desc.Encoding = encoding
+        m_desc.CodedCharSetId = ccsid
+
         if get_opts.Options & CMQC.MQGMO_CONVERT:
             mqlog.trace(f"Retrying MQGET with original_length doubled from: {original_length}")
             original_length = original_length * 2
         else:
             mqlog.trace(f"Retrying MQGET with original_length set to: {original_length}")
+
+        # Stash a new default length for this queue, as it's likely to be needed again. So we don't
+        # need to do 2 MQGETs for large messages.
+        self.__prev_length = original_length
 
         # Without changing the MQMD, we will have the MsgId/CorrelId set, so we ought to refetch the same message.
         # Though it's not 100% guaranteed. And the default for match options is MsgId+Correlid
@@ -316,6 +336,11 @@ class Queue(MQObject):
         _ = m_desc.unpack(rv[1])
         _ = get_opts.unpack(rv[2])
 
+        # Consider adding a heuristic that gradually shrinks the buffer back down if it's way too large. For example:
+        #    final_length = rv[-3]
+        #    ratio = float(final_length) / float(original_length)
+        #     if ratio > 2: self.__prev_length = max(self.__prev_length * 0.9, 4096)
+
         # Only process OTel tracing if we actually got a message
         if rv[-2] == CMQC.MQCC_OK or rv[-1] == CMQC.MQRC_TRUNCATED_MSG_ACCEPTED:
             if OTelFunctions.get_trace_after:
@@ -328,7 +353,7 @@ class Queue(MQObject):
         mqlog.trace_exit("queue:get", ep=6)
         return rv[0]
 
-    def get_no_jms(self, max_length=None, *args, **kwargs):  # pylint: disable=keyword-arg-before-vararg
+    def get_no_jms(self, max_length: Optional[int] = None, *args: Any, **kwargs: Any) -> bytes:  # pylint: disable=keyword-arg-before-vararg
         """Get a message but force there to be no properties returned."""
         mqlog.trace_entry("queue:get_no_jms")
 
@@ -343,7 +368,7 @@ class Queue(MQObject):
 
     get_no_rfh2 = get_no_jms
 
-    def get_rfh2(self, max_length=None, *opts, **kwargs):  # pylint: disable=keyword-arg-before-vararg
+    def get_rfh2(self, max_length: Optional[int] = None, *opts: Any, **kwargs: Any) -> bytes:  # pylint: disable=keyword-arg-before-vararg
         """ Get a message and attempt to unpack the rfh2 headers.
         opts[2] should be a empty list.
         Unpacking only attempted if Format in previous header is
@@ -437,7 +462,7 @@ class Queue(MQObject):
             raise MQMIError(rv[-2], rv[-1])
         mqlog.trace_exit("queue:set")
 
-    def set_handle(self, queue_handle):
+    def set_handle(self, queue_handle: int) -> None:
         """ Sets the queue handle in the case when a handle was returned from a previous MQ call.
         """
         self.__q_handle = queue_handle

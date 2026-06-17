@@ -1,6 +1,6 @@
 """"MQCD: Channel Descriptor"""
 
-# Copyright (c) 2025 IBM Corporation and other Contributors. All Rights Reserved.
+# Copyright (c) 2025, 2026 IBM Corporation and other Contributors. All Rights Reserved.
 # Copyright (c) 2009-2024 Dariusz Suchojad. All Rights Reserved.
 
 from mqcommon import *
@@ -121,17 +121,19 @@ class CD(MQOpts):
             # Version 11 # This is in 9.1 - can use as base
         ]
 
-        # The MQ 12 additional field is not relevant for client connections
-        # but we'll put it here for completeness.
+        # The SPLProtection field is not relevant for client connections
+        # but we need it here both for completeness and for the padding that is needed
+        # when moving to the MQCD V13 structure.
         cd_current_version = ibmmqc.__strucversions__.get("cd", 1)
         if cd_current_version >= CMQXC.MQCD_VERSION_12:
             opts += [['SPLProtection', 0, MQLONG_TYPE]]
             if MQLONG_TYPE == 'i':
                 opts += [['__pad', b'', '4s']]
 
-        # In theory, the pad should've been placed right before the 'MsgExitPtr'
-        # attribute, however setting it there makes no effect and that's why
-        # it's being set here, as a last element in the list.
+        if cd_current_version >= CMQXC.MQCD_VERSION_13:
+            opts += [
+                ['QuantumSafeAlgorithm', 0, MQLONG_TYPE],
+                ['QuantumSafeRequired', 0, MQLONG_TYPE]]
 
         super().__init__(tuple(opts), **kw)
 

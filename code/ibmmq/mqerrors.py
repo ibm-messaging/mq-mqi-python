@@ -2,7 +2,7 @@
 within this library.
 """
 
-# Copyright (c) 2025 IBM Corporation and other Contributors. All Rights Reserved.
+# Copyright (c) 2025, 2026 IBM Corporation and other Contributors. All Rights Reserved.
 # Copyright (c) 2009-2024 Dariusz Suchojad. All Rights Reserved.
 
 try:

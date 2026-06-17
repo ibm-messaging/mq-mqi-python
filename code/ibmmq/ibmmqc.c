@@ -41,6 +41,16 @@ PERFORMANCE OF THIS SOFTWARE.
  * Copyright (c) 2009-2024 Dariusz Suchojad. All Rights Reserved.
  */
 
+ /*
+ * 64bit suppport courtesy of Brent S. Elmer, Ph.D. (mailto:webe3vt@aim.com)
+ *
+ * On 64 bit machines when MQ is compiled 64bit, MQLONG is an int defined
+ * in /opt/mqm/inc/cmqc.h or wherever your MQ installs to.
+ *
+ * On 32 bit machines, MQLONG is a long and many other MQ data types are
+ * set to MQLONG.
+ */
+
 /* This version is normally provided by the setup.py build process */
 #if defined PYVERSION
 static char __version__[] = PYVERSION;
@@ -65,6 +75,9 @@ elements of a tuple. Any other returned elements precede those in the tuple.\
  \
 ";
 
+/* This include should come before any standard system headers */
+#define PY_SSIZE_T_CLEAN 1
+#include "Python.h"
 
 // For Windows, we won't want warnings about functions like ctime that we know are OK in the way we use them
 #define _CRT_SECURE_NO_WARNINGS
@@ -86,21 +99,61 @@ elements of a tuple. Any other returned elements precede those in the tuple.\
 #define FALSE (0)
 #endif
 
+/* Platform-specific mutex includes */
+#ifdef _WIN32
+#include <windows.h>
+typedef CRITICAL_SECTION map_mutex_t;
+#else
+#include <pthread.h>
+typedef pthread_mutex_t map_mutex_t;
+#endif
+
 #include "ibmmqc.h"
 
-/*
- * 64bit suppport courtesy of Brent S. Elmer, Ph.D. (mailto:webe3vt@aim.com)
- *
- * On 64 bit machines when MQ is compiled 64bit, MQLONG is an int defined
- * in /opt/mqm/inc/cmqc.h or wherever your MQ installs to.
- *
- * On 32 bit machines, MQLONG is a long and many other MQ data types are
- * set to MQLONG.
- */
+/* Structures used by the Map functions */
 
-#define PY_SSIZE_T_CLEAN 1
+/* Generic entry */
+typedef struct MapEntry {
+    char *key;
+    void *value;
+    struct MapEntry *next;
+} MapEntry;
 
-#include "Python.h"
+/* Map structure */
+typedef struct Map {
+    MapEntry **buckets;
+    size_t capacity;
+    size_t size;
+    map_mutex_t mutex;
+} Map;
+
+/* The real structure that is added as the value */
+typedef struct GetBuffer {
+    size_t size;
+    char * buf;
+} GetBuffer;
+
+#define MAP_INITIAL_CAPACITY 16
+#define MAP_LOAD_FACTOR 0.75
+#define KEY_SIZE 24 /* Big enough for 2 32-bit ints + '/' */
+
+/* Required map function declarations */
+static Map* map_create(void);
+static int map_put(Map *map, const char *key, void *value);
+static void* map_get(Map *map, const char *key); // Returns the value or NULL
+static int map_remove(Map *map, const char *key);
+
+static int map_lock(Map *map);
+static int map_unlock(Map *map);
+
+/* Other functions we want to pre-declare */
+static void debug_fn(int level, const char *fmt, ...);
+#if 1
+#define debug(...)  debug_fn(__VA_ARGS__)
+#else
+#define debug(...)
+#endif
+/* Where do we put any errors */
 static PyObject *ErrorObj;
 
 /* To control any trace logging */
@@ -108,6 +161,11 @@ static FILE *fp = NULL;
 static int fpOpened = 0;
 static long debugOpts = 0; /* Not a BOOL so we can use bitmask to control what's logged */
 static int shortTrace = FALSE;
+
+/* The Map of message buffers for MQGET calls. It is not needed for any other MQ verb
+ * including MQCB/CallBacks (where the buffer is owned by the qmgr).
+ */
+static Map *getBufferMap = NULL;
 
 /*
  * MQI Structure sizes for the current supported MQ version are
@@ -133,7 +191,6 @@ static int shortTrace = FALSE;
 #define PY_IBMMQ_CBC_SIZEOF sizeof(MQCBC)
 #define PY_IBMMQ_CTLO_SIZEOF sizeof(MQCTLO)
 
-
 #define PY_IBMMQ_CMHO_SIZEOF sizeof(MQCMHO)
 #define PY_IBMMQ_DMHO_SIZEOF sizeof(MQDMHO)
 #define PY_IBMMQ_SMPO_SIZEOF sizeof(MQSMPO)
@@ -141,7 +198,7 @@ static int shortTrace = FALSE;
 #define PY_IBMMQ_PD_SIZEOF sizeof(MQPD)
 
 /*
- * Convert an object that might be either a string or a byte array to a C NULL-terminated string
+ * Convert an object that might be either a Python string or a byte array to a C NULL-terminated string
  */
 static char* PyBytesOrText_AsStringAndSize(PyObject *txtObj, MQLONG *outLen) {
   if(PyBytes_Check(txtObj)) {
@@ -158,6 +215,7 @@ static char* PyBytesOrText_AsStringAndSize(PyObject *txtObj, MQLONG *outLen) {
       if (outLen != NULL) {
         (*outLen) = (MQLONG)PyBytes_Size(bytesObj);
       }
+      Py_DECREF(bytesObj);
       return PyBytes_AsString(bytesObj);
     } else {
       return NULL;
@@ -181,16 +239,30 @@ static char* PyBytesOrText_AsString(PyObject *txtObj) {
  */
 #define ERRORBUF 256
 static char errorBuf[ERRORBUF] = {0};
-static void *myAlloc(size_t s,char *cause) {
+static void *myAlloc(size_t s,const char *cause) {
   void *p = malloc(s);
   if (!p) {
-    snprintf(errorBuf,ERRORBUF-1,"Cannot allocate memory buffer:%d bytes. Caller: %s",(int)s,cause);
+    snprintf(errorBuf,ERRORBUF-1,"Cannot allocate memory buffer: %d bytes. Caller: %s",(int)s,cause);
     PyErr_SetString(ErrorObj, errorBuf);
   }
+
+  // debug(1,"myAlloc: \"%s\" asked for %d bytes. p=%p",cause,s,p);
+  return p;
+}
+
+static void *myRealloc(char *oldBuf, size_t s, const char *cause) {
+  void *p = realloc(oldBuf, s );
+  if (!p) {
+    snprintf(errorBuf,ERRORBUF-1,"Cannot reallocate memory buffer:%d bytes. Caller: %s",(int)s,cause);
+    PyErr_SetString(ErrorObj, errorBuf);
+  }
+
+  // debug(1,"myRealloc: \"%s\" asked for %d bytes p=%p",cause,s,p);
   return p;
 }
 
 static void myFree(void *p) {
+  // debug(1,"myFree: %p",p);
   if (p) {
     free(p);
   }
@@ -209,7 +281,7 @@ static int checkArgSize(Py_ssize_t given, Py_ssize_t expected, const char *name)
 /* Print the debug info to the log file. Note that that boilerplate prefix   */
 /* is designed to match the Formatter object in mqlog.py associated with     */
 /* a configured filename. The default (stderr) formatter is a bit different. */
-static void debug(int level, char *fmt, ...) {
+static void debug_fn(int level, const char *fmt, ...) {
     va_list vaArgs;
 
     /* Not filtering any output based on logLevel for now. Just on/off */
@@ -232,6 +304,138 @@ static void debug(int level, char *fmt, ...) {
         fflush(fp);
     }
     va_end(vaArgs);
+}
+
+/* Some failures in an MQI verb can still mean a resource should be deleted from
+   internal maps as we don't know the real outcome.
+ */
+static int cleanupOK(MQLONG mqrc) {
+    int rc = FALSE;
+
+    switch (mqrc) {
+    case MQRC_NONE:
+    case MQRC_Q_MGR_STOPPING:
+    case MQRC_Q_MGR_QUIESCING:
+    case MQRC_CONNECTION_BROKEN:
+    case MQRC_CONNECTION_STOPPING:
+    case MQRC_CONNECTION_QUIESCING:
+      rc = TRUE;
+      break;
+    default:
+      rc = FALSE;
+      break;
+    }
+    return rc;
+}
+
+/* Allocate a message buffer ready for MQGET. Stash the buffer */
+/* in a map entry so it can be used on the next MQGET for this */
+/* queue. If there is already an assigned buffer but it's too  */
+/* small, reallocate it and update the map entry.              */
+static char *updateQ(MQHCONN hConn, MQHOBJ hObj, size_t size) {
+  char *buf = NULL;
+
+  GetBuffer *bd;
+  char key[KEY_SIZE] = {0};
+
+  snprintf(key,sizeof(key)-1,"%d/%d",hConn,hObj);
+
+  map_lock(getBufferMap);
+
+  /* The map_get function returns the stored value or NULL if not found */
+  bd = map_get(getBufferMap,key);
+  if (!bd) {
+    bd = (GetBuffer *)myAlloc(sizeof(GetBuffer),"buffer descriptor");
+    if (bd) {
+      buf = (char *)myAlloc(size,"message buffer");
+      if (buf) {
+        bd->buf = buf;
+        bd->size = size;
+
+        debug(1,"UpdateQ: Adding entry for %s",key);
+
+        /* Insert into the map. If it fails, free our allocated buffers and return NULL */
+        int rc = map_put(getBufferMap, key, bd);
+        if (rc != 0) {
+          myFree(buf);
+          myFree(bd);
+          buf = NULL;
+        }
+      }
+    }
+  } else if (bd->size < size) {
+    /* Update the map entry in place */
+    debug(1,"UpdateQ: Reallocating new buffer from size %d to %d for %s",bd->size, size, key);
+    buf = (char *)myRealloc(bd->buf,size, "message buffer");
+    if (buf) {
+      bd->size = size;
+      bd->buf = buf;
+    }
+  } else {
+    debug(1,"UpdateQ: Reusing buffer of size %d for %s",size, key);
+    buf = bd->buf;
+  }
+
+  map_unlock(getBufferMap);
+
+  return buf;
+}
+
+/* Called when a queue is closed, so we can free the associated message buffer */
+static void deleteQ(MQHCONN hConn, MQHOBJ hObj) {
+  char key[KEY_SIZE] = {0};
+  GetBuffer *bd;
+
+  snprintf(key,sizeof(key)-1,"%d/%d",hConn,hObj);
+
+  map_lock(getBufferMap);
+
+  /* Removing the entry will free() the value as well as control structures. But it does
+     not free the allocated message buffer. So we have to do that here first.
+   */
+  bd = map_get(getBufferMap, key);
+  if (bd) {
+    debug(1,"DeleteQ: deleting entry for %s",key);
+    myFree(bd->buf);
+    /* Not a lot can be done if the removal fails */
+    map_remove(getBufferMap, key);
+  } else {
+    debug(1,"DeleteQ: no entry for %s",key);
+  }
+
+  map_unlock(getBufferMap);
+}
+
+/* Called during MQDISC to free message buffers for all associated queues */
+static void deleteAll(MQHCONN hConn) {
+
+  char key[KEY_SIZE] = {0};
+  // Just put the hConn and separator in the key as we will then
+  // match on any real keys that start with that string
+  snprintf(key,sizeof(key)-1,"%d/",hConn);
+
+  debug(1,"DeleteAll: removing all entries for %d",hConn);
+
+  map_lock(getBufferMap);
+
+  /* Iterate through all entries in the bucket chains */
+  for (size_t i = 0; i < getBufferMap->capacity; i++) {
+    MapEntry *entry = getBufferMap->buckets[i];
+
+    while (entry) {
+      MapEntry *next = entry->next;
+      if (!strncmp(entry->key,key,strlen(key))) {
+        debug(1,"           removing entry for %s in bucket %d",entry->key,i);
+        GetBuffer *bd = entry->value;
+        myFree(bd->buf);
+
+        map_remove(getBufferMap,entry->key);
+      }
+      entry = next;
+    }
+  }
+
+  map_unlock(getBufferMap);
 }
 
 /*
@@ -261,7 +465,7 @@ static PyObject * ibmmqc_MQLOGCF(PyObject *self, PyObject *args) {
         fpOpened = 0;
     }
 
-    if (filename) {
+    if ((filename != NULL) && (strncmp(filename,"stderr",6) != 0)) {
       fp = fopen(filename,"a");
       if (fp) {
         fpOpened = 1;
@@ -272,7 +476,7 @@ static PyObject * ibmmqc_MQLOGCF(PyObject *self, PyObject *args) {
     } else {
       /* Don't set fpOpened, as we don't want to try to close stderr later */
       fp = stderr;
-      shortTrace=TRUE;
+      //shortTrace=TRUE;
     }
     setbuf(fp,NULL); /* Force the log file to be flushed immediately */
   }
@@ -385,13 +589,12 @@ static PyObject * ibmmqc_MQCONNX(PyObject *self, PyObject *args) {
     cno->Version = MQCNO_VERSION_6;
   }
 
-  // These fields can be assumed to always be available
+  /* These fields can be assumed to always be available */
   if(mqcd) {
     cno->ClientConnPtr = (MQCD *)mqcd;
 
-    // SPLProtection is the only MQCD field more recent than the baseline 9.1
-    // ... and it's only really valid for qmgr channels so should never be set by
-    // client applications. But it's convenient for testing VERSION policies here.
+  /* SPLProtection is not used by clients, but was a convenient way of  */
+  /* testing the version management before V10                          */
 #if defined(MQCD_VERSION_12)
     if (mqcd->SPLProtection != 0) {
       if (mqcd->Version < MQCD_VERSION_12) {
@@ -400,6 +603,15 @@ static PyObject * ibmmqc_MQCONNX(PyObject *self, PyObject *args) {
     }
 #endif
 
+  /* The Post-Quantum features came in MQ 10, with a new MQCD version */
+#if defined(MQCD_VERSION_13)
+    if ((mqcd->QuantumSafeAlgorithm > 0) || (mqcd->QuantumSafeRequired > 0)) {
+
+      if (mqcd->Version < MQCD_VERSION_13) {
+        mqcd->Version = MQCD_VERSION_13;
+      }
+    }
+#endif
   }
 
   if (sco) {
@@ -435,7 +647,6 @@ static PyObject * ibmmqc_MQCONNX(PyObject *self, PyObject *args) {
     }
 #endif
   }
-
 
   /* The bno variable is always available even for older levels of MQ. But it is not USABLE without the
    * MQBNO structure and the CNO versions being suitable.
@@ -474,16 +685,23 @@ static PyObject * ibmmqc_MQDISC(PyObject *self, PyObject *args) {
 
   long lQmgrHandle;
   MQHCONN qmgrHandle;
+  MQHCONN savedQmgrHandle; // Need to keep track as successful MQDISC resets value to -1
 
   if (!PyArg_ParseTuple(args, "l", &lQmgrHandle)) {
     return NULL;
   }
 
   qmgrHandle = (MQHCONN)lQmgrHandle;
+  savedQmgrHandle = qmgrHandle;
 
   Py_BEGIN_ALLOW_THREADS
   MQDISC((PMQHCONN)&qmgrHandle, &compCode, &reasonCode);
   Py_END_ALLOW_THREADS
+
+  if (cleanupOK(reasonCode)) {
+    deleteAll(savedQmgrHandle);
+  }
+
   return MQRETURN(compCode, reasonCode);
 }
 
@@ -540,21 +758,27 @@ returned. \
 
 static PyObject * ibmmqc_MQCLOSE(PyObject *self, PyObject *args) {
   MQHOBJ qHandle;
+  MQHOBJ savedQHandle;
   MQLONG compCode, reasonCode;
 
-  /* Note: MQLONG is an int on 64 bit platforms and MQHCONN and MQHOBJ are MQLONG
-   */
-
+  /* Note: MQLONG is an int on 64 bit platforms and MQHCONN and MQHOBJ are MQLONG */
   long lOptions, lQmgrHandle, lqHandle;
 
   if (!PyArg_ParseTuple(args, "lll", &lQmgrHandle, &lqHandle, &lOptions)) {
     return NULL;
   }
   qHandle = (MQHOBJ) lqHandle;
+  savedQHandle = qHandle;
+
 
   Py_BEGIN_ALLOW_THREADS
   MQCLOSE((MQHCONN) lQmgrHandle, &qHandle, (MQLONG) lOptions, &compCode, &reasonCode);
   Py_END_ALLOW_THREADS
+
+  if (cleanupOK(reasonCode)) {
+    deleteQ((MQHCONN)lQmgrHandle,savedQHandle);
+  }
+
   return MQRETURN(compCode, reasonCode);
 }
 
@@ -732,10 +956,11 @@ static PyObject *ibmmqc_MQGET(PyObject *self, PyObject *args) {
   }
   gmoP = (MQGMO *)getOptsBuffer;
 
-  /* Allocate temp. storage for message */
-  if (!(msgBuffer = myAlloc(maxLength,"message buffer"))) {
+  /* Allocate or find storage for message */
+  if (!(msgBuffer = updateQ((MQHCONN) lQmgrHandle, (MQHOBJ) lqHandle, maxLength))) {
     return NULL;
   }
+
   actualLength = 0;
   Py_BEGIN_ALLOW_THREADS
   MQGET((MQHCONN) lQmgrHandle, (MQHOBJ) lqHandle, mDescP, gmoP, (MQLONG) maxLength, msgBuffer, &actualLength,
@@ -756,7 +981,7 @@ static PyObject *ibmmqc_MQGET(PyObject *self, PyObject *args) {
   rv = Py_BuildValue("(y#y#y#lll)", msgBuffer, (int) returnLength,
              mDescP, PY_IBMMQ_MD_SIZEOF, gmoP, PY_IBMMQ_GMO_SIZEOF,
              (long) actualLength, (long) compCode, (long) reasonCode);
-  myFree(msgBuffer);
+
   return rv;
 }
 
@@ -878,7 +1103,11 @@ static PyObject *ibmmqc_MQINQ(PyObject *self, PyObject *args) {
 
   selectorCount = (MQLONG)PyList_Size(lSelectors);
 
-  selectors = myAlloc(sizeof(MQLONG) * selectorCount, "MQINQ");
+  selectors = (MQLONG *)myAlloc(sizeof(MQLONG) * selectorCount, "MQINQ");
+  if (!selectors) {
+    return NULL;
+  }
+
   if (selectors) {
     Py_ssize_t i;
     for (i=0;i<selectorCount;i++) {
@@ -895,11 +1124,17 @@ static PyObject *ibmmqc_MQINQ(PyObject *self, PyObject *args) {
   }
 
   if (intAttrCount > 0) {
-    intAttrs = myAlloc(sizeof(MQLONG) * intAttrCount, "MQINQ");
+    intAttrs = (MQLONG *)myAlloc(sizeof(MQLONG) * intAttrCount, "MQINQ");
+    if (!intAttrs) {
+        return NULL;
+    }
   }
 
   if (charAttrLength > 0) {
-     charAttrs = myAlloc(charAttrLength, "MQINQ");
+     charAttrs = (char *)myAlloc(charAttrLength, "MQINQ");
+     if (!charAttrs) {
+        return NULL;
+     }
   }
 
   Py_BEGIN_ALLOW_THREADS
@@ -910,7 +1145,10 @@ static PyObject *ibmmqc_MQINQ(PyObject *self, PyObject *args) {
   if (compCode == MQCC_OK) {
     Py_ssize_t i;
     for (i=0;i<intAttrCount;i++) {
-      PyList_Append(lIntAttrs,PyLong_FromLong((long)intAttrs[i]));
+      PyObject *item = PyLong_FromLong((long)intAttrs[i]);
+      if (PyList_Append(lIntAttrs,item)<0) {
+        Py_DECREF(item);
+      }
     }
   }
 
@@ -969,7 +1207,7 @@ static PyObject *ibmmqc_MQSET(PyObject *self, PyObject *args) {
   }
 
   selectorCount = (MQLONG) PyList_Size(lSelectors);
-  selectors = myAlloc(sizeof(MQLONG) * selectorCount, "MQSET");
+  selectors = (MQLONG *)myAlloc(sizeof(MQLONG) * selectorCount, "MQSET");
   if (selectors) {
     Py_ssize_t i;
     for (i=0;i<selectorCount;i++) {
@@ -980,7 +1218,7 @@ static PyObject *ibmmqc_MQSET(PyObject *self, PyObject *args) {
 
   intAttrCount = (MQLONG) PyList_Size(lIntAttrs);
   if (intAttrCount > 0) {
-  intAttrs = myAlloc(sizeof(MQLONG) * intAttrCount, "MQSET");
+  intAttrs = (MQLONG *)myAlloc(sizeof(MQLONG) * intAttrCount, "MQSET");
     if (intAttrs) {
       Py_ssize_t i;
       for (i=0;i<intAttrCount;i++) {
@@ -1387,7 +1625,7 @@ static PyObject* ibmmqc_MQSETMP(PyObject *self, PyObject *args) {
   Py_ssize_t value_length = 0;
 
   PyObject *property_value_object;
-  PyObject *v;
+  PyObject *v = NULL;
 
   if (!PyArg_ParseTuple(args, "lLy#y#y#lOl",
                               &lQmgrHandle, &msg_handle,
@@ -1522,6 +1760,10 @@ static PyObject* ibmmqc_MQSETMP(PyObject *self, PyObject *args) {
   MQSETMP((MQHCONN)lQmgrHandle, msg_handle, smpo, &name, pd, property_type, (MQLONG)value_length,
             value, &compCode, &reasonCode);
   Py_END_ALLOW_THREADS
+
+  if (v) {
+    Py_DECREF(v);
+  }
 
   if (property_value_free){
     myFree(value);
@@ -1796,16 +2038,9 @@ static struct PyMethodDef ibmmqc_methods[] = {
   {NULL, (PyCFunction)NULL, 0, NULL}        /* sentinel */
 };
 
+static char ibmmqc_module_documentation[] = "";
 
-/* Initialization function for the module */
-static char ibmmqc_module_documentation[] =
-""
-;
-
-#ifdef WIN32
-__declspec(dllexport)
-#endif
-
+/* Module description                    */
 static struct PyModuleDef ibmmqc_module = {
     PyModuleDef_HEAD_INIT,
     "ibmmqc",
@@ -1814,7 +2049,10 @@ static struct PyModuleDef ibmmqc_module = {
     ibmmqc_methods
 };
 
+/* Initialization function for the module */
+/* Everything else should be 'static'     */
 PyMODINIT_FUNC PyInit_ibmmqc(void) {
+  int localError = FALSE;
   PyObject *m, *d, *v;
 
   /* Create the module and add the functions */
@@ -1941,10 +2179,262 @@ PyMODINIT_FUNC PyInit_ibmmqc(void) {
    */
   PyDict_SetItemString(d,"__mqbuild__", PyUnicode_FromString("common"));
 
+  /* Create the Map where we will store information about message buffers
+   * for MQGETs. The map is never explicitly destroyed as there's no suitable
+   * "terminate" call to this layer.
+   */
+  if (!getBufferMap) {
+    getBufferMap = map_create();
+  }
+
+  if (!getBufferMap) {
+    localError = TRUE;
+  }
+
   /* Check for errors */
-  if (PyErr_Occurred())
+  if (PyErr_Occurred() || localError)
     Py_FatalError("can't initialize module ibmmqc");
 
   return m;
 
+}
+
+/*********************************************************/
+/* Implementation of a Map collection. Only a subset     */
+/* of operations is required (eg no "destroy")           */
+/*********************************************************/
+
+/*Hash function for string keys (djb2 algorithm) */
+static unsigned long map_hash(const char *str) {
+  unsigned long hash = 5381;
+  int c;
+  while ((c = *str++)) {
+    hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+  }
+  return hash;
+}
+
+/* Resize the map when load factor is exceeded */
+static int map_resize(Map *map) {
+  size_t old_capacity = map->capacity;
+  MapEntry **old_buckets = map->buckets;
+
+  map->capacity *= 2;
+  map->buckets = (MapEntry **)myAlloc(sizeof(MapEntry *) * map->capacity, "map buckets");
+
+  if (!map->buckets) {
+    map->buckets = old_buckets;
+    map->capacity = old_capacity;
+    return -1;
+  }
+
+  for (size_t i = 0; i < map->capacity; i++) {
+    map->buckets[i] = NULL;
+  }
+
+  /* Rehash all entries */
+  for (size_t i = 0; i < old_capacity; i++) {
+    MapEntry *entry = old_buckets[i];
+    while (entry) {
+      MapEntry *next = entry->next;
+      unsigned long hash = map_hash(entry->key);
+      size_t index = hash % map->capacity;
+
+      entry->next = map->buckets[index];
+      map->buckets[index] = entry;
+
+      entry = next;
+    }
+  }
+
+  myFree(old_buckets);
+  return 0;
+}
+
+/* Create a new map with initial capacity. This has to be called in an environment
+ * where we don't need the map's own lock, but can ensure it's only called once.
+ */
+static Map* map_create(void) {
+  Map *map = (Map *)myAlloc(sizeof(Map), "map structure");
+  if (!map) {
+    return NULL;
+  }
+
+  map->capacity = MAP_INITIAL_CAPACITY;
+  map->size = 0;
+  map->buckets = (MapEntry **)myAlloc(sizeof(MapEntry *) * map->capacity, "map buckets");
+
+  if (!map->buckets) {
+    myFree(map);
+    return NULL;
+  }
+
+  for (size_t i = 0; i < map->capacity; i++) {
+    map->buckets[i] = NULL;
+  }
+
+  /* Initialize mutex */
+#ifdef _WIN32
+  InitializeCriticalSection(&map->mutex);
+#else
+   if (pthread_mutex_init(&map->mutex, NULL) != 0) {
+    myFree(map->buckets);
+    myFree(map);
+    return NULL;
+  }
+#endif
+
+  return map;
+}
+
+/*
+ * Insert or update a key-value pair in the map
+ * Returns 0 on success, -1 on failure
+ */
+static int map_put(Map *map, const char *key, void *value) {
+
+  debug(1, "map_put for %s value %p",key,value);
+  if (!map || !key) {
+    return -1;
+  }
+
+  /* Check if we need to resize */
+  if ((double)map->size / map->capacity > MAP_LOAD_FACTOR) {
+    if (map_resize(map) != 0) {
+        return -1;
+    }
+  }
+
+  unsigned long hash = map_hash(key);
+  size_t index = hash % map->capacity;
+
+  /* Check if key already exists */
+  MapEntry *entry = map->buckets[index];
+  while (entry) {
+    if (strcmp(entry->key, key) == 0) {
+      /* Update existing value */
+      entry->value = value;
+      return 0;
+    }
+    entry = entry->next;
+  }
+
+  /* Create new entry */
+  MapEntry *new_entry = (MapEntry *)myAlloc(sizeof(MapEntry), "map entry");
+  if (!new_entry) {
+    return -1;
+  }
+
+  new_entry->key = (char *)myAlloc(strlen(key) + 1, "map key");
+  if (!new_entry->key) {
+    myFree(new_entry);
+    return -1;
+  }
+
+  strcpy(new_entry->key, key);
+  new_entry->value = value;
+  new_entry->next = map->buckets[index];
+  map->buckets[index] = new_entry;
+  map->size++;
+
+  return 0;
+}
+
+/*
+ * Get a value from the map by key. Returns the value or NULL if not found
+ */
+static void* map_get(Map *map, const char *key) {
+  if (!map || !key) {
+    return NULL;
+  }
+
+  unsigned long hash = map_hash(key);
+  size_t index = hash % map->capacity;
+
+  MapEntry *entry = map->buckets[index];
+  while (entry) {
+    if (strcmp(entry->key, key) == 0) {
+        return entry->value;
+    }
+    entry = entry->next;
+  }
+
+  return NULL;
+}
+
+
+/*
+ * Remove a key-value pair from the map
+ * Returns 0 on success, -1 if key not found
+ */
+static int map_remove(Map *map, const char *key) {
+
+  if (!map || !key) {
+    return -1;
+  }
+
+  unsigned long hash = map_hash(key);
+  size_t index = hash % map->capacity;
+
+  MapEntry *entry = map->buckets[index];
+  MapEntry *prev = NULL;
+
+  while (entry) {
+    if (strncmp(entry->key, key, strlen(key)) == 0) {
+      if (prev) {
+        prev->next = entry->next;
+      } else {
+        map->buckets[index] = entry->next;
+      }
+
+      myFree(entry->key);
+      if (entry->value) {
+        /* We know the "value" was a malloced block, so can be freed here */
+        myFree(entry->value);
+      }
+      myFree(entry);
+
+      map->size--;
+      return 0;
+    }
+    prev = entry;
+    entry = entry->next;
+  }
+
+  return -1;
+
+}
+
+/* Lock the map mutex. Returns 0 on success, -1 on failure */
+static int map_lock(Map *map) {
+  if (!map) {
+    return -1;
+  }
+
+#ifdef _WIN32
+  EnterCriticalSection(&map->mutex);
+  return 0;
+#else
+  if (pthread_mutex_lock(&map->mutex) == 0) {
+    return 0;
+  }
+  return -1;
+#endif
+}
+
+/* Unlock the map mutex. Returns 0 on success, -1 on failure  */
+static int map_unlock(Map *map) {
+  if (!map) {
+    return -1;
+  }
+
+#ifdef _WIN32
+  LeaveCriticalSection(&map->mutex);
+  return 0;
+#else
+  if (pthread_mutex_unlock(&map->mutex) == 0) {
+    return 0;
+  }
+  return -1;
+#endif
 }
