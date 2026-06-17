@@ -128,7 +128,9 @@ jobs:
           # The default repair command tries to merge the MQ shared libraries into the wheel,
           # We do not want that as it would breach the Redist Client licensing rules if we
           # re-uploaded that wheel to PyPI. So we will just do a simple copy.
-          CIBW_REPAIR_WHEEL_COMMAND: cp {wheel} {dest_dir}
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: cp {wheel} {dest_dir}
+          CIBW_REPAIR_WHEEL_COMMAND_MACOS: cp {wheel} {dest_dir}
+
 
         run: |
            python -m cibuildwheel --output-dir dist
