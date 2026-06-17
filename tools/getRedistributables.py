@@ -1,10 +1,10 @@
-# Download and extract the redistributable package to support building
-# the wheels on Windows and Linux.
+# Download and extract the MQ packages that support building
+# wheels on MacOS, Windows and Linux.
 #
 # Pass the source URL as the first argument and the destination directory
 # as the second argument.
 #
-# The source URL should end with .tar.gz or .zip
+# The source URL should end with .tar.gz (Linux) or .zip (Windows) or .pkg (MacOS)
 #
 import os
 import sys
@@ -18,12 +18,16 @@ if len(sys.argv) != 3:
     sys.exit(1)
 
 SOURCE_URL = sys.argv[1]
+# This is a directory
 DESTINATION_PATH = sys.argv[2]
 
+# And we actually download to a file whose name starts with the destination directory
 if SOURCE_URL.endswith('.tar.gz'):
     temp_path = DESTINATION_PATH + '-temp.tar.gz'
 elif SOURCE_URL.endswith('.zip'):
     temp_path = DESTINATION_PATH + '-temp.zip'
+elif SOURCE_URL.endswith('.pkg'):
+    temp_path = DESTINATION_PATH + '-temp.pkg'
 else:
     print("Unsupported archive format")
     sys.exit(1)
@@ -55,8 +59,12 @@ def extract_archive(archive_path, extract_to):
         raise ValueError("Unsupported archive format")
 
 
-print(f'Downloading "{SOURCE_URL}" to "{DESTINATION_PATH}"')
+# If it's a .pkg file, that's for MacOS which we do not unpack here.
+# Instead, it'll be installed properly by the calling environment.
+print(f'Downloading "{SOURCE_URL}" to {temp_path}' )
 download_file(SOURCE_URL, temp_path)
-extract_archive(temp_path, DESTINATION_PATH)
-os.unlink(temp_path)
+if not SOURCE_URL.endswith('.pkg'):
+    print(f'Extracting files from {temp_path} to {DESTINATION_PATH}')
+    extract_archive(temp_path, DESTINATION_PATH)
+    os.unlink(temp_path)
 print(f'Done via "{temp_path}"')
