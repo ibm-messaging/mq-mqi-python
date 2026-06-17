@@ -72,11 +72,11 @@ while True:
         download_file(SOURCE_URL, temp_path)
         break
     except requests.exceptions.ConnectionError as e:
-        cnt = cnt + 1
         if cnt == 3:
             print("Maximum retries reached")
             raise(e)
         print(f"Connection error {e}: sleeping")
+        cnt = cnt + 1
         time.sleep(5)
 
 if not SOURCE_URL.endswith('.pkg'):
