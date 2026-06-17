@@ -1,0 +1,31 @@
+#!/bin/sh
+# Check that modified files have got updated copyrights for the current year
+# Copyright (c) 2025 IBM Corporation. All Rights Reserved.
+
+rc=/tmp/checkCopyright.$$
+
+cd ..
+currentYear=`date "+%Y"`
+echo 0 > $rc
+# Which files are different from the public repo
+git diff origin -- | grep "+++" | sed "s!+++ b/!!g" |\
+  while read f
+do
+  echo $f
+  grep -qi "copyright" $f
+  if [ $? -eq 0 ]
+  then
+    grep -qi "copyright.*$currentYear" $f
+    if [ $? -ne 0 ]
+    then
+      echo $f
+      echo 1 > $rc
+    else
+      : echo NewCR $f
+    fi
+  fi
+done
+rc=`cat $rc`
+rm -f $rc
+exit $rc
+
