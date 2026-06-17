@@ -110,7 +110,7 @@ jobs:
           sudo mkdir -p /opt/mqm || true;
           sudo installer -verbose -pkg tmpPkg-temp.pkg -target /opt/mqm && rm -rf tmpPkg-temp.pkg && ln -s /opt/mqm $MQ_FILE_PATH;
           ;;
-          *) echo "Unrecognised platform";exit 1;;
+          *) echo "Unrecognised platform: $ImageOS";exit 1;;
           esac
 
       # The original version of this YAML file used this pattern to select the download image. Leaving it here for
@@ -162,7 +162,7 @@ jobs:
         run: |
           python -m build --sdist
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: artifact-sdist
           path: dist/*.tar.gz
