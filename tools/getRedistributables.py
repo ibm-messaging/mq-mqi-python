@@ -8,6 +8,7 @@
 #
 import os
 import sys
+import time
 import tarfile
 import zipfile
 
@@ -62,7 +63,22 @@ def extract_archive(archive_path, extract_to):
 # If it's a .pkg file, that's for MacOS which we do not unpack here.
 # Instead, it'll be installed properly by the calling environment.
 print(f'Downloading "{SOURCE_URL}" to {temp_path}' )
-download_file(SOURCE_URL, temp_path)
+
+cnt = 0
+while True:
+    try:
+        # A very simple retry mechanism as we've seen occasional DNS failures
+        # on some github runners
+        download_file(SOURCE_URL, temp_path)
+        break
+    except requests.exceptions.ConnectionError as e:
+        cnt = cnt + 1
+        if cnt == 3:
+            print("Maximum retries reached")
+            raise(e)
+        print(f"Connection error {e}: sleeping")
+        time.sleep(5)
+
 if not SOURCE_URL.endswith('.pkg'):
     print(f'Extracting files from {temp_path} to {DESTINATION_PATH}')
     extract_archive(temp_path, DESTINATION_PATH)
