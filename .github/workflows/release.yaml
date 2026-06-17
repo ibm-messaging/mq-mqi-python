@@ -60,9 +60,9 @@ jobs:
       fail-fast: false
       matrix:
         buildplat:
-        #- [windows-2022, win_amd64, ""]
-        - [ubuntu-22.04, manylinux_x86_64, ""]
-        #- [macos-14, macosx_arm64, ""]
+        - [windows-2022, win_amd64, ""]
+        #- [ubuntu-22.04, manylinux_x86_64, ""]
+        - [macos-14, macosx_arm64, ""]
 
         python: ["cp39"]
 

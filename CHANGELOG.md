@@ -19,6 +19,7 @@ Newest updates are at the top of this file.
 * Add more typing information to function definitions
 * Testcases don't use the deprecated form of objects/functions
 * PyPI release includes binary wheels for some platforms
+  * Not yet for Linux x64
 
 ## 2026 Apr 21 - V2.0.6
 * Better handling of message buffer sizes. Particularly for PCF operations (#21)
