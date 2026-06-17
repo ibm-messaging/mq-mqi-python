@@ -1,3 +1,14 @@
+# A process to create binary wheels and the sdist for this package, ready to
+# upload and release on PyPI.
+#
+# The wheels are created for Windows and LinuxX64 as they have the Redistributable Client
+# packages ready to build against. And for MacOS which has the Toolkit publicly accessible too.
+# Other platforms will have to install the sdist and build locally.
+#
+# Gnerated wheels do not include the MQ libraries themselves. You still need to get them
+# installed locally before running an application. The Redistributable Client license does not
+# permit inclusion of the libraries in this kind of package.
+
 name: Release
 on:
   # This lets us trigger using the "gh" command line
@@ -22,10 +33,19 @@ on:
 
 
 env:
+  # MQ product version
+  VRMF: "10.0.0.0"
+
+  # Where do we get the redist client or MacOS toolkit from? They are public URLs.
   REDIST_ROOT: "https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist/"
+  MACOS_ROOT: "https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/mactoolkit/"
   LINUX_FILE: "IBM-MQC-Redist-LinuxX64.tar.gz"
   WINDOWS_FILE: "IBM-MQC-Redist-Win64.zip"
-  VRMF: "9.4.5.0"
+  MACOS_FILE: "IBM-MQ-DevToolkit-MacOS.pkg"
+
+  # Where is it downloaded (MacOS will symlink to here)
+  # This path should match the fallback option in setup.py
+  MQ_FILE_PATH: "ibm-mq-redist"
 
 defaults:
   run:
@@ -34,12 +54,17 @@ defaults:
 
 jobs:
   build_wheels:
-    name: Build ${{ matrix.runs-on }}
-    runs-on: ${{ matrix.runs-on }}
+    name: Build ${{ matrix.buildplat[0] }}-${{ matrix.buildplat[1] }}
+    runs-on: ${{ matrix.buildplat[0] }}
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ubuntu-22.04, windows-2022]
+        buildplat:
+        - [windows-2022, win_amd64, ""]
+        - [ubuntu-22.04, manylinux_x86_64, ""]
+        - [macos-14, macosx_arm64, ""]
+
+        python: ["cp39"]
 
     steps:
       - uses: actions/checkout@v5
@@ -47,37 +72,74 @@ jobs:
       - uses: actions/setup-python@v5
         name: Install Python
         with:
-          python-version: '3.9'
+          python-version: '3.13'
 
       - name: Install deps
         run: |
           python -m pip install -r tools/requirements-dev.txt
 
-      - name: Get IBM MQ C Linux Redistributables
-        if: matrix.runs-on == 'ubuntu-22.04'
-        run: |
-          python tools/getRedistributables.py "$REDIST_ROOT/$VRMF-$LINUX_FILE" ibm-mq-c
+      # Available env vars that we could use to select how to download client code:
+      #  ImageOS  = win22,      ubuntu22,  macos14
+      #  OS       = Windows_NT, -,         -
+      #  OSType   =     -     , linux-gnu, darwin23
+      #  RunnerOS = Windows   , Linux,     macOS
 
-      - name: Get IBM MQ C Windows Redistributables
-        if: matrix.runs-on == 'windows-2022'
-        run: |
-          python tools/getRedistributables.py "$REDIST_ROOT/$VRMF-$WINDOWS_FILE" ibm-mq-c
+      # For Windows and LinuxX64 we can use the Redistributable Client packages.
+      #
+      # For MacOS, the MQ Dev Toolkit is downloaded and then installed properly.
+      #
+      #   Using the "brew" command is an alternative, but it requires the cask to have been updated to know about the
+      #   current VRMF. The MQ cask does not make it easy to give a specific version to the brew command.
+      #     brew tap ibm-messaging/ibmmq && brew install ibm-messaging/ibmmq/mqdevtoolkit && ln -s /opt/mqm $MQ_FILE_PATH
+      #
+      #   So we grab the install image directly from the download site.
+      #   For "installer" we have to make sure the /opt/mqm directory exists first. The MQ installation always goes
+      #   into /opt/mqm, and it's not configurable. So we accept that, and then symlink from our custom path to the
+      #   same place as the other downloads. Need to run under sudo (the github MacOS runner has password-less sudo available).
+      #   The "tmpPkg" name is used by the getRedist script to construct a filename but we don't extract files into that
+      #   directory on this platform.
+      #
+      # This "case" block determines where we're running and how to get the appropriate package. Note how the YAML syntax affects
+      # how the bash script is written, to essentially be a single line with ";" separators.
+      - name: Get IBM MQ C SDK
+        run: >-
+          case "$ImageOS" in
+          win22) python tools/getRedistributables.py "$REDIST_ROOT/$VRMF-$WINDOWS_FILE" $MQ_FILE_PATH;;
+          ubuntu22) python tools/getRedistributables.py "$REDIST_ROOT/$VRMF-$LINUX_FILE" $MQ_FILE_PATH;;
+          macos14)  python tools/getRedistributables.py "$MACOS_ROOT/$VRMF-$MACOS_FILE" tmpPkg;
+          sudo mkdir -p /opt/mqm || true;
+          sudo installer -verbose -pkg tmpPkg-temp.pkg -target /opt/mqm && rm -rf tmpPkg-temp.pkg && ln -s /opt/mqm $MQ_FILE_PATH;
+          ;;
+          *) echo "Unrecognised platform";exit 1;;
+          esac
+
+      # The original version of this YAML file used this pattern to select the download image. Leaving it here for
+      # reference in case we need later to reintroduce something similar.
+      #- name: Get IBM MQ C Linux Client SDK
+      #  if: matrix.buildplat[0] == 'ubuntu-22.04'
+      #  run: |
+      #    python tools/getRedistributables.py "$REDIST_ROOT/$VRMF-$LINUX_FILE" $MQ_FILE_PATH
 
       - name: Build wheels
-        run: |
-          export MQ_FILE_PATH=`pwd`/ibm-mq-c
-          python -m build --wheel
+        env:
+          CIBW_BUILD: ${{ matrix.python}}-${{ matrix.buildplat[1] }}
+          CIBW_ENVIRONMENT_PASS_LINUX: MQ_FILE_PATH
 
-      - name: Check files
-        run: ls -al dist/
+          # The default repair command tries to merge the MQ shared libraries into the wheel,
+          # We do not want that as it would breach the Redist Client licensing rules if we
+          # re-uploaded that wheel to PyPI. So we will just do a simple copy.
+          CIBW_REPAIR_WHEEL_COMMAND: cp {wheel} {dest_dir}
+
+        run: |
+           python -m cibuildwheel --output-dir dist
 
       - name: Audit ABI3 wheels
         run: |
           abi3audit -vsS dist/*.whl
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
-          name: artifact-wheels-${{ matrix.runs-on }}
+          name: artifact-wheels-${{ matrix.buildplat[0] }}
           path: ./dist/*.whl
 
 
@@ -97,9 +159,10 @@ jobs:
           python -m pip install build
 
       - name: Build sdist
-        run: python -m build --sdist
+        run: |
+          python -m build --sdist
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: artifact-sdist
           path: dist/*.tar.gz
@@ -109,10 +172,10 @@ jobs:
     needs: [build_wheels, build_sdist]
     runs-on: ubuntu-22.04
     permissions:
-      # IMPORTANT: this permission is mandatory for trusted publishing
+      # This permission is mandatory for trusted publishing, if we ever enable that
       id-token: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           pattern: artifact-*
           merge-multiple: true
@@ -121,7 +184,8 @@ jobs:
       - name: Check files
         run: ls -al dist/
 
-      # Uncomments this block to add auto-upload to PyPI when a new tag is created
+      # Uncomment this block to add auto-upload to PyPI when a new tag is created.
+      # It needs permissions to be added to the PyPI project to allow the trusted publisher.
       #- name: Publish to PyPI - on tag
         # Skip upload to PyPI if we don't have a tag
       #  if: startsWith(github.ref, 'refs/tags/')

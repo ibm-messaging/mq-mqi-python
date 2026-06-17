@@ -31,9 +31,10 @@ function continueYN {
 
 function printSyntax {
 cat << EOF
-Usage: pyRelease.sh [-k keyfile] [-p packageName] [-l Y|N] [-r] [ -e venvLocation] [-v]
+Usage: pyRelease.sh [-a] [-d] [-k keyfile] [-p packageName] [-l Y|N] [-r] [ -e venvLocation] [-v]
 Options:
     -a Use GitHub Actions to execute build
+    -d Dry-run
     -k File containing API Key (default depends on repository)
     -l Use empty(Y)/untouched(N) local server at $localRepository
     -p package name (default $defaultPkg)
@@ -58,6 +59,7 @@ useTestServer=true
 useLocalServer=false
 useActions=false
 verbose=false
+dryRun=false
 
 keyFileProd="$HOME/.creds/pythonPyPi"
 keyFileTest="$HOME/.creds/pythonTestPyPi"
@@ -70,11 +72,14 @@ pkg=$defaultPkg
 
 venv=$root/../venv_build
 
-while getopts :ae:k:l:p:rv o
+while getopts :ade:k:l:p:rv o
 do
   case $o in
   a)
     useActions=true
+    ;;
+  d)
+    dryRun=true
     ;;
   e)
     venv=$OPTARG
@@ -95,7 +100,8 @@ do
     case $OPTARG in
     y|Y)
       echo "Deleting packages from test server"
-      rm -f $root/../venv_pypi/packages/*
+      rm -f $root/../venv_pypi/packages/*tar.gz
+      rm -f $root/../venv_pypi/packages/*whl
       ;;
     n|N)
       # Leave server untouched
@@ -109,7 +115,7 @@ do
   r)
     useTestServer=false
     repository=$prodRepository
-    # Not going to build wheels for release at the moment
+    # Can force this option in a future version once we use the Actions
     # useActions=true
     ;;
   v)
@@ -197,7 +203,8 @@ rm -rf code/$pkg.egg-info
 # See  https://discuss.python.org/t/pypi-org-unsupported-platform-tag-openbsd-7-0-amd64/16302 for one discussion.
 #
 # So if we want to create an appropriate binary wheel, based off the Redistributable client packages, then
-# we can use a GitHub Action to drive the process - including running it on suitable base images.
+# we can use a GitHub Action to drive the process - including running it on suitable base images. The Action
+# script builds wheels for 3 platforms along with the sdist.
 if $useActions
 then
   cd $curdir
@@ -259,12 +266,22 @@ export TWINE_PASSWORD="$tok"
 # verboseUpload="--verbose"
 
 # If using the local repository, then first make sure the pypi-server is running
+if $dryRun
+then
+  echo
+  echo "Dry Run: real upload is not going to happen"
+  uploadCmd="echo python"
+else
+  uploadCmd="python"
+fi
+
 echo
+# Upload github-built built wheels
 if $useActions
 then
   for w in dist/$pkg*whl
   do
-    python -m twine upload $repositoryFlag $repository $verboseUpload $w
+    $uploadCmd -m twine upload $repositoryFlag $repository $verboseUpload $w
     if [ $? -ne 0 ]
     then
       echo "ERROR: Upload of binary wheel failed"
@@ -273,10 +290,11 @@ then
   done
 fi
 
-python -m twine upload $repositoryFlag $repository $verboseUpload dist/$pkg*.tar.gz
+# Upload the sdist
+$uploadCmd -m twine upload $repositoryFlag $repository $verboseUpload dist/$pkg*.tar.gz
 if [ $? -ne 0 ]
 then
-  echo "ERROR: Upload failed"
+  echo "ERROR: Upload of sdist failed"
   exit 1
 fi
 
