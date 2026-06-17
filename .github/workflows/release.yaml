@@ -61,7 +61,7 @@ jobs:
       matrix:
         buildplat:
         - [windows-2022, win_amd64, ""]
-        - [ubuntu-22.04, manylinux_x86_64, ""]
+        #- [ubuntu-22.04, manylinux_x86_64, ""]
         - [macos-14, macosx_arm64, ""]
 
         python: ["cp39"]
@@ -110,7 +110,7 @@ jobs:
           sudo mkdir -p /opt/mqm || true;
           sudo installer -verbose -pkg tmpPkg-temp.pkg -target /opt/mqm && rm -rf tmpPkg-temp.pkg && ln -s /opt/mqm $MQ_FILE_PATH;
           ;;
-          *) echo "Unrecognised platform";exit 1;;
+          *) echo "Unrecognised platform: $ImageOS";exit 1;;
           esac
 
       # The original version of this YAML file used this pattern to select the download image. Leaving it here for
@@ -128,7 +128,10 @@ jobs:
           # The default repair command tries to merge the MQ shared libraries into the wheel,
           # We do not want that as it would breach the Redist Client licensing rules if we
           # re-uploaded that wheel to PyPI. So we will just do a simple copy.
-          CIBW_REPAIR_WHEEL_COMMAND: cp {wheel} {dest_dir}
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: cp {wheel} {dest_dir}
+          CIBW_REPAIR_WHEEL_COMMAND_MACOS: cp {wheel} {dest_dir}
+          CIBW_REPAIR_WHEEL_COMMAND_LINUX: cp {wheel} {dest_dir}
+
 
         run: |
            python -m cibuildwheel --output-dir dist
@@ -162,7 +165,7 @@ jobs:
         run: |
           python -m build --sdist
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: artifact-sdist
           path: dist/*.tar.gz
@@ -175,7 +178,7 @@ jobs:
       # This permission is mandatory for trusted publishing, if we ever enable that
       id-token: write
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           pattern: artifact-*
           merge-multiple: true

@@ -15,7 +15,7 @@ rc=0
 if [ -z "$NORUN" ]
 then
   # This runs against the default (main) branch. Add '--ref my-branch' if needed
-  gh workflow run release.yaml
+  gh workflow run release.yaml --ref whl
   rc=$?
   if [ $rc -eq 0  ]
   then

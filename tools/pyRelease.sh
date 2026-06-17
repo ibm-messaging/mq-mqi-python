@@ -263,7 +263,7 @@ fi
 export TWINE_USERNAME="__token__"
 export TWINE_PASSWORD="$tok"
 
-# verboseUpload="--verbose"
+verboseUpload="--verbose"
 
 # If using the local repository, then first make sure the pypi-server is running
 if $dryRun
