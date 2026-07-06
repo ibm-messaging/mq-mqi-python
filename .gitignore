@@ -31,5 +31,7 @@ tools.untracked
 tests.untracked
 checkRemote
 
+docs/gil*
+
 # Other local directories I may use
 issues

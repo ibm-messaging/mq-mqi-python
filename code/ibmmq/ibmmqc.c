@@ -102,10 +102,10 @@ elements of a tuple. Any other returned elements precede those in the tuple.\
 /* Platform-specific mutex includes */
 #ifdef _WIN32
 #include <windows.h>
-typedef CRITICAL_SECTION map_mutex_t;
+typedef CRITICAL_SECTION common_mutex_t;
 #else
 #include <pthread.h>
-typedef pthread_mutex_t map_mutex_t;
+typedef pthread_mutex_t common_mutex_t;
 #endif
 
 #include "ibmmqc.h"
@@ -124,7 +124,7 @@ typedef struct Map {
     MapEntry **buckets;
     size_t capacity;
     size_t size;
-    map_mutex_t mutex;
+    common_mutex_t mutex;
 } Map;
 
 /* The real structure that is added as the value */
@@ -157,6 +157,7 @@ static void debug_fn(int level, const char *fmt, ...);
 static PyObject *ErrorObj;
 
 /* To control any trace logging */
+static common_mutex_t log_mutex;
 static FILE *fp = NULL;
 static int fpOpened = 0;
 static long debugOpts = 0; /* Not a BOOL so we can use bitmask to control what's logged */
@@ -197,6 +198,30 @@ static Map *getBufferMap = NULL;
 #define PY_IBMMQ_IMPO_SIZEOF sizeof(MQIMPO)
 #define PY_IBMMQ_PD_SIZEOF sizeof(MQPD)
 
+static int lock(common_mutex_t *mutex) {
+#ifdef _WIN32
+  EnterCriticalSection(mutex);
+  return 0;
+#else
+  if (pthread_mutex_lock(mutex) == 0) {
+    return 0;
+  }
+  return -1;
+#endif
+}
+
+static int unlock(common_mutex_t *mutex) {
+#ifdef _WIN32
+  LeaveCriticalSection(mutex);
+  return 0;
+#else
+  if (pthread_mutex_unlock(mutex) == 0) {
+    return 0;
+  }
+  return -1;
+#endif
+}
+
 /*
  * Convert an object that might be either a Python string or a byte array to a C NULL-terminated string
  */
@@ -233,12 +258,16 @@ static char* PyBytesOrText_AsString(PyObject *txtObj) {
 #define MQRETURN(cc,rc)  Py_BuildValue("(ll)", (long)cc, (long)rc);
 
 /*
- * This is a static buffer, so multi-threads might try to update it at once.
+ * This is a static buffer, so multiple calls might try to update it at once.
  * But by now, we're likely in a really bad situation anyway. Don't want to
- * have to malloc space for the error message.
+ * have to malloc space for the error message. At least it's in thread-local storage.
  */
 #define ERRORBUF 256
-static char errorBuf[ERRORBUF] = {0};
+#ifdef _WIN32
+static __declspec(thread) char errorBuf[ERRORBUF] = {0};
+#else
+static _Thread_local char errorBuf[ERRORBUF] = {0};
+#endif
 static void *myAlloc(size_t s,const char *cause) {
   void *p = malloc(s);
   if (!p) {
@@ -284,8 +313,10 @@ static int checkArgSize(Py_ssize_t given, Py_ssize_t expected, const char *name)
 static void debug_fn(int level, const char *fmt, ...) {
     va_list vaArgs;
 
+    (void)lock(&log_mutex);
     /* Not filtering any output based on logLevel for now. Just on/off */
     if (debugOpts == 0) {
+        unlock(&log_mutex);
         return;
     }
 
@@ -304,6 +335,8 @@ static void debug_fn(int level, const char *fmt, ...) {
         fflush(fp);
     }
     va_end(vaArgs);
+
+    (void)unlock(&log_mutex);
 }
 
 /* Some failures in an MQI verb can still mean a resource should be deleted from
@@ -447,6 +480,8 @@ static char ibmmqc_MQLOGCF__doc__[] =
 An internal call to configure any debug logging from this module. \
 If opts is non-zero, debug info gets reported to filename. Or stderr if \
 that is empty/not supplied.\
+This is only called once during initialisation, so locking around the \
+setup is not necessary.\
 ";
 
 static PyObject * ibmmqc_MQLOGCF(PyObject *self, PyObject *args) {
@@ -454,6 +489,11 @@ static PyObject * ibmmqc_MQLOGCF(PyObject *self, PyObject *args) {
   long lOpts;
 
   if (!PyArg_ParseTuple(args, "l|s", &lOpts,&filename)) {
+    return NULL;
+  }
+
+  if (lock(&log_mutex) != 0) {
+    PyErr_SetString(ErrorObj, "Cannot lock log_mutex");
     return NULL;
   }
 
@@ -496,6 +536,8 @@ static PyObject * ibmmqc_MQLOGCF(PyObject *self, PyObject *args) {
 
   debug(1,"MQLOGCF Opts: %ld File: %s",lOpts,filename?filename:"N/A");
   // fprintf(stderr,"MQLOGCF Opts: %ld File: %s\n",lOpts,filename?filename:"N/A");
+
+  unlock(&log_mutex);
 
   return Py_BuildValue("(l)", (long) 0L);
 }
@@ -1362,6 +1404,8 @@ static PyObject * ibmmqc_MQSTAT(PyObject *self, PyObject *args) {
 /* finally invoke the real user-designated callback. And then it all unwinds.           */
 /****************************************************************************************/
 static PyObject *cbFunc_Py = NULL;
+static common_mutex_t cbFunc_mutex;
+
 static void cbFunc_C(MQHCONN hc,MQMD *md,MQGMO *gmo,unsigned char *buf,MQCBC *cbc) {
     PyObject *result = NULL;
     PyObject *arglist = NULL;
@@ -1412,14 +1456,25 @@ to the fixed Python proxy callback function. \
 
 static PyObject * ibmmqc_MQCBINIT(PyObject *self, PyObject *args) {
 
-  if (!PyArg_ParseTuple(args, "O",&cbFunc_Py)) {
+  PyObject *newCb;
+
+  if (!PyArg_ParseTuple(args, "O",&newCb)) {
     return NULL;
   }
 
-  if (!PyCallable_Check(cbFunc_Py)) {
+  if (!PyCallable_Check(newCb)) {
     PyErr_Format(ErrorObj,"Need a callable object.");
     return NULL;
   }
+
+  /* This function should only be called once, so the locking is probably */
+  /* unnecessary. But do it anyway, just in case the free-threading env   */
+  /* allows pathological multiple initialisations.                        */
+  (void)lock(&cbFunc_mutex);
+  Py_XDECREF(cbFunc_Py);
+  Py_INCREF(newCb);
+  cbFunc_Py = newCb;
+  (void)unlock(&cbFunc_mutex);
 
   return Py_None;
 }
@@ -1838,8 +1893,10 @@ static PyObject* ibmmqc_MQINQMP(PyObject *self, PyObject *args) {
       return NULL;
   }
 
+  Py_BEGIN_ALLOW_THREADS
   MQINQMP((MQHCONN)lQmgrHandle, msg_handle, impo, &name, pd, &property_type, value_length,
     value, &data_length, &compCode, &reasonCode);
+  Py_END_ALLOW_THREADS
 
   MQLONG return_length;
   if (value_length > data_length)
@@ -1996,7 +2053,9 @@ static PyObject* ibmmqc_MQDLTMP(PyObject *self, PyObject *args) {
   name.VSPtr = property_name;
   name.VSLength = (MQLONG)property_name_length;
 
+  Py_BEGIN_ALLOW_THREADS
   MQDLTMP((MQHCONN)lQmgrHandle, msg_handle, dmpo, &name, &compCode, &reasonCode);
+  Py_END_ALLOW_THREADS
 
   return MQRETURN(compCode,reasonCode);
 }
@@ -2046,7 +2105,8 @@ static struct PyModuleDef ibmmqc_module = {
     "ibmmqc",
     ibmmqc_module_documentation,
     -1,
-    ibmmqc_methods
+    ibmmqc_methods,
+    NULL,NULL,NULL,NULL
 };
 
 /* Initialization function for the module */
@@ -2190,6 +2250,14 @@ PyMODINIT_FUNC PyInit_ibmmqc(void) {
   if (!getBufferMap) {
     localError = TRUE;
   }
+
+#ifdef _WIN32
+  InitializeCriticalSection(&cbFunc_mutex);
+  InitializeCriticalSection(&log_mutex);
+#else
+  pthread_mutex_init(&cbFunc_mutex, NULL);
+  pthread_mutex_init(&log_mutex, NULL);
+#endif
 
   /* Check for errors */
   if (PyErr_Occurred() || localError)
@@ -2411,15 +2479,7 @@ static int map_lock(Map *map) {
     return -1;
   }
 
-#ifdef _WIN32
-  EnterCriticalSection(&map->mutex);
-  return 0;
-#else
-  if (pthread_mutex_lock(&map->mutex) == 0) {
-    return 0;
-  }
-  return -1;
-#endif
+  return lock(&map->mutex);
 }
 
 /* Unlock the map mutex. Returns 0 on success, -1 on failure  */
@@ -2428,13 +2488,5 @@ static int map_unlock(Map *map) {
     return -1;
   }
 
-#ifdef _WIN32
-  LeaveCriticalSection(&map->mutex);
-  return 0;
-#else
-  if (pthread_mutex_unlock(&map->mutex) == 0) {
-    return 0;
-  }
-  return -1;
-#endif
+  return unlock(&map->mutex);
 }

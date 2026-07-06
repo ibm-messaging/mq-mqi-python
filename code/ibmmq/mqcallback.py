@@ -86,12 +86,13 @@ def _internal_cb(hc, md, gmo, buf, cbc):
     mqlog.trace_entry("callback:_internal_cb")
 
     key = _make_key(hc, CBC().unpack(cbc).Hobj)
-    try:
-        cb = _stashedCBD[key]
-    except KeyError as exc:
-        # Should not happen as we've got control of the map. But just in case ...
-        mqlog.trace_exit("callback:_internal_cb", ep=1)
-        raise KeyError(f'Cannot find key {key} in callback map') from exc
+    with _callback_lock:
+        try:
+            cb = _stashedCBD[key]
+        except KeyError as exc:
+            # Should not happen as we've got control of the map. But just in case ...
+            mqlog.trace_exit("callback:_internal_cb", ep=1)
+            raise KeyError(f'Cannot find key {key} in callback map') from exc
 
     try:
         qmgr = cb.object.get_queue_manager()
