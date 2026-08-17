@@ -24,6 +24,8 @@ md = mq.MD()
 # Get Message Options
 gmo = mq.GMO()
 gmo.Options = mq.CMQC.MQGMO_WAIT | mq.CMQC.MQGMO_FAIL_IF_QUIESCING
+# Make sure the message is converted to the local codepage
+gmo.Options |= mq.CMQC.MQGMO_CONVERT
 gmo.WaitInterval = WAIT_INTERVAL * 1000
 
 qmgr = mq.connect(queue_manager, channel, conn_info, user, password)

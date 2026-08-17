@@ -23,6 +23,7 @@ md = mq.MD()
 # Get Message Options
 gmo = mq.GMO()
 gmo.Options = mq.CMQC.MQGMO_WAIT | mq.CMQC.MQGMO_FAIL_IF_QUIESCING
+gmo.Options |= mq.CMQC.MQGMO_CONVERT
 gmo.MatchOptions = mq.CMQC.MQMO_NONE
 gmo.WaitInterval = 5000  # 5 seconds
 
