@@ -77,7 +77,7 @@ def _make_key(hc, ho) -> str:
 def _is_usable_handle(mh):
     """Is the message handle valid? We are given the actual integer value, not a MessageHandle object"""
     rc = False
-    if mh not in (CMQC.MQHM_NONE, CMQC.MQHM_UNUSABLE_HMSG):
+    if mh is not None and mh not in (CMQC.MQHM_NONE, CMQC.MQHM_UNUSABLE_HMSG):
         rc = True
 
     mqlog.debug(f"is_usable_handle: {mh} {rc}")
@@ -135,6 +135,7 @@ def _props_contain(hc, mh, prop: str) -> bool:
     except MQMIError:
         pass
 
+    mqlog.debug(f"Searched for {prop} in handle \"{mh}\". Found: \"{rc}\"")
     return rc
 
 
@@ -396,9 +397,10 @@ def otel_put_trace_before(hc, md, pmo, buffer):
                 trace_id = span_context.trace_id
                 span_id = span_context.span_id
                 trace_flags = span_context.trace_flags
-                trace_flags_string = "01"
-                if trace_flags != 1:
-                    trace_flags_string = "00"
+
+                # Convert the trace_flags bitfield to a (single) byte string
+                # We don't interpret the field though. That's done downstream.
+                trace_flags_string = f'{trace_flags:02x}'
 
                 # This is the W3C-defined format for the trace property
                 value = "00" + "-" + \
@@ -462,7 +464,7 @@ def otel_get_trace_before(hc, ho, gmo, asynchronous):
     # MQGMO_PROPERTIES_COMPAT/FORCE_RFH2: Any returned properties will be in RFH2
     # MQGMO_PROPERTIES_AS_Q_DEF:
     #      PROPCTL: NONE: same as GMO_NO_PROPERTIES
-    #               ALL/COMPATV6COMPAT: Any returned properties will be either in RFH2 or Handle if supplied
+    #               ALL/COMPAT/V6COMPAT: Any returned properties will be either in RFH2 or Handle if supplied
     #               FORCE: Any returned properties will be in RFH2
     prop_get_options = gmo.Options & get_props_options
     mqlog.debug(f"propGetOptions: 0x{prop_get_options:08x}")
@@ -628,11 +630,7 @@ def otel_get_trace_after(ho, gmo, md, otel_options, buffer, asynchronous):
 
                 trace_id = _int_from_hex(elem[1], oteltrace.INVALID_TRACE_ID)
                 span_id = _int_from_hex(elem[2], oteltrace.INVALID_SPAN_ID)
-                # Final element can only be 00 or 01 (for now)
-                if elem[3] == "00":
-                    trace_flags = oteltrace.TraceFlags.DEFAULT
-                else:
-                    trace_flags = oteltrace.TraceFlags.SAMPLED
+                trace_flags = _int_from_hex(elem[3], oteltrace.TraceFlags.DEFAULT)
 
                 have_new_context = True
 

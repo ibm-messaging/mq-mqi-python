@@ -33,13 +33,14 @@ function endtrc {
 # Assumes the MQ installation is under /opt/mqm.91
 # Also do a basic check with Python 3.9, the oldest version
 # we claim to support. There's a venv assumed to have been created for that version.
+# Each venv needs the pythonXXX-devel fileset installed for Python.h
 
 curdir=`pwd`
 mqTracePath=/tmp/mq.trace
 mkdir -p $mqTracePath #  2>/dev/null 2>&1
 
 # Use different virtual envs for different versions of Python
-for i in 0 1 2
+for i in 0 1 2 3
 do
   case $i in
   0)
@@ -59,6 +60,13 @@ do
     export MQ_FILE_PATH=/opt/mqm
     venv=../../venv_39
     python=python3.9
+    ;;
+   3)
+    # New python, with free threading
+    # This venv was created with "python3.14t -m venv ..."
+    export MQ_FILE_PATH=/opt/mqm
+    venv=../../venv_freethread
+    python=python
     ;;
   esac
 

@@ -10,6 +10,7 @@ import re
 from mqcommon import *
 from mqopts import MQOpts
 from mqerrors import *
+import mqlog
 
 from ibmmq import CMQC
 
@@ -31,28 +32,6 @@ class RFH2(MQOpts):
                     ['Format', CMQC.MQFMT_NONE, '8s'],
                     ['Flags', 0, MQLONG_TYPE],
                     ['NameValueCCSID', CMQC.MQCCSI_Q_MGR, MQLONG_TYPE]]  # type: List[List[Union[str, int, bytes]]]
-
-    big_endian_encodings = [CMQC.MQENC_INTEGER_NORMAL,
-                            CMQC.MQENC_DECIMAL_NORMAL,
-                            CMQC.MQENC_FLOAT_IEEE_NORMAL,
-                            CMQC.MQENC_FLOAT_S390,
-
-                            # 17
-                            CMQC.MQENC_INTEGER_NORMAL +
-                            CMQC.MQENC_DECIMAL_NORMAL,
-
-                            # 257
-                            CMQC.MQENC_INTEGER_NORMAL +
-                            CMQC.MQENC_FLOAT_IEEE_NORMAL,
-
-                            # 272
-                            CMQC.MQENC_DECIMAL_NORMAL +
-                            CMQC.MQENC_FLOAT_IEEE_NORMAL,
-
-                            # 273
-                            CMQC.MQENC_INTEGER_NORMAL +
-                            CMQC.MQENC_DECIMAL_NORMAL +
-                            CMQC.MQENC_FLOAT_IEEE_NORMAL]
 
     def __init__(self, **kw):
         # Take a copy of private initial_opts
@@ -135,11 +114,27 @@ class RFH2(MQOpts):
         # Calculate the correct StrucLength
         self['StrucLength'] = self.get_length()
 
+    def is_big_endian(self,encoding):
+        # If the encoding value is "large", then it needs byte-swapping.
+        # This line does that: the "<" and ">" can be in either order as it's
+        # going to swap regardless.
+        if encoding > 0x0000FFFF:
+            encoding = struct.unpack("<I", struct.pack(">I", i))[0]
+
+        # The original code had a list of specific encodings, which was not
+        # actually exhaustive. All we care about is the low-bit, giving the "integer_normal"
+        # flag ie big-endian
+        if encoding & 0x00000001 != 0:
+           rc = True
+        else:
+           rc = False
+        return rc
+
     def pack(self, encoding=None):
         """ Override pack in order to set correct numeric encoding in the format.
         """
         if encoding is not None:
-            if encoding in self.big_endian_encodings:
+            if self.is_big_endian(encoding):
                 self.opts[0][2] = '>' + self.initial_opts[0][2]
                 saved_values = self.get()
 
@@ -156,9 +151,14 @@ class RFH2(MQOpts):
         Encoding meant to come from the MQMD.
         """
 
+        # Include the platform-default string along with both ASCII and EBCDIC versions of the
+        # strucid for when a message has been read without conversion from z/OS
+        struc_ids = ['RFH ', b'\x52\x46\x48\x20',  b'\xd9\xc6\xc8\x40']
+
         ensure_not_unicode(buff)  # Python 3 bytes check
 
-        if buff[0:4] != CMQC.MQRFH_STRUC_ID:
+        struc_id = buff[0:4]
+        if struc_id not in struc_ids:
             raise PYIFError('RFH2 - _StrucId not MQRFH_STRUC_ID. Value: %s' % buff[0:4])
 
         if len(buff) < 36:
@@ -168,16 +168,20 @@ class RFH2(MQOpts):
 
         big_endian = False
         if encoding is not None:
-            if encoding in self.big_endian_encodings:
+            if self.is_big_endian(encoding):
                 big_endian = True
         else:
             # If small endian first byte of version should be > 'x\00'
             if buff[4:5] == b'\x00':
                 big_endian = True
 
+        mqlog.debug(f"Original encoding: {encoding} Bigendian: {big_endian}")
+
         # Indicate bigendian in format
         if big_endian:
             self.opts[0][2] = '>' + self.opts[0][2]
+        else:
+            self.opts[0][2] = '<' + self.opts[0][2]
 
         # Apply and parse the default header
         super().__init__(tuple(self.opts))

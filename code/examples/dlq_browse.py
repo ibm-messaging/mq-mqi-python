@@ -22,6 +22,7 @@ gmo.Options = CMQC.MQGMO_BROWSE_FIRST
 while ok:
     try:
         md = mq.MD()
+        gmo.Options |= CMQC.MQGMO_CONVERT
         msg = q.get(None, md, gmo)
         gmo.Options = CMQC.MQGMO_BROWSE_NEXT
         fmt = md['Format']

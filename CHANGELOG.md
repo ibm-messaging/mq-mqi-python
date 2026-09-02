@@ -2,6 +2,12 @@
 # Changelog
 Newest updates are at the top of this file.
 
+## 2026 Sep xx - V2.1.1
+* Better big/little-endian checks in RFH2 processing  (#26)
+* Add GMO_CONVERT to some of the samples
+* Prepare for free-threading
+* Make sure trace_flags is now treated as bitfield (#28)
+
 ## 2026 Jul 06 - no version change
 * Enable binary wheel for Linux x64
 

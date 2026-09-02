@@ -168,6 +168,7 @@ static int shortTrace = FALSE;
  */
 static Map *getBufferMap = NULL;
 
+static common_mutex_t process_mutex; /* A general purpose mutex for any other global operations */
 /*
  * MQI Structure sizes for the current supported MQ version are
  * defined here for convenience. This allows older versions of the
@@ -534,10 +535,12 @@ static PyObject * ibmmqc_MQLOGCF(PyObject *self, PyObject *args) {
 
   debugOpts = lOpts;
 
+  // Make sure we've unlocked before calling debug which uses the same mutex
+  unlock(&log_mutex);
+
   debug(1,"MQLOGCF Opts: %ld File: %s",lOpts,filename?filename:"N/A");
   // fprintf(stderr,"MQLOGCF Opts: %ld File: %s\n",lOpts,filename?filename:"N/A");
 
-  unlock(&log_mutex);
 
   return Py_BuildValue("(l)", (long) 0L);
 }
@@ -661,7 +664,7 @@ static PyObject * ibmmqc_MQCONNX(PyObject *self, PyObject *args) {
   }
 
 #if defined(MQCNO_VERSION_7)
-  if (cno->ApplName[0] != 0 || cno->ApplName[0] != ' ') {
+  if (cno->ApplName[0] != 0 && cno->ApplName[0] != ' ') {
     if (cno->Version < MQCNO_VERSION_7) {
       cno->Version = MQCNO_VERSION_7;
     }
@@ -2109,14 +2112,73 @@ static struct PyModuleDef ibmmqc_module = {
     NULL,NULL,NULL,NULL
 };
 
+// Make sure the mutices are initialised by a block that's only executed once in the process.
+#ifdef _WIN32
+INIT_ONCE critSecInitOnce = INIT_ONCE_STATIC_INIT;
+
+BOOL CALLBACK InitCritSecCallback(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context) {
+  InitializeCriticalSection(&cbFunc_mutex);
+  InitializeCriticalSection(&log_mutex);
+  InitializeCriticalSection(&process_mutex);
+  return TRUE;
+}
+#else
+pthread_once_t mutexInitOnce = PTHREAD_ONCE_INIT;
+
+void mutexInit(void) {
+  pthread_mutex_init(&cbFunc_mutex, NULL);
+  pthread_mutex_init(&log_mutex, NULL);
+  pthread_mutex_init(&process_mutex, NULL);
+}
+#endif
+
+/* Called by Py_Finalize() when the process exits. Flushes and closes any
+ * open log file and destroys the module-level mutexes to keep leak checkers
+ * and sanitisers quiet. Safe to call even if the resources were never fully
+ * initialised because every operation is guarded by a NULL/zero check.
+ */
+static void ibmmqc_atexit(void) {
+  if (fpOpened && fp) {
+    fflush(fp);
+    fclose(fp);
+    fp = NULL;
+    fpOpened = 0;
+  }
+#ifdef _WIN32
+  DeleteCriticalSection(&log_mutex);
+  DeleteCriticalSection(&process_mutex);
+  DeleteCriticalSection(&cbFunc_mutex);
+#else
+  pthread_mutex_destroy(&log_mutex);
+  pthread_mutex_destroy(&process_mutex);
+  pthread_mutex_destroy(&cbFunc_mutex);
+#endif
+}
+
 /* Initialization function for the module */
 /* Everything else should be 'static'     */
 PyMODINIT_FUNC PyInit_ibmmqc(void) {
   int localError = FALSE;
   PyObject *m, *d, *v;
 
+    fprintf(stderr, "About to call the init_once\n");
+#ifdef _WIN32
+  InitOnceExecuteOnce(&critSecInitOnce, InitCritSecCallback, NULL, NULL);
+#else
+  pthread_once(&mutexInitOnce,mutexInit);
+#endif
+
   /* Create the module and add the functions */
   m = PyModule_Create(&ibmmqc_module);
+
+#ifdef Py_GIL_DISABLED
+  /* When built under a free-threaded Python interpreter, this tells         */
+  /* the interpreter that the module is safe to run as free-threaded itself. */
+  /* Otherwise there's a warning, and the GIL is reinstated.                 */
+  /* We cannot be using the Stable/Limited ABI/API for this to build (which  */
+  /* is controlled in setup.py                                               */
+  PyUnstable_Module_SetGIL(m, Py_MOD_GIL_NOT_USED);
+#endif
 
   /* Add some symbolic constants to the module */
   d = PyModule_GetDict(m);
@@ -2243,6 +2305,7 @@ PyMODINIT_FUNC PyInit_ibmmqc(void) {
    * for MQGETs. The map is never explicitly destroyed as there's no suitable
    * "terminate" call to this layer.
    */
+  lock(&process_mutex);
   if (!getBufferMap) {
     getBufferMap = map_create();
   }
@@ -2250,14 +2313,12 @@ PyMODINIT_FUNC PyInit_ibmmqc(void) {
   if (!getBufferMap) {
     localError = TRUE;
   }
+  unlock(&process_mutex);
 
-#ifdef _WIN32
-  InitializeCriticalSection(&cbFunc_mutex);
-  InitializeCriticalSection(&log_mutex);
-#else
-  pthread_mutex_init(&cbFunc_mutex, NULL);
-  pthread_mutex_init(&log_mutex, NULL);
-#endif
+  /* Register the process-exit cleanup handler. Py_AtExit handlers are called
+   * LIFO during Py_Finalize(), after all Python-level atexit handlers.
+   */
+  Py_AtExit(ibmmqc_atexit);
 
   /* Check for errors */
   if (PyErr_Occurred() || localError)

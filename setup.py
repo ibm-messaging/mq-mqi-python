@@ -7,6 +7,7 @@
 
 import os
 import platform
+import sysconfig
 
 from shutil import which
 from struct import calcsize
@@ -17,7 +18,7 @@ from setuptools import setup, Extension
 # The version should correspond to PEP440 and gets normalised if
 # not in the right format. VRM can be followed with a|b|rc with a further numeric
 # to indicate alpha/beta/release-candidate versions.
-VERSION = '2.1.0'
+VERSION = '2.1.1'
 
 _ABI_LIMITS = {
     # Minimum Python version that this package supports.
@@ -117,7 +118,6 @@ c_source = ['code/ibmmq/ibmmqc.c']
 
 ld_flags = []
 cc_flags = []
-# cc_flags = ['-g']
 
 # Get any platform-specific settings
 plat = platform.system()
@@ -128,7 +128,8 @@ if plat == "Windows":
 # AIX
 elif plat == "AIX":
     library_dirs, include_dirs, libraries = get_aix_settings()
-
+    # If gcc tries to build as 32-bit module, can add this line or set CFLAGS="-maix64" as env var
+    # cc_flags.append( '-maix64')
 # At this point, to preserve backward-compatibility we try out generic
 # UNIX settings first, i.e. libraries and include files in well-known locations.
 # Otherwise we look up dspmqver in $PATH.
@@ -213,11 +214,22 @@ and in the `dev-patterns repository
 
 # Define how the C module gets built. Set flags to build using the Python 3.9
 # Limited API which should make the binary extension forwards compatible.
+# If you are running with the free-threaded version of Python, then the LIMITED_API
+# is not available (at least for now).
+is_free_threaded = sysconfig.get_config_var("Py_GIL_DISABLED") == 1
+define_macros = [('PYVERSION', '"' + VERSION + '"')]
+bdist_options = {}
+
+# This is the expected path for now: it's how we build the binary wheels on GitHub
+if not is_free_threaded:
+    define_macros.append(('Py_LIMITED_API', _ABI_LIMITS['Py_LIMITED_API']))
+    bdist_options = {"py_limited_api": _ABI_LIMITS["py_limited_api"]}
+
+print(f'Building for free threaded model: {is_free_threaded}')
+
 mqi_extension = Extension('ibmmq.ibmmqc', c_source,
-                          define_macros=[('PYVERSION', '"' + VERSION + '"'),
-                                         ('Py_LIMITED_API', _ABI_LIMITS['Py_LIMITED_API'])
-                                         ],
-                          py_limited_api=True,
+                          define_macros=define_macros,
+                          py_limited_api=not is_free_threaded,
                           library_dirs=library_dirs,
                           include_dirs=include_dirs,
                           extra_link_args=ld_flags,
@@ -247,4 +259,4 @@ setup(name='ibmmq',
                    'Programming Language :: Python',
                    'Topic :: Software Development :: Libraries :: Python Modules'],
       ext_modules=[mqi_extension],
-      options={"bdist_wheel": {"py_limited_api": _ABI_LIMITS["py_limited_api"]}})
+      options={"bdist_wheel": bdist_options})
