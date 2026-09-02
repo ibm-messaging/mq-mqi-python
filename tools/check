@@ -197,8 +197,9 @@ find . -name "*.py" -type f | xargs grep "print(" |\
 
 find . -name "*.c" -type f | xargs grep printf |\
      grep -v snprintf |\
-     grep -v fprintf |\
-     grep -v vfprintf
+     grep -v "fprintf(fp" |\
+     grep -v vfprintf |\
+     grep -Ev "^[ ]+//"
 ) | tee $errFile
 cnt=`cat $errFile | wc -l `
 if [ $cnt -ne 0 ]
