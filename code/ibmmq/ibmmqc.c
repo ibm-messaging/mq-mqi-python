@@ -2161,7 +2161,7 @@ PyMODINIT_FUNC PyInit_ibmmqc(void) {
   int localError = FALSE;
   PyObject *m, *d, *v;
 
-    fprintf(stderr, "About to call the init_once\n");
+  //  fprintf(stderr, "About to call the init_once\n");
 #ifdef _WIN32
   InitOnceExecuteOnce(&critSecInitOnce, InitCritSecCallback, NULL, NULL);
 #else
