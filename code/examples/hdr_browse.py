@@ -93,10 +93,10 @@ while ok:
             print()
             print('------------')
             try:
-                h=bytes.decode(fmt, "utf8")
+                h = bytes.decode(fmt, "utf8")
             except UnicodeDecodeError:
                 # Maybe the message comes from an EBCDIC system
-                h=bytes.decode(fmt, "cp500")
+                h = bytes.decode(fmt, "cp500")
             print(f'Header: {h}')
             print('------------')
 

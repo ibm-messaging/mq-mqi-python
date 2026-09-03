@@ -114,20 +114,22 @@ class RFH2(MQOpts):
         # Calculate the correct StrucLength
         self['StrucLength'] = self.get_length()
 
-    def is_big_endian(self,encoding):
-        # If the encoding value is "large", then it needs byte-swapping.
-        # This line does that: the "<" and ">" can be in either order as it's
-        # going to swap regardless.
+    def is_big_endian(self, encoding):
+        """If the encoding value is "large", then it needs byte-swapping.
+        This line does that: the "<" and ">" can be in either order as it's
+        going to swap regardless.
+        """
+        mqlog.debug(f"Do we need to byteswap {encoding:x}")
+
         if encoding > 0x0000FFFF:
-            encoding = struct.unpack("<I", struct.pack(">I", i))[0]
+            encoding = struct.unpack("<I", struct.pack(">I", encoding))[0]
+            mqlog.debug(f"Is now {encoding}")
 
         # The original code had a list of specific encodings, which was not
         # actually exhaustive. All we care about is the low-bit, giving the "integer_normal"
         # flag ie big-endian
-        if encoding & 0x00000001 != 0:
-           rc = True
-        else:
-           rc = False
+        rc = (encoding & 0x00000001) != 0
+
         return rc
 
     def pack(self, encoding=None):
@@ -153,7 +155,7 @@ class RFH2(MQOpts):
 
         # Include the platform-default string along with both ASCII and EBCDIC versions of the
         # strucid for when a message has been read without conversion from z/OS
-        struc_ids = ['RFH ', b'\x52\x46\x48\x20',  b'\xd9\xc6\xc8\x40']
+        struc_ids = ['RFH ', b'\x52\x46\x48\x20', b'\xd9\xc6\xc8\x40']
 
         ensure_not_unicode(buff)  # Python 3 bytes check
 
