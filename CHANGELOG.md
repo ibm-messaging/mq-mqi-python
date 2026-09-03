@@ -2,7 +2,7 @@
 # Changelog
 Newest updates are at the top of this file.
 
-## 2026 Sep xx - V2.1.1
+## 2026 Sep 03 - V2.1.1
 * Better big/little-endian checks in RFH2 processing  (#26)
 * Add GMO_CONVERT to some of the samples
 * Prepare for free-threading
