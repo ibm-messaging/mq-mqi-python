@@ -36,8 +36,8 @@
 """
   -----------------------------------------------------------------
   <BEGIN_BUILDINFO>
-  Generated on:  5/22/26, 1:19 PM
-  Build Level:   p1000-L260522
+  Generated on:  9/22/26, 2:55 PM
+  Build Level:   p1001-L260922
   Build Type:    Production
   <END_BUILDINFO>
   -----------------------------------------------------------------
@@ -102,6 +102,11 @@ MQAIT_DICT = {
     2: "MQAIT_OCSP",
     3: "MQAIT_IDPW_OS",
     4: "MQAIT_IDPW_LDAP",
+}
+
+MQAM_DICT = {
+    0: "MQAM_JAAS",
+    1: "MQAM_QMGR",
 }
 
 MQAPPL_DICT = {
@@ -1220,6 +1225,7 @@ MQCMDL_DICT = {
     944: "MQCMDL_LEVEL_944",
     945: "MQCMDL_LEVEL_945",
     1000: "MQCMDL_LEVEL_1000",
+    1001: "MQCMDL_LEVEL_1001",
 }
 
 MQCMD_DICT = {
@@ -2434,6 +2440,7 @@ MQIACH_DICT = {
     1646: "MQIACH_SPL_PROTECTION",
     1647: "MQIACH_SSL_QS",
     1648: "MQIACH_SSL_QSR",
+    1649: "MQIACH_AUTHMODE",
 }
 
 MQIAMO64_DICT = {
@@ -3493,6 +3500,8 @@ MQPROTO_DICT = {
     2: "MQPROTO_HTTP",
     3: "MQPROTO_AMQP",
     4: "MQPROTO_MQTTV311",
+    5: "MQPROTO_MQTTV5",
+    8: "MQPROTO_MQTTV5_MASK",
 }
 
 MQPRT_DICT = {
@@ -5699,6 +5708,7 @@ MQI_VALUE_NAME_LIST = [
     {  "value":          0, "name": "MQADOPT_TYPE_NO" },
     {  "value":          0, "name": "MQADPCTX_NO" },
     {  "value":          0, "name": "MQAIT_ALL" },
+    {  "value":          0, "name": "MQAM_JAAS" },
     {  "value":          0, "name": "MQAPPL_IMMOVABLE" },
     {  "value":          0, "name": "MQAS_NONE" },
     {  "value":          0, "name": "MQAT_NO_CONTEXT" },
@@ -6024,6 +6034,7 @@ MQI_VALUE_NAME_LIST = [
     {  "value":          1, "name": "MQADPCTX_YES" },
     {  "value":          1, "name": "MQAIR_VERSION_1" },
     {  "value":          1, "name": "MQAIT_CRL_LDAP" },
+    {  "value":          1, "name": "MQAM_QMGR" },
     {  "value":          1, "name": "MQAPPL_MOVABLE" },
     {  "value":          1, "name": "MQAS_STARTED" },
     {  "value":          1, "name": "MQAT_CICS" },
@@ -6934,6 +6945,7 @@ MQI_VALUE_NAME_LIST = [
     {  "value":          5, "name": "MQOPER_PUT_REPLY" },
     {  "value":          5, "name": "MQOT_Q_MGR" },
     {  "value":          5, "name": "MQPL_WINDOWS" },
+    {  "value":          5, "name": "MQPROTO_MQTTV5" },
     {  "value":          5, "name": "MQPS_STATUS_ERROR" },
     {  "value":          5, "name": "MQQSGS_PENDING" },
     {  "value":          5, "name": "MQRQ_Q_MGR_STOPPING" },
@@ -7064,6 +7076,7 @@ MQI_VALUE_NAME_LIST = [
     {  "value":          8, "name": "MQOPER_SEND" },
     {  "value":          8, "name": "MQOT_TOPIC" },
     {  "value":          8, "name": "MQPMRF_FEEDBACK" },
+    {  "value":          8, "name": "MQPROTO_MQTTV5_MASK" },
     {  "value":          8, "name": "MQPUBO_NO_REGISTRATION" },
     {  "value":          8, "name": "MQQMF_CLUSSDR_USER_DEFINED" },
     {  "value":          8, "name": "MQREGO_DIRECT_REQUESTS" },
@@ -8661,8 +8674,9 @@ MQI_VALUE_NAME_LIST = [
     {  "value":        999, "name": "MQ_TOTAL_EXIT_DATA_LENGTH" },
     {  "value":        999, "name": "MQ_TOTAL_EXIT_NAME_LENGTH" },
     {  "value":       1000, "name": "MQCHSSTATE_IN_MSGEXIT" },
-    {  "value":       1000, "name": "MQCMDL_CURRENT_LEVEL" },
     {  "value":       1000, "name": "MQCMDL_LEVEL_1000" },
+    {  "value":       1001, "name": "MQCMDL_CURRENT_LEVEL" },
+    {  "value":       1001, "name": "MQCMDL_LEVEL_1001" },
     {  "value":       1001, "name": "MQIACF_FIRST" },
     {  "value":       1001, "name": "MQIACF_Q_MGR_ATTRS" },
     {  "value":       1001, "name": "MQNT_ALL" },
@@ -9281,8 +9295,9 @@ MQI_VALUE_NAME_LIST = [
     {  "value":       1647, "name": "MQIACH_SSL_QS" },
     {  "value":       1648, "name": "MQCDC_LENGTH_6 (4 byte)" },
     {  "value":       1648, "name": "MQCD_LENGTH_6 (4 byte)" },
-    {  "value":       1648, "name": "MQIACH_LAST_USED" },
     {  "value":       1648, "name": "MQIACH_SSL_QSR" },
+    {  "value":       1649, "name": "MQIACH_AUTHMODE" },
+    {  "value":       1649, "name": "MQIACH_LAST_USED" },
     {  "value":       1688, "name": "MQCDC_LENGTH_6 (8 byte)" },
     {  "value":       1688, "name": "MQCD_LENGTH_6 (8 byte)" },
     {  "value":       1700, "name": "MQCHSSTATE_IN_MQI_CALL" },

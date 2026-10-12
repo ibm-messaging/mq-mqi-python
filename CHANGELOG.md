@@ -2,6 +2,9 @@
 # Changelog
 Newest updates are at the top of this file.
 
+## 2026 Oct 13 - V2.1.2
+* Support for MQ 10.0.1
+
 ## 2026 Sep 03 - V2.1.1
 * Better big/little-endian checks in RFH2 processing  (#26)
 * Add GMO_CONVERT to some of the samples

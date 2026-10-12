@@ -34,7 +34,7 @@ on:
 
 env:
   # MQ product version
-  VRMF: "10.0.0.0"
+  VRMF: "10.0.1.0"
 
   # Where do we get the redist client or MacOS toolkit from? They are public URLs.
   HOST: "https://public.dhe.ibm.com"

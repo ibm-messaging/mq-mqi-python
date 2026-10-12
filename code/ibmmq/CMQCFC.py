@@ -35,8 +35,8 @@
 
 ----------------------------------------------------------------
 <BEGIN_BUILDINFO>
-   Generated on:  5/22/26, 1:19 PM                              
-   Build Level:   p1000-L260522                                 
+   Generated on:  9/22/26, 2:55 PM                              
+   Build Level:   p1001-L260922                                 
    Build Type:    Production                                    
    Pointer Size:  64 Bit                                        
 <END_BUILDINFO>
@@ -1632,7 +1632,8 @@ MQIACH_SECURITY_PROTOCOL                 = 1645
 MQIACH_SPL_PROTECTION                    = 1646
 MQIACH_SSL_QS                            = 1647
 MQIACH_SSL_QSR                           = 1648
-MQIACH_LAST_USED                         = 1648
+MQIACH_AUTHMODE                          = 1649
+MQIACH_LAST_USED                         = 1649
 
 #----------------------------------------------------------------#
 # Values Related to Character Parameter Structures               #
@@ -2078,6 +2079,10 @@ MQAUTHOPT_NAME_ALL_MATCHING              = 0x00000020
 MQAUTHOPT_NAME_AS_WILDCARD               = 0x00000040
 MQAUTHOPT_CUMULATIVE                     = 0x00000100
 MQAUTHOPT_EXCLUDE_TEMP                   = 0x00000200
+
+# Auth Mode
+MQAM_QMGR                                = 1
+MQAM_JAAS                                = 0
 
 # Bridge Types
 MQBT_OTMA                                = 1

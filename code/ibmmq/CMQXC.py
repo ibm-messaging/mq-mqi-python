@@ -35,8 +35,8 @@
 
 ----------------------------------------------------------------
 <BEGIN_BUILDINFO>
-   Generated on:  5/22/26, 1:19 PM                              
-   Build Level:   p1000-L260522                                 
+   Generated on:  9/22/26, 2:55 PM                              
+   Build Level:   p1001-L260922                                 
    Build Type:    Production                                    
    Pointer Size:  64 Bit                                        
 <END_BUILDINFO>
@@ -154,6 +154,8 @@ MQPROTO_MQTTV3                           = 1
 MQPROTO_HTTP                             = 2
 MQPROTO_AMQP                             = 3
 MQPROTO_MQTTV311                         = 4
+MQPROTO_MQTTV5                           = 5
+MQPROTO_MQTTV5_MASK                      = 8
 
 # Security Protocol
 MQSECPROT_NONE                           = 0
